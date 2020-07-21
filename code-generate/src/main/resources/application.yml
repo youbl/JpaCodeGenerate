@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: "scangitcode"         # 程序name，建议配置，方便统一的服务管理
+
+  # mysql连接信息配置
+  datasource:
+    url: jdbc:mysql://172.18.0.84:3306/beinet?characterEncoding=utf8&serverTimezone=UTC&useSSL=false
+    username: beinet
+    password: beinet123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jackson:
+    default-property-inclusion: always  #为空也序列化
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    mapper:
+      accept_case_insensitive_properties: true

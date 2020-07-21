@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>代码生成器</title>
+    <script src="static/unpkg/vue.min.js"></script>
+    <script src="static/unpkg/axios.min.js"></script>
+    <script src="static/unpkg/vue-multiselect.min.js"></script>
+    <link rel="stylesheet" href="static/unpkg/vue-multiselect.min.css">
+    <script src="static/rowColor.js"></script>
+    <script src="static/qs.min.js"></script>
+    <style>
+        .tabs { /* tab选项卡外围 */
+            width: 95%;
+            height: 20px;
+            padding: 0;
+        }
+
+        .li-tab { /* tab的每个选项卡 */
+            width: 120px;
+            height: 20px;
+            display: inline-block;
+            text-align: center;
+            float: left;
+            border: 1px solid white;
+            background-color: gray;
+            cursor: pointer;
+        }
+
+        .active { /* tab活动选项卡 */
+            background-color: #99ffff !important;
+        }
+
+        .divTab { /* tab内容 */
+            width: 95%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <ul class="tabs">
+        <li :class="{active:0==tab.tabIndex}" class="li-tab" @click="toggleTabs(0)">查看</li>
+        <li :class="{active:1==tab.tabIndex}" class="li-tab" @click="toggleTabs(1)">xxx</li>
+    </ul>
+    <div class="tab-content">
+        <!-- tab 1 -->
+        <div v-show="tab.tabIndex===0" class="divTab">
+            <div>
+                <div style="float: left;">
+                    <div>
+                        <span style="display: inline-block;width:80px;">选数据库：</span>
+                        <div style="width: 450px; display: inline-block;">
+                            <multiselect placeholder="请选择数据库" @input="databaseChange" v-model="condition.database"
+                                         :options="databaseArr"
+                                         :multiple="false" :taggable="false" :searchable="true"
+                                         :allow-empty="false"></multiselect>
+                        </div>
+                    </div>
+                    <div>
+                        <span style="display: inline-block;width:80px;">表(多选)：</span>
+                        <div style="width: 450px; display: inline-block;">
+                            <multiselect placeholder="请选择表" @input="tableChange" v-model="condition.tables"
+                                         :options="tableArr"
+                                         :multiple="true" :taggable="false" :searchable="true"
+                                         :allow-empty="false"></multiselect>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="float: left;">
+                    <div>
+                        <span style="display: inline-block;width:80px;">包名：</span>
+                        <input type="text" v-model="condition.package">
+                    </div>
+                    <div style="text-align: center; vertical-align: bottom;">
+                        <button @click="generateCode">生成JPA文件</button>
+                        　　<a v-show="codeLink" :href="codeLink">下载</a>
+                    </div>
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+            <hr>
+            所选的表字段预览：<br>
+            <textarea style="width:99%; height: 700px;">{{ JSON.stringify(columnArr, null, 4)}}</textarea>
+        </div>
+        <!-- tab 2 -->
+        <div v-show="tab.tabIndex===1" class="divTab">
+            我是第二个TAB
+        </div>
+    </div>
+</div>
+<script>
+    var vueApp = new Vue({
+        el: '#divApp',
+        components: {
+            Multiselect: window.VueMultiselect.default
+        },
+        data: {
+            tab: {
+                tabIndex: 0,
+                title: '',
+            },
+            condition: {
+                database: '',
+                tables: [],
+                package: 'cn.beinet.codeGenerate',
+            },
+            databaseArr: [], // 用于下拉列表
+            tableArr: [],
+            columnArr: [],
+            codeLink: '',
+        },
+        created: function () {
+            let _vue = this;
+            _vue.loadDatabases();
+        },
+        methods: {
+            toggleTabs: function (idx) {
+                this.tab.tabIndex = idx;
+            },
+            loadDatabases: function () {
+                let _vue = this;
+                let url = '/v1/code/databases';
+                axios.get(url).then(function (response) {
+                    if (!response.data || response.data.length <= 0) {
+                        alert('未找到数据库');
+                        return;
+                    }
+                    _vue.databaseArr = response.data;
+                }).catch(function (error) {
+                    _vue.ajaxError(error);
+                });
+            },
+            databaseChange: function () {
+                this.tableArr = [];
+                this.loadTables();
+            },
+            loadTables: function () {
+                let _vue = this;
+                let url = '/v1/code/tables';
+                let para = {};
+                para.database = this.condition.database;
+                axios.get(url, {params: para}).then(function (response) {
+                    if (!response.data || response.data.length <= 0) {
+                        alert(para.database + '数据库，没有找到表.');
+                        return;
+                    }
+                    _vue.tableArr = response.data;
+                }).catch(function (error) {
+                    _vue.ajaxError(error);
+                });
+            },
+            tableChange: function () {
+                this.loadColumns();
+            },
+            loadColumns: function () {
+                let _vue = this;
+                // 用Qs库，避免 tables[0]这种传输语法
+                let url = '/v1/code/columns?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                axios.get(url).then(function (response) {
+                    if (!response.data || response.data.length <= 0) {
+                        alert(para.database + '数据库，没有找到字段.');
+                        return;
+                    }
+                    _vue.columnArr = response.data;
+                }).catch(function (error) {
+                    _vue.ajaxError(error);
+                });
+            },
+            generateCode: function () {
+                let _vue = this;
+                // 用Qs库，避免 tables[0]这种传输语法
+                let url = '/v1/code/tables?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                axios.post(url).then(function (response) {
+                    _vue.codeLink = response.data;
+                }).catch(function (error) {
+                    _vue.ajaxError(error);
+                });
+
+            },
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+</script>
+</body>
+</html>
