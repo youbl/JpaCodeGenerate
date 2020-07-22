@@ -1,27 +1,23 @@
 package cn.beinet.codegenerate.service;
 
 import cn.beinet.codegenerate.model.ColumnDto;
-import cn.beinet.codegenerate.repository.ColumnRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Model类生成工具
+ */
 @Component
 public class ModelGenerater {
-    private final ColumnRepository columnRepository;
 
-    public ModelGenerater(ColumnRepository columnRepository) {
-        this.columnRepository = columnRepository;
-    }
-
-    public String generate(String database, String table, String packageName) {
-        List<ColumnDto> columns = columnRepository.findColumnByTable(database, table);
-        if (columns == null || columns.isEmpty())
-            return "";
-
+    String generate(List<ColumnDto> columns, String packageName) {
         StringBuilder sb = new StringBuilder();
         // 头部的package和import
         sb.append(getHead(packageName));
+
+        String database = columns.get(0).getCatalog();
+        String table = columns.get(0).getTable();
 
         // class的定义
         sb.append("@Data\n")
@@ -32,6 +28,10 @@ public class ModelGenerater {
         // class的成员
         sb.append(getClassBody(columns));
 
+        sb.append("\n/*")
+                .append(getInsertSQL(columns))
+                .append(getUpdateSQL(columns))
+                .append("*/");
         sb.append("\n}");
         return sb.toString();
     }
@@ -69,48 +69,11 @@ public class ModelGenerater {
      * @return 定义串
      */
     private String getColumnDefine(ColumnDto column) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("    private ")
-                .append(getFieldType(column.getType()))
-                .append(' ')
-                .append(lowFirstChar(column.getColumn()))
-                .append(";\n\n");
-        return sb.toString();
-    }
-
-    private String getFieldType(String type) {
-        int idx = type.indexOf('(');
-        if (idx > 0) {
-            type = type.substring(0, idx);
-        }
-        idx = type.indexOf(' '); // float unsigned
-        if (idx > 0) {
-            type = type.substring(0, idx);
-        }
-        switch (type.toLowerCase()) {
-            case "bigint":
-                return "long";
-            case "bit":
-                return "boolean";
-            case "date":
-            case "datetime":
-            case "timestamp":
-                return "LocalDateTime";
-            case "decimal":
-                return "BigDecimal";
-            case "double":
-                return "double";
-            case "float":
-                return "float";
-            case "int":
-            case "mediumint":
-            case "smallint":
-            case "tinyint":
-                return "int";
-            default: // varchar char blob text enum longblob longtext mediumblob mediumtext tinytext varbinary json
-                return "String";
-        }
-
+        return "    private " +
+                column.getFieldType() +
+                ' ' +
+                column.getColumn() +
+                ";\n\n";
     }
 
     /**
@@ -127,18 +90,10 @@ public class ModelGenerater {
                 .append(column.getComment().replaceAll("[\\r\\n]", ";"))
                 .append("'\"");
 
-        String extra = column.getExtra();
-        if (extra != null && extra.toUpperCase().contains("GENERATED")) {
+        if (column.isVirtual() || column.isDbManager()) {
             // 虚拟字段，不能插入和更新
             sb.append(", insertable = false, updatable = false");
-        } else {
-            String colName = column.getColumn().toLowerCase();
-            if (colName.equals("creationtime") || colName.equals("lastmodificationtime")) {
-                // 插入时间和更新时间，由数据库自行处理，不让代码处理
-                sb.append(", insertable = false, updatable = false");
-            }
         }
-
         sb.append(")\n");
         return sb.toString();
     }
@@ -151,8 +106,7 @@ public class ModelGenerater {
      * @return 注解字符串
      */
     private String getGeneratedValueAnnotate(ColumnDto column) {
-        String extra = column.getExtra();
-        if (extra == null || !extra.toLowerCase().contains("auto_increment")) {
+        if (!column.isAuto()) {
             return "";
         }
         return "    @GeneratedValue(strategy = GenerationType.IDENTITY)\n";
@@ -166,25 +120,76 @@ public class ModelGenerater {
      * @return 注解字符串
      */
     private String getSizeAnnotate(ColumnDto column) {
-        String type = column.getType();
-        if (type == null) {
+        int size = column.getSize();
+        if (size <= 0) {
             return "";
         }
-        String chType = "char(";
-        int idx = type.toLowerCase().indexOf(chType);
-        if (idx < 0) {
-            return "";
-        }
-        type = type.substring(idx + chType.length());
-        idx = type.indexOf(')');
-        if (idx <= 0) {
-            return "";
-        }
-
-        return "    @Size(max = " + type.substring(0, idx) + ")\n";
+        return "    @Size(max = " + size + ")\n";
     }
 
-    private static String lowFirstChar(String name) {
-        return name.substring(0, 1).toLowerCase() + name.substring(1);
+    /**
+     * 生成INSERT语句，方便复制用
+     *
+     * @param columns 列清单
+     * @return INSERT语句
+     */
+    private String getInsertSQL(List<ColumnDto> columns) {
+        StringBuilder sbColNames = new StringBuilder();
+        StringBuilder sbColValue = new StringBuilder();
+        for (ColumnDto column : columns) {
+            if (column.isDbManager() || column.isAuto() || column.isVirtual()) {
+                continue;
+            }
+            if (sbColNames.length() > 0) {
+                sbColNames.append(", ");
+                sbColValue.append(", ");
+            }
+            sbColNames.append(column.getColumn());
+            sbColValue.append(":").append(column.getColumn());
+        }
+
+        return "\nINSERT INTO " +
+                columns.get(0).getCatalog() +
+                '.' +
+                columns.get(0).getTable() +
+                " (\n  " +
+                sbColNames +
+                "\n)VALUES(\n  " +
+                sbColValue +
+                "\n);\n";
+    }
+
+    /**
+     * 生成 UPDATE 语句，方便复制用
+     *
+     * @param columns 列清单
+     * @return UPDATE语句
+     */
+    private String getUpdateSQL(List<ColumnDto> columns) {
+        StringBuilder sbColNames = new StringBuilder();
+        StringBuilder sbColWhere = new StringBuilder();
+        for (ColumnDto column : columns) {
+            if (column.isDbManager() || column.isAuto() || column.isVirtual()) {
+                continue;
+            }
+
+            StringBuilder sbTmp = column.isPrimaryKey() ? sbColWhere : sbColNames;
+            if (sbTmp.length() > 0) {
+                sbTmp.append(column.isPrimaryKey() ? " AND " : ", ");
+            }
+            sbTmp.append(column.getColumn())
+                    .append(" = :")
+                    .append(column.getColumn());
+        }
+
+        return "\nUPDATE " +
+                columns.get(0).getCatalog() +
+                '.' +
+                columns.get(0).getTable() +
+                " SET\n  " +
+                sbColNames +
+                "\nWHERE " +
+                sbColWhere +
+                ";\n";
     }
 }

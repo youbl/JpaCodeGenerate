@@ -1,11 +1,16 @@
 package cn.beinet.codegenerate.service;
 
+import cn.beinet.codegenerate.model.ColumnDto;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class RepositoryGenerater {
 
-    String generate(String table, String packageName) {
+    String generate(List<ColumnDto> columns, String packageName) {
+        String table = columns.get(0).getTable();
+
         StringBuilder sb = new StringBuilder();
         // 头部的package和import
         sb.append(getHead(table, packageName));
@@ -14,7 +19,7 @@ public class RepositoryGenerater {
         sb.append("@Repository\n")
                 .append("public interface ")
                 .append(table).append("Repository ")
-                .append("extends JpaRepository<").append(table).append(", Long> {\n}\n");
+                .append("extends JpaRepository<").append(table).append(", ").append(getKeyType(columns)).append("> {\n}\n");
         return sb.toString();
     }
 
@@ -25,4 +30,12 @@ public class RepositoryGenerater {
                 "import org.springframework.stereotype.Repository;\n\n";
     }
 
+    private String getKeyType(List<ColumnDto> columns) {
+        for (ColumnDto column : columns) {
+            if (column.isPrimaryKey()) {
+                return column.getManagerType();
+            }
+        }
+        return "Long";
+    }
 }

@@ -75,7 +75,7 @@
                     </div>
                     <div style="text-align: center; vertical-align: bottom;">
                         <button @click="generateCode">生成JPA文件</button>
-                        　　<a v-show="codeLink" :href="codeLink">下载</a>
+                        　　<a v-show="codeLink" :href="'/v1/code/down?zipfile=' + codeLink">下载</a>
                     </div>
                 </div>
                 <div style="clear: both;"></div>

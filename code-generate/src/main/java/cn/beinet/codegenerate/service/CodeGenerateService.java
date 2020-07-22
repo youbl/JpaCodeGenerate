@@ -27,6 +27,8 @@ public class CodeGenerateService {
     @Autowired
     RepositoryGenerater repositoryGenerater;
 
+    private String basePath = FileHelper.getResourceBasePath();
+
     public List<String> getDatabases() {
         return columnRepository.findDatabases();
     }
@@ -54,43 +56,44 @@ public class CodeGenerateService {
 
         List<String> files = new ArrayList<>();
         for (String item : tables) {
-            String table = upFirstChar(item);
+            List<ColumnDto> columns = columnRepository.findColumnByTable(database, item);
+            if (columns == null || columns.isEmpty())
+                continue;
 
-            files.add(generateModelFile(database, table, packageName));
-            files.add(generateRepositoryFile(table, packageName));
+            files.add(generateModelFile(columns, packageName));
+            files.add(generateRepositoryFile(columns, packageName));
         }
-        return doZip(files);
+        String zipFile = doZip(files);
+        return hidePath(zipFile);
     }
 
     /**
      * 生成Model类文件
      *
-     * @param database    数据库
-     * @param table       表名
+     * @param columns     表的列清单
      * @param packageName 包名
      * @return 生成的文件名
      * @throws IOException 可能的异常
      */
-    private String generateModelFile(String database, String table, String packageName) throws IOException {
-        String model = modelGenerater.generate(database, table, packageName);
-        return saveFile("model/" + table, model);
+    private String generateModelFile(List<ColumnDto> columns, String packageName) throws IOException {
+        String model = modelGenerater.generate(columns, packageName);
+        return saveFile("model/" + columns.get(0).getTable(), model);
     }
 
     /**
      * 生成仓储接口文件
      *
-     * @param table       表名
+     * @param columns     表的列清单
      * @param packageName 包名
      * @return 生成的文件名
      * @throws IOException 可能的异常
      */
-    private String generateRepositoryFile(String table, String packageName) throws IOException {
-        String content = repositoryGenerater.generate(table, packageName);
-        return saveFile("repository/" + table + "Repository", content);
+    private String generateRepositoryFile(List<ColumnDto> columns, String packageName) throws IOException {
+        String content = repositoryGenerater.generate(columns, packageName);
+        return saveFile("repository/" + columns.get(0).getTable() + "Repository", content);
     }
 
     private String saveFile(String fileName, String content) throws IOException {
-        String basePath = FileHelper.getResourceBasePath();
         String writeFileName = new File(basePath, fileName + ".java").getAbsolutePath();
         FileHelper.saveFile(writeFileName, content);
         return writeFileName;
@@ -98,7 +101,6 @@ public class CodeGenerateService {
     }
 
     private String doZip(List<String> files) throws IOException {
-        String basePath = FileHelper.getResourceBasePath();
         File zipFile = new File(basePath, "model.zip");
         if (zipFile.exists()) {
             zipFile.delete();
@@ -110,7 +112,7 @@ public class CodeGenerateService {
                 try (FileInputStream fis = new FileInputStream(itemFile)) {
                     String inFileName = getFileNameWithLastDir(file);
                     zos.putNextEntry(new ZipEntry(inFileName)); // 带目录和文件名压缩
-                    int len = 0;
+                    int len;
                     byte[] b = new byte[1024];
                     while ((len = fis.read(b)) > 0) {
                         zos.write(b, 0, len);
@@ -136,8 +138,21 @@ public class CodeGenerateService {
         return file.substring(idx + 1);
     }
 
+    private String hidePath(String file) {
+        file = file.replace(basePath, "");
+        if (file.length() > 0 && (file.charAt(0) == '/' || file.charAt(0) == '\\')) {
+            file = file.substring(1);
+        }
+        return file;
+    }
 
-    static String upFirstChar(String name) {
-        return name.substring(0, 1).toUpperCase() + name.substring(1);
+    /**
+     * 拼接可以下载的文件路径返回
+     *
+     * @param file
+     * @return
+     */
+    public String getRealPath(String file) {
+        return new File(basePath, file).getAbsolutePath();
     }
 }
