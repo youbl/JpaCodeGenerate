@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.service;
+package cn.beinet.codegenerate.util;
 
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;

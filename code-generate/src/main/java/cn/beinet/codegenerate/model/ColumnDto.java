@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.model;
 
+import cn.beinet.codegenerate.util.StringHelper;
 import lombok.Data;
 import org.springframework.util.StringUtils;
 
@@ -18,7 +19,7 @@ public class ColumnDto {
      * 首字母大写后设置表名（类名要首字母大写）
      */
     public void setTable(String table) {
-        this.table = upFirstChar(table);
+        this.table = StringHelper.upFirstChar(table);
     }
 
     /**
@@ -30,7 +31,7 @@ public class ColumnDto {
      * 首字母小写后设置字段名（类的field名要首字母小写）
      */
     public void setColumn(String column) {
-        this.column = lowFirstChar(column);
+        this.column = StringHelper.lowFirstChar(column);
     }
 
     /**
@@ -137,9 +138,9 @@ public class ColumnDto {
             case "date":
             case "datetime":
             case "timestamp":
-                return "LocalDateTime";
+                return "java.time.LocalDateTime";
             case "decimal":
-                return "BigDecimal";
+                return "java.math.BigDecimal";
             case "double":
                 return "double";
             case "float":
@@ -183,18 +184,6 @@ public class ColumnDto {
     public boolean isAuto() {
         String strExtra = getExtra();
         return (strExtra != null && strExtra.toLowerCase().contains("auto_increment"));
-    }
-
-    private static String upFirstChar(String name) {
-        if (StringUtils.isEmpty(name))
-            return "";
-        return name.substring(0, 1).toUpperCase() + name.substring(1);
-    }
-
-    private static String lowFirstChar(String name) {
-        if (StringUtils.isEmpty(name))
-            return "";
-        return name.substring(0, 1).toLowerCase() + name.substring(1);
     }
 
 }

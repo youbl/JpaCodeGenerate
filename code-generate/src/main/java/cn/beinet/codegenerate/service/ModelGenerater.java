@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.service;
 
 import cn.beinet.codegenerate.model.ColumnDto;
+import cn.beinet.codegenerate.util.StringHelper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
  * Model类生成工具
  */
 @Component
-public class ModelGenerater {
+public class ModelGenerater implements Generater {
 
     String generate(List<ColumnDto> columns, String packageName) {
         StringBuilder sb = new StringBuilder();
@@ -28,6 +29,8 @@ public class ModelGenerater {
         // class的成员
         sb.append(getClassBody(columns));
 
+        sb.append(mapToDto(columns));
+
         sb.append("\n/*")
                 .append(getInsertSQL(columns))
                 .append(getUpdateSQL(columns))
@@ -36,14 +39,12 @@ public class ModelGenerater {
         return sb.toString();
     }
 
-    private String getHead(String packageName) {
-        return "package " + packageName + ".model;\n\n" +
-                "import lombok.Data;\n\n" +
+    @Override
+    public String getHead(String packageName) {
+        return Generater.super.getHead(packageName) +
                 "import javax.persistence.*;\n" +
-                "import javax.validation.constraints.NotNull;\n" +
-                "import javax.validation.constraints.Size;\n" +
-                "import java.time.LocalDateTime;\n" +
-                "import java.math.BigDecimal;\n\n";
+                "// <groupId>org.hibernate.validator</groupId><artifactId>hibernate-validator</artifactId>\n" +
+                "import javax.validation.constraints.*;\n\n";
     }
 
     private String getClassBody(List<ColumnDto> columns) {
@@ -62,19 +63,6 @@ public class ModelGenerater {
         return sb.toString();
     }
 
-    /**
-     * 获取字段在Model类里的field定义
-     *
-     * @param column 对应的列
-     * @return 定义串
-     */
-    private String getColumnDefine(ColumnDto column) {
-        return "    private " +
-                column.getFieldType() +
-                ' ' +
-                column.getColumn() +
-                ";\n\n";
-    }
 
     /**
      * 生成 注解 @Column
@@ -125,6 +113,32 @@ public class ModelGenerater {
             return "";
         }
         return "    @Size(max = " + size + ")\n";
+    }
+
+    private String mapToDto(List<ColumnDto> columns) {
+        String table = columns.get(0).getTable();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("    public ")
+                .append(table)
+                .append("Dto mapTo() {\n")
+                .append("        ")
+                .append(table)
+                .append("Dto result = new ")
+                .append(table)
+                .append("Dto();\n");
+        for (ColumnDto column : columns) {
+            String colName = StringHelper.upFirstChar(column.getColumn());
+            sb.append("        ")
+                    .append("result.set")
+                    .append(colName)
+                    .append("(")
+                    .append("this.get")
+                    .append(colName)
+                    .append("());\n");
+        }
+        sb.append("        return result;\n    }");
+        return sb.toString();
     }
 
     /**

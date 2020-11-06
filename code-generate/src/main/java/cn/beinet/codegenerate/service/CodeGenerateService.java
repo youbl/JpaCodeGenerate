@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.service;
 
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.repository.ColumnRepository;
+import cn.beinet.codegenerate.util.FileHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -23,6 +24,9 @@ public class CodeGenerateService {
 
     @Autowired
     ModelGenerater modelGenerater;
+
+    @Autowired
+    DtoGenerater dtoGenerater;
 
     @Autowired
     RepositoryGenerater repositoryGenerater;
@@ -60,11 +64,28 @@ public class CodeGenerateService {
             if (columns == null || columns.isEmpty())
                 continue;
 
+            // 创建dto文件
+            files.add(generateDtoFile(columns, packageName));
+            // 创建数据库model文件
             files.add(generateModelFile(columns, packageName));
+            // 创建仓储层文件
             files.add(generateRepositoryFile(columns, packageName));
         }
         String zipFile = doZip(files);
         return hidePath(zipFile);
+    }
+
+    /**
+     * 生成Dto类文件
+     *
+     * @param columns     表的列清单
+     * @param packageName 包名
+     * @return 生成的文件名
+     * @throws IOException 可能的异常
+     */
+    private String generateDtoFile(List<ColumnDto> columns, String packageName) throws IOException {
+        String model = dtoGenerater.generate(columns, packageName);
+        return saveFile("model/" + columns.get(0).getTable() + "Dto", model);
     }
 
     /**
@@ -92,6 +113,7 @@ public class CodeGenerateService {
         String content = repositoryGenerater.generate(columns, packageName);
         return saveFile("repository/" + columns.get(0).getTable() + "Repository", content);
     }
+
 
     private String saveFile(String fileName, String content) throws IOException {
         String writeFileName = new File(basePath, fileName + ".java").getAbsolutePath();
