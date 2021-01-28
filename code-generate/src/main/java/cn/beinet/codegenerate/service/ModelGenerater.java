@@ -22,6 +22,9 @@ public class ModelGenerater implements Generater {
 
         // class的定义
         sb.append("@Data\n")
+                .append("@AllArgsConstructor\n")
+                .append("@NoArgsConstructor\n")
+                .append("@Builder\n")
                 .append("@Entity\n")
                 .append("@Table(name = \"").append(table).append("\", catalog = \"").append(database).append("\")\n")
                 .append("public class ").append(table).append(" {\n");

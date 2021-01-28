@@ -31,7 +31,13 @@ public class CodeGenerateService {
     @Autowired
     RepositoryGenerater repositoryGenerater;
 
-    private String basePath = FileHelper.getResourceBasePath();
+    @Autowired
+    ServiceGenerater serviceGenerater;
+
+    @Autowired
+    ControllerGenerater controllerGenerater;
+
+    private final String basePath = FileHelper.getResourceBasePath();
 
     public List<String> getDatabases() {
         return columnRepository.findDatabases();
@@ -70,6 +76,10 @@ public class CodeGenerateService {
             files.add(generateModelFile(columns, packageName));
             // 创建仓储层文件
             files.add(generateRepositoryFile(columns, packageName));
+            // 创建Service层文件
+            files.add(generateServiceFile(columns, packageName));
+            // 创建Controller层文件
+            files.add(generateControllerFile(columns, packageName));
         }
         String zipFile = doZip(files);
         return hidePath(zipFile);
@@ -110,8 +120,50 @@ public class CodeGenerateService {
      * @throws IOException 可能的异常
      */
     private String generateRepositoryFile(List<ColumnDto> columns, String packageName) throws IOException {
-        String content = repositoryGenerater.generate(columns, packageName);
+        String table = columns.get(0).getTable();
+        String keyType = getKeyType(columns);
+        String content = repositoryGenerater.generate(table, keyType, packageName);
         return saveFile("repository/" + columns.get(0).getTable() + "Repository", content);
+    }
+
+
+    /**
+     * 生成Service层文件
+     *
+     * @param columns     表的列清单
+     * @param packageName 包名
+     * @return 生成的文件名
+     * @throws IOException 可能的异常
+     */
+    private String generateServiceFile(List<ColumnDto> columns, String packageName) throws IOException {
+        String table = columns.get(0).getTable();
+        String keyType = getKeyType(columns);
+        String content = serviceGenerater.generate(table, keyType, packageName);
+        return saveFile("service/" + table + "Service", content);
+    }
+
+    /**
+     * 生成Controller层文件
+     *
+     * @param columns     表的列清单
+     * @param packageName 包名
+     * @return 生成的文件名
+     * @throws IOException 可能的异常
+     */
+    private String generateControllerFile(List<ColumnDto> columns, String packageName) throws IOException {
+        String table = columns.get(0).getTable();
+        String keyType = getKeyType(columns);
+        String content = controllerGenerater.generate(table, keyType, packageName);
+        return saveFile(table + "Controller", content);
+    }
+
+    private String getKeyType(List<ColumnDto> columns) {
+        for (ColumnDto column : columns) {
+            if (column.isPrimaryKey()) {
+                return column.getManagerType();
+            }
+        }
+        return "Long";
     }
 
 
@@ -155,8 +207,10 @@ public class CodeGenerateService {
     private String getFileNameWithLastDir(String file) {
         file = file.replaceAll("\\\\", "/");
         int idx = file.lastIndexOf('/');
-        idx = file.lastIndexOf('/', idx - 1);
-
+        // Controller不需要目录
+        if (!file.contains("Controller")) {
+            idx = file.lastIndexOf('/', idx - 1);
+        }
         return file.substring(idx + 1);
     }
 
@@ -171,8 +225,8 @@ public class CodeGenerateService {
     /**
      * 拼接可以下载的文件路径返回
      *
-     * @param file
-     * @return
+     * @param file 相对路径
+     * @return 绝对路径
      */
     public String getRealPath(String file) {
         return new File(basePath, file).getAbsolutePath();

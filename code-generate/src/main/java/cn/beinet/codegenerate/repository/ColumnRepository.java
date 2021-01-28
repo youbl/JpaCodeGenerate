@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.model.ColumnDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -12,8 +13,16 @@ import java.util.List;
 
 @Repository
 public class ColumnRepository {
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+
+    /**
+     * 注入方式获取jdbcTemplate
+     *
+     * @param jdbcTemplate
+     */
+    public ColumnRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public List<String> findDatabases() {
         String sql = "SELECT DISTINCT table_schema FROM information_schema.tables " +
@@ -29,8 +38,9 @@ public class ColumnRepository {
 
     /**
      * 返回指定表的字段定义
+     *
      * @param database 数据库
-     * @param table 表名
+     * @param table    表名
      * @return 字段列表
      */
     public List<ColumnDto> findColumnByTable(String database, String table) {
@@ -70,4 +80,19 @@ public class ColumnRepository {
             return resultSet.getString(1);
         }
     }
+
+    /* 如果需要自定义连接
+    private JdbcTemplate getJdbcTemplate() {
+        if (jdbcTemplate == null) {
+            DriverManagerDataSource dataSource = new DriverManagerDataSource();
+            dataSource.setUrl(env.getProperty("spring.datasourceSecond.url"));
+            dataSource.setUsername(env.getProperty("spring.datasourceSecond.username"));
+            dataSource.setPassword(env.getProperty("spring.datasourceSecond.password"));
+
+            //创建JdbcTemplate对象，设置数据源
+            jdbcTemplate = new JdbcTemplate(dataSource);
+        }
+        return jdbcTemplate;
+    }
+    */
 }

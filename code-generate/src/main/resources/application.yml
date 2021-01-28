@@ -1,12 +1,15 @@
+server:
+  port: 8080
+
 spring:
   application:
-    name: "scangitcode"         # 程序name，建议配置，方便统一的服务管理
+    name: "code-generate"         # 程序name，建议配置，方便统一的服务管理
 
   # mysql连接信息配置
   datasource:
-    url: jdbc:mysql://172.18.0.84:3306/beinet?characterEncoding=utf8&serverTimezone=UTC&useSSL=false
+    url: jdbc:mysql://10.2.5.2:3306/assets?characterEncoding=utf8&serverTimezone=UTC&useSSL=false
     username: beinet
-    password: beinet123
+    password: beinet.cn
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jackson:
@@ -15,3 +18,4 @@ spring:
     time-zone: GMT+8
     mapper:
       accept_case_insensitive_properties: true
+

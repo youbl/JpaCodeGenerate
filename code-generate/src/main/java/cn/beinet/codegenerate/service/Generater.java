@@ -12,7 +12,7 @@ import cn.beinet.codegenerate.model.ColumnDto;
 interface Generater {
     default String getHead(String packageName) {
         return "package " + packageName + ".model;\n\n" +
-                "import lombok.Data;\n\n";
+                "import lombok.*;\n\n";
     }
 
 

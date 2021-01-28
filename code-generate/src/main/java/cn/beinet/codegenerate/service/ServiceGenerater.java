@@ -1,76 +1,65 @@
 package cn.beinet.codegenerate.service;
 
-import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.StringHelper;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-/**
- * 服务类生成工具
- */
 @Component
 public class ServiceGenerater {
 
-    String generate(List<ColumnDto> columns, String packageName) {
-        String table = columns.get(0).getTable();
-
+    String generate(String table, String keyType, String packageName) {
         StringBuilder sb = new StringBuilder();
         // 头部的package和import
         sb.append(getHead(table, packageName));
 
         // class的定义
-        sb.append("@Data\npublic class ").append(table).append("Dto {\n");
-
-        // class的成员
-        sb.append(getClassBody(columns));
-
-        // mapTo Model方法
-        sb.append(mapToModel(columns));
-
-        sb.append("\n}");
+        sb.append("@Service\n")
+                .append("public class ")
+                .append(table).append("Service {\n")
+                .append(getClassBody(table, keyType))
+                .append("}\n");
         return sb.toString();
     }
-
 
     private String getHead(String table, String packageName) {
         return "package " + packageName + ".service;\n\n" +
                 "import " + packageName + ".model." + table + ";\n" +
-                "import " + packageName + ".repository." + table + "Repository;\n\n";
+                "import " + packageName + ".repository." + table + "Repository;\n" +
+                "import org.springframework.stereotype.Service;\n\n" +
+                "import java.util.List;\n\n";
     }
 
-
-    private String getClassBody(List<ColumnDto> columns) {
+    private String getClassBody(String table, String keyType) {
         StringBuilder sb = new StringBuilder();
-        for (ColumnDto column : columns) {
-            sb.append(getColumnDefine(column));
-        }
-        return sb.toString();
-    }
+        String lowTable = StringHelper.lowFirstChar(table);
 
-    private String mapToModel(List<ColumnDto> columns) {
-        String table = columns.get(0).getTable();
+        // 仓储层变量定义
+        sb.append("    private final ").append(table).append("Repository ").append(lowTable).append("Repository;\n\n");
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("    public ")
-                .append(table)
-                .append(" mapTo() {\n")
-                .append("        ")
-                .append(table)
-                .append(" result = new ")
-                .append(table)
-                .append("();\n");
-        for (ColumnDto column : columns) {
-            String colName = StringHelper.upFirstChar(column.getColumn());
-            sb.append("        ")
-                    .append("result.set")
-                    .append(colName)
-                    .append("(")
-                    .append("this.get")
-                    .append(colName)
-                    .append("());\n");
-        }
-        sb.append("        return result;\n    }");
+        // 构造函数定义
+        sb.append("    public ").append(table).append("Service(")
+                .append(table).append("Repository ").append(lowTable).append("Repository")
+                .append(") {\n")
+                .append("        this.").append(lowTable).append("Repository = ").append(lowTable).append("Repository;\n")
+                .append("    }\n\n");
+
+        // findAll 方法定义
+        sb.append("    public List<").append(table).append("> findAll() {\n")
+                .append("        return ").append(lowTable).append("Repository.findAll();\n")
+                .append("    }\n\n");
+
+        // findById 方法定义
+        sb.append("    public ").append(table).append(" findById(").append(keyType).append(" id) {\n")
+                .append("        return ").append(lowTable).append("Repository.findById(id).orElse(null);\n")
+                .append("    }\n\n");
+
+        // save 方法定义
+        sb.append("    public ").append(table).append(" save(").append(table).append(" item) {\n")
+                .append("        if (item == null) {\n")
+                .append("            return null;\n")
+                .append("        }\n")
+                .append("        return ").append(lowTable).append("Repository.save(item);\n")
+                .append("    }\n\n");
+
         return sb.toString();
     }
 }
