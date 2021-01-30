@@ -25,6 +25,8 @@ public class ModelGenerater implements Generater {
                 .append("@AllArgsConstructor\n")
                 .append("@NoArgsConstructor\n")
                 .append("@Builder\n")
+                .append("@DynamicInsert\n")
+                .append("@DynamicUpdate\n")
                 .append("@Entity\n")
                 .append("@Table(name = \"").append(table).append("\", catalog = \"").append(database).append("\")\n")
                 .append("public class ").append(table).append(" {\n");

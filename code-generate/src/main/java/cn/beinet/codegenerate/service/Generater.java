@@ -12,7 +12,9 @@ import cn.beinet.codegenerate.model.ColumnDto;
 interface Generater {
     default String getHead(String packageName) {
         return "package " + packageName + ".model;\n\n" +
-                "import lombok.*;\n\n";
+                "import lombok.*;\n" +
+                "import org.hibernate.annotations.DynamicInsert;\n" +  // 空值不加入生成sql
+                "import org.hibernate.annotations.DynamicUpdate;\n\n";
     }
 
 
