@@ -44,19 +44,19 @@ public class ControllerGenerater {
                 .append("    }\n\n");
 
         // findAll 方法定义
-        sb.append("    @GetMapping(\"").append(lowTable).append("s\")\n")
+        sb.append("    @GetMapping(\"/").append(lowTable).append("s\")\n")
                 .append("    public List<").append(table).append("> findAll() {\n")
                 .append("        return ").append(lowTable).append("Service.findAll();\n")
                 .append("    }\n\n");
 
         // findById 方法定义
-        sb.append("    @GetMapping(\"").append(lowTable).append("\")\n")
+        sb.append("    @GetMapping(\"/").append(lowTable).append("\")\n")
                 .append("    public ").append(table).append(" findById(@RequestParam ").append(keyType).append(" id) {\n")
                 .append("        return ").append(lowTable).append("Service.findById(id);\n")
                 .append("    }\n\n");
 
         // save 方法定义
-        sb.append("    @PostMapping(\"").append(lowTable).append("\")\n")
+        sb.append("    @PostMapping(\"/").append(lowTable).append("\")\n")
                 .append("    public ").append(table).append(" save(@RequestBody ").append(table).append("Dto item) {\n")
                 .append("        if (item == null) {\n")
                 .append("            return null;\n")
