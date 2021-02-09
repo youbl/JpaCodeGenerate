@@ -23,11 +23,9 @@ public class ControllerGenerater {
     private String getHead(String table, String packageName) {
         return "package " + packageName + ";\n\n" +
                 "import " + packageName + ".model." + table + ";\n" +
+                "import " + packageName + ".model." + table + "Dto;\n" +
                 "import " + packageName + ".service." + table + "Service;\n" +
-                "import org.springframework.web.bind.annotation.GetMapping;\n" +
-                "import org.springframework.web.bind.annotation.PostMapping;\n" +
-                "import org.springframework.web.bind.annotation.RequestBody;\n" +
-                "import org.springframework.web.bind.annotation.RestController;\n\n" +
+                "import org.springframework.web.bind.annotation.*;\n\n" +
                 "import java.util.List;\n\n";
     }
 
@@ -53,17 +51,17 @@ public class ControllerGenerater {
 
         // findById 方法定义
         sb.append("    @GetMapping(\"").append(lowTable).append("\")\n")
-                .append("    public ").append(table).append(" findById(").append(keyType).append(" id) {\n")
+                .append("    public ").append(table).append(" findById(@RequestParam ").append(keyType).append(" id) {\n")
                 .append("        return ").append(lowTable).append("Service.findById(id);\n")
                 .append("    }\n\n");
 
         // save 方法定义
         sb.append("    @PostMapping(\"").append(lowTable).append("\")\n")
-                .append("    public ").append(table).append(" save(@RequestBody ").append(table).append(" item) {\n")
+                .append("    public ").append(table).append(" save(@RequestBody ").append(table).append("Dto item) {\n")
                 .append("        if (item == null) {\n")
                 .append("            return null;\n")
                 .append("        }\n")
-                .append("        return ").append(lowTable).append("Service.save(item);\n")
+                .append("        return ").append(lowTable).append("Service.save(item.mapTo());\n")
                 .append("    }\n\n");
 
         return sb.toString();
