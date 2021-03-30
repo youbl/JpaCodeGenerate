@@ -1,39 +1,38 @@
 package cn.beinet.codegenerate.repository;
 
 import cn.beinet.codegenerate.model.ColumnDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
-@Repository
 public class ColumnRepository {
-    private final JdbcTemplate jdbcTemplate;
+    private final Environment env;
 
-    /**
-     * 注入方式获取jdbcTemplate
-     *
-     * @param jdbcTemplate
-     */
-    public ColumnRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
+    private final String configPrefix;
+
+    public ColumnRepository(Environment env, DbEnv dbEnv) {
+        this.env = env;
+        this.configPrefix = dbEnv.getConfig();
     }
 
     public List<String> findDatabases() {
         String sql = "SELECT DISTINCT table_schema FROM information_schema.tables " +
                 "WHERE table_schema NOT IN ('performance_schema', 'mysql', 'information_schema', 'sys') " +
                 "ORDER BY table_schema";
-        return jdbcTemplate.query(sql, new MyRowMapper());
+        return getJdbcTemplate().query(sql, new MyRowMapper());
     }
 
     public List<String> findTables(String database) {
         String sql = "SELECT DISTINCT table_name FROM information_schema.tables WHERE table_schema=? ORDER BY table_name";
-        return jdbcTemplate.query(sql, new Object[]{database}, new MyRowMapper());
+        return getJdbcTemplate().query(sql, new Object[]{database}, new MyRowMapper());
     }
 
     /**
@@ -47,23 +46,27 @@ public class ColumnRepository {
         String sql = "SELECT c.table_schema, c.table_name, c.column_name, c.ordinal_position, c.column_default, c.column_type, " +
                 "CASE WHEN c.column_key = 'PRI' THEN TRUE ELSE FALSE END AS is_primarykey, c.column_comment, c.extra " +
                 " FROM information_schema.columns c " +
-                " WHERE c.table_schema = ? AND c.table_name=? " +
-                " ORDER BY c.ordinal_position";
-        return jdbcTemplate.query(sql, new Object[]{database, table}, new RowMapper<ColumnDto>() {
-            @Override
-            public ColumnDto mapRow(ResultSet resultSet, int i) throws SQLException {
-                ColumnDto ret = new ColumnDto();
-                ret.setCatalog(resultSet.getString("table_schema"));
-                ret.setTable(resultSet.getString("table_name"));
-                ret.setColumn(resultSet.getString("column_name"));
-                ret.setPosition(resultSet.getLong("ordinal_position"));
-                ret.setDefaultVal(resultSet.getString("column_default"));
-                ret.setType(resultSet.getString("column_type"));
-                ret.setPrimaryKey(resultSet.getBoolean("is_primarykey"));
-                ret.setComment(resultSet.getString("column_comment"));
-                ret.setExtra(resultSet.getString("extra"));
-                return ret;
-            }
+                " WHERE c.table_schema = ? ";
+
+        List<Object> arrPara = new ArrayList<>();
+        arrPara.add(database);
+        if (StringUtils.hasText(table)) {
+            sql += "AND c.table_name=? ";
+            arrPara.add(table);
+        }
+        sql += "ORDER BY c.table_schema, c.ordinal_position";
+        return getJdbcTemplate().query(sql, arrPara.toArray(new Object[0]), (resultSet, i) -> {
+            ColumnDto ret = new ColumnDto();
+            ret.setCatalog(resultSet.getString("table_schema"));
+            ret.setTable(resultSet.getString("table_name"));
+            ret.setColumn(resultSet.getString("column_name"));
+            ret.setPosition(resultSet.getLong("ordinal_position"));
+            ret.setDefaultVal(resultSet.getString("column_default"));
+            ret.setType(resultSet.getString("column_type"));
+            ret.setPrimaryKey(resultSet.getBoolean("is_primarykey"));
+            ret.setComment(resultSet.getString("column_comment"));
+            ret.setExtra(resultSet.getString("extra"));
+            return ret;
         });
     }
 
@@ -81,18 +84,42 @@ public class ColumnRepository {
         }
     }
 
-    /* 如果需要自定义连接
     private JdbcTemplate getJdbcTemplate() {
         if (jdbcTemplate == null) {
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
-            dataSource.setUrl(env.getProperty("spring.datasourceSecond.url"));
-            dataSource.setUsername(env.getProperty("spring.datasourceSecond.username"));
-            dataSource.setPassword(env.getProperty("spring.datasourceSecond.password"));
+            //dataSource.setDriverClassName(env.getProperty("xxx.driver-class-name"));
+            dataSource.setUrl(env.getProperty(configPrefix + ".url"));
+            dataSource.setUsername(env.getProperty(configPrefix + ".username"));
+            dataSource.setPassword(env.getProperty(configPrefix + ".password"));
 
             //创建JdbcTemplate对象，设置数据源
             jdbcTemplate = new JdbcTemplate(dataSource);
         }
         return jdbcTemplate;
     }
-    */
+
+    public enum DbEnv {
+        /**
+         * 默认的数据库连接串
+         */
+        DEFAULT("spring.datasource"),
+        /**
+         * 测试环境数据库连接串
+         */
+        TEST("spring.datasourceTest"),
+        /**
+         * 生产环境数据库连接串
+         */
+        PROD("spring.datasourceProd");
+
+        final String config;
+
+        DbEnv(String config) {
+            this.config = config;
+        }
+
+        public String getConfig() {
+            return config;
+        }
+    }
 }

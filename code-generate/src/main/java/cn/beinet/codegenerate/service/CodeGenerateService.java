@@ -3,7 +3,7 @@ package cn.beinet.codegenerate.service;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.util.FileHelper;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -19,25 +19,31 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class CodeGenerateService {
 
-    @Autowired
-    ColumnRepository columnRepository;
-
-    @Autowired
-    ModelGenerater modelGenerater;
-
-    @Autowired
-    DtoGenerater dtoGenerater;
-
-    @Autowired
-    RepositoryGenerater repositoryGenerater;
-
-    @Autowired
-    ServiceGenerater serviceGenerater;
-
-    @Autowired
-    ControllerGenerater controllerGenerater;
+    private final ModelGenerater modelGenerater;
+    private final DtoGenerater dtoGenerater;
+    private final RepositoryGenerater repositoryGenerater;
+    private final ServiceGenerater serviceGenerater;
+    private final ControllerGenerater controllerGenerater;
+    private final Environment env;
 
     private final String basePath = FileHelper.getResourceBasePath();
+    private final ColumnRepository columnRepository;
+
+    public CodeGenerateService(Environment env,
+                               ModelGenerater modelGenerater,
+                               DtoGenerater dtoGenerater,
+                               RepositoryGenerater repositoryGenerater,
+                               ServiceGenerater serviceGenerater,
+                               ControllerGenerater controllerGenerater) {
+        this.env = env;
+        this.columnRepository = new ColumnRepository(env, ColumnRepository.DbEnv.DEFAULT);
+
+        this.modelGenerater = modelGenerater;
+        this.dtoGenerater = dtoGenerater;
+        this.repositoryGenerater = repositoryGenerater;
+        this.serviceGenerater = serviceGenerater;
+        this.controllerGenerater = controllerGenerater;
+    }
 
     public List<String> getDatabases() {
         return columnRepository.findDatabases();

@@ -12,6 +12,19 @@ spring:
     password: beinet.cn
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # 用于表结构对比的生产数据库
+  datasourceProd:
+    url: jdbc:mysql://10.2.5.2:3306/assets?characterEncoding=utf8&serverTimezone=UTC&useSSL=false
+    username: beinet
+    password: beinet.cn
+  #    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # 用于表结构对比的测试数据库
+  datasourceTest:
+    url: jdbc:mysql://10.2.5.3:3306/assets?characterEncoding=utf8&serverTimezone=UTC&useSSL=false
+    username: beinet
+    password: beinet.cn
+
   jackson:
     default-property-inclusion: always  #为空也序列化
     date-format: yyyy-MM-dd HH:mm:ss
