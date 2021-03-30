@@ -43,7 +43,8 @@ public class ColumnRepository {
      * @return 字段列表
      */
     public List<ColumnDto> findColumnByTable(String database, String table) {
-        String sql = "SELECT c.table_schema, c.table_name, c.column_name, c.ordinal_position, c.column_default, c.column_type, " +
+        String sql = "SELECT c.table_schema, c.table_name, c.column_name, c.ordinal_position, " +
+                "c.column_default, c.column_type, c.is_nullable, " +
                 "CASE WHEN c.column_key = 'PRI' THEN TRUE ELSE FALSE END AS is_primarykey, c.column_comment, c.extra " +
                 " FROM information_schema.columns c " +
                 " WHERE c.table_schema = ? ";
@@ -64,6 +65,7 @@ public class ColumnRepository {
             ret.setDefaultVal(resultSet.getString("column_default"));
             ret.setType(resultSet.getString("column_type"));
             ret.setPrimaryKey(resultSet.getBoolean("is_primarykey"));
+            ret.setNullable("YES".equalsIgnoreCase(resultSet.getString("is_nullable")));
             ret.setComment(resultSet.getString("column_comment"));
             ret.setExtra(resultSet.getString("extra"));
             return ret;

@@ -43,6 +43,10 @@ public class ColumnDto {
      */
     private boolean primaryKey;
     /**
+     * 是否允许空
+     */
+    private boolean nullable;
+    /**
      * 字段默认值
      */
     private String defaultVal;

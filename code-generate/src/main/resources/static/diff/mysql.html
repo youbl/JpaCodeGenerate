@@ -57,12 +57,15 @@
     </el-form>
     <br>
 
-    <el-table
-            border
-            :data="filteredTableData"
-            :header-row-class-name="'tableHeader'"
-            :cell-style="cellStyle"
-            style="width: 100%">
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              :data="filteredTableData"
+              :header-row-class-name="'tableHeader'"
+              :cell-style="cellStyle"
+              style="width: 100%">
         <el-table-column
                 prop="table"
                 label="表名"
@@ -110,6 +113,7 @@
     const vueApp = new Vue({
         el: '#divApp',
         data: {
+            loading: false,
             searchCond: {
                 dbTestName: '',
                 dbProdName: '',
@@ -174,6 +178,7 @@
                 let url = '/mysql/tables/';
                 let urlTest = url + '0?db=' + this.searchCond.dbTestName;
                 let urlProd = url + '1?db=' + this.searchCond.dbProdName;
+                this.loading = true;
                 this.loadColumns(urlTest, false).then(() => {
                     this.loadColumns(urlProd, true).then(this.compareDo)
                 });
@@ -191,6 +196,11 @@
             },
             doGenerateSql: function () {
                 this.generateSqlShow = true;
+                // 允许横向滚动条
+                setTimeout(function () {
+                    document.getElementsByTagName('textarea')[0].wrap = 'off';
+                }, 100);
+
                 let db;
                 let sourceCol;   // 要使用的列定义
                 let targetCol;   // 要修改的列 旧定义
@@ -198,10 +208,6 @@
                 let sql = '';
                 for (let i = 0, j = this.filteredTableData.length; i < j; i++) {
                     let item = this.filteredTableData[i];
-                    if (!item.column) {
-                        // 表不存在，暂不生成
-                        continue;
-                    }
                     if (this.generateSqlTarget === 'test') {
                         db = this.searchCond.dbTestName;
                         sourceCol = item.prodDefine;
@@ -210,6 +216,11 @@
                         db = this.searchCond.dbProdName;
                         sourceCol = item.testDefine;
                         targetCol = item.prodDefine;
+                    }
+                    if (!item.column && sourceCol) {
+                        // 表不存在时，sourceCol是所有的列，此时要生成建表语句
+                        sql += this.generateTableSql(db, item.table, sourceCol) + ';\n\n';
+                        continue;
                     }
                     if (!sourceCol) {
                         continue;// 目标有，源没有，这种不需要生成
@@ -221,22 +232,55 @@
                     } else {
                         addOrEdit = 'ADD COLUMN ';
                     }
-                    let defaultVal = '';
-                    if (sourceCol.defaultVal !== null && sourceCol.defaultVal.length > 0) {
-                        if (sourceCol.defaultVal !== 'CURRENT_TIMESTAMP' &&
-                            sourceCol.defaultVal.indexOf('\'') < 0) {
-                            defaultVal = '\'' + sourceCol.defaultVal + '\'';
-                        } else {
-                            defaultVal = sourceCol.defaultVal;
-                        }
-                        defaultVal = ' DEFAULT ' + defaultVal;
-                    }
 
+                    // ALTER TABLE xx CHANGE `id` `id` INT(11) NOT NULL  AUTO_INCREMENT  PRIMARY KEY会报错：key重复
+                    // 可以后续处理索引差异对比时再说
                     sql += 'ALTER TABLE `' + db + '`.`' + item.table + '` ' +
-                        addOrEdit + ' `' + sourceCol.column + '` ' + sourceCol.type +
-                        defaultVal + ' NOT NULL COMMENT \'' + sourceCol.comment + '\'; \n';
+                        addOrEdit + this.generateRowSql(sourceCol, false) + ';\n\n';
                 }
                 this.generateSql = sql;
+            },
+            generateTableSql: function (db, table, colList) {
+                let sql = 'CREATE TABLE `' + db + '`.`' + table + '`(';
+                for (let i = 0, j = colList.length; i < j; i++) {
+                    let item = colList[i];
+                    sql += this.generateRowSql(item, true);
+                    if (i < j - 1) {
+                        sql += ',';
+                    }
+                }
+                sql += ')\n ENGINE=INNODB DEFAULT CHARSET=utf8mb4';
+                return sql;
+            },
+            generateRowSql: function (sourceCol, needPrimary) {
+                let defaultVal = '';
+                if (sourceCol.defaultVal !== null && sourceCol.defaultVal.length > 0) {
+                    if (sourceCol.defaultVal !== 'CURRENT_TIMESTAMP' &&
+                        sourceCol.defaultVal.indexOf('\'') < 0) {
+                        defaultVal = '\'' + sourceCol.defaultVal + '\'';
+                    } else {
+                        defaultVal = sourceCol.defaultVal;
+                    }
+                    defaultVal = ' DEFAULT ' + defaultVal;
+                }
+                let nullable = ' NOT NULL ';
+                if (sourceCol.nullable) {
+                    nullable = ' NULL ';
+                }
+                let autoInc = '';
+                if (sourceCol.auto) {
+                    autoInc = ' AUTO_INCREMENT ';
+                }
+                let primaryKey = '';
+                if (needPrimary && sourceCol.primaryKey) {
+                    primaryKey = ' PRIMARY KEY ';
+                }
+                let comment = '';
+                if (sourceCol.comment) {
+                    comment = ' COMMENT \'' + sourceCol.comment.replace(/\s+/g, ' ') + '\' ';
+                }
+                return '\n  `' + sourceCol.column + '` ' + sourceCol.type +
+                    defaultVal + nullable + autoInc + primaryKey + comment;
             },
             cellStyle(row, column, rowIndex, columnIndex) {
                 let style = 'text-align:left;margin-left:20px;';
@@ -261,9 +305,11 @@
             },
             compareDo: function () {
                 if (!this.colsProd || !hasAnyProperty(this.colsProd)) {
+                    this.loading = false;
                     return alert('生产环境数据库加载失败，请重试');
                 }
                 if (!this.colsTest || !hasAnyProperty(this.colsTest)) {
+                    this.loading = false;
                     return alert('测试环境数据库加载失败，请重试');
                 }
                 let loadedAtt = {};
@@ -309,8 +355,8 @@
                             column: '',
                             prod: att,
                             comment: '',
-                            testDefine: this.colsTest[att],
-                            prodDefine: null,
+                            testDefine: null,
+                            prodDefine: this.colsProd[att],
                         };
                         continue;
                     }
@@ -355,6 +401,7 @@
                     });
                 }
                 Vue.set(this, 'attData', resultData.sort(this.sortByKey));
+                this.loading = false;
             },
             combineCol: function (col) {
                 let ret = col.type;
@@ -366,6 +413,9 @@
                 }
                 if (col.auto) {
                     ret += ' 自增';
+                }
+                if (col.nullable) {
+                    ret += ' 可空';
                 }
                 if (col.defaultVal !== null && col.defaultVal.length > 0) {
                     ret += ' 默认值:' + col.defaultVal;
