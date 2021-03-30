@@ -11,26 +11,38 @@ public class ColumnDto {
      */
     private String catalog;
     /**
-     * 表名
+     * 设置首字段大写的表名
      */
     private String table;
+
+    /**
+     * 原始的表名
+     */
+    private String originTable;
 
     /**
      * 首字母大写后设置表名（类名要首字母大写）
      */
     public void setTable(String table) {
+        this.originTable = table;
         this.table = StringHelper.upFirstChar(table);
     }
 
     /**
-     * 字段名
+     * 设置首字母小宝的字段名
      */
     private String column;
+
+    /**
+     * 原始的字段名
+     */
+    private String originColumn;
 
     /**
      * 首字母小写后设置字段名（类的field名要首字母小写）
      */
     public void setColumn(String column) {
+        this.originColumn = column;
         this.column = StringHelper.lowFirstChar(column);
     }
 

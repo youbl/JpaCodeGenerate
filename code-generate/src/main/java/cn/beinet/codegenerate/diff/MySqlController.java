@@ -34,7 +34,7 @@ public class MySqlController {
         List<ColumnDto> allCols = columnRepository.findColumnByTable(db, null);
         Map<String, List<ColumnDto>> ret = new HashMap<>();
         for (ColumnDto col : allCols) {
-            List<ColumnDto> tableCols = ret.computeIfAbsent(col.getTable(), tableName -> new ArrayList<>());
+            List<ColumnDto> tableCols = ret.computeIfAbsent(col.getOriginTable(), tableName -> new ArrayList<>());
             tableCols.add(col);
         }
         return ret;

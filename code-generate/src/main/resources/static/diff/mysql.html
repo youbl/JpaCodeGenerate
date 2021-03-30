@@ -279,7 +279,7 @@
                 if (sourceCol.comment) {
                     comment = ' COMMENT \'' + sourceCol.comment.replace(/\s+/g, ' ') + '\' ';
                 }
-                return '\n  `' + sourceCol.column + '` ' + sourceCol.type +
+                return '\n  `' + sourceCol.originColumn + '` ' + sourceCol.type +
                     defaultVal + nullable + autoInc + primaryKey + comment;
             },
             cellStyle(row, column, rowIndex, columnIndex) {
@@ -313,7 +313,7 @@
                     return alert('测试环境数据库加载失败，请重试');
                 }
                 let loadedAtt = {};
-                // 加载测试库
+                // 加载测试库, att是表名
                 for (let att in this.colsTest) {
                     if (!this.colsProd[att]) {
                         // 生产环境不存在此表
@@ -337,7 +337,7 @@
                         loadedAtt[key] = {
                             test: this.combineCol(col),
                             table: att,
-                            column: col.column,
+                            column: col.originColumn,
                             prod: '字段不存在',
                             comment: col.comment,
                             testDefine: col,
@@ -375,7 +375,7 @@
                             loadedAtt[key] = {
                                 test: '字段不存在',
                                 table: att,
-                                column: col.column,
+                                column: col.originColumn,
                                 prod: this.combineCol(col),
                                 comment: col.comment,
                                 testDefine: null,
