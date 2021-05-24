@@ -254,7 +254,7 @@
             },
             generateRowSql: function (sourceCol, needPrimary) {
                 let defaultVal = '';
-                if (sourceCol.defaultVal !== null && sourceCol.defaultVal.length > 0) {
+                if (sourceCol.defaultVal !== null) {//&& sourceCol.defaultVal.length > 0
                     if (sourceCol.defaultVal !== 'CURRENT_TIMESTAMP' &&
                         sourceCol.defaultVal.indexOf('\'') < 0) {
                         defaultVal = '\'' + sourceCol.defaultVal + '\'';
