@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.repository;
 
 import cn.beinet.codegenerate.model.ColumnDto;
+import cn.beinet.codegenerate.model.IndexDto;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -39,7 +40,7 @@ public class ColumnRepository {
      * 返回指定表的字段定义
      *
      * @param database 数据库
-     * @param table    表名
+     * @param table    表名，为空表示返回所有表
      * @return 字段列表
      */
     public List<ColumnDto> findColumnByTable(String database, String table) {
@@ -68,6 +69,47 @@ public class ColumnRepository {
             ret.setNullable("YES".equalsIgnoreCase(resultSet.getString("is_nullable")));
             ret.setComment(resultSet.getString("column_comment"));
             ret.setExtra(resultSet.getString("extra"));
+            return ret;
+        });
+    }
+
+    /**
+     * 返回指定表的索引定义
+     *
+     * @param database 数据库
+     * @param table    表名，为空表示返回所有表
+     * @return 索引列表
+     */
+    public List<IndexDto> findIndexesByTable(String database, String table) {
+        String sql = "SELECT b.TABLE_NAME,b.INDEX_NAME, b.SEQ_IN_INDEX, b.COLUMN_NAME, b.SUB_PART, b.NON_UNIQUE, b.INDEX_TYPE, b.INDEX_COMMENT " +
+                "FROM information_schema.STATISTICS b " +
+                " WHERE b.TABLE_SCHEMA=? ";
+
+        List<Object> arrPara = new ArrayList<>();
+        arrPara.add(database);
+        if (StringUtils.hasText(table)) {
+            sql += "AND b.TABLE_NAME=? ";
+            arrPara.add(table);
+        }
+        sql += "ORDER BY b.TABLE_NAME, b.INDEX_NAME, b.SEQ_IN_INDEX";
+        return getJdbcTemplate().query(sql, arrPara.toArray(new Object[0]), (resultSet, i) -> {
+            IndexDto ret = new IndexDto();
+            ret.setCatalog(database);
+            ret.setTable(resultSet.getString("table_name"));
+            ret.setIndexName(resultSet.getString("INDEX_NAME"));
+            ret.setIndex(resultSet.getInt("SEQ_IN_INDEX"));
+            ret.setColumn(resultSet.getString("COLUMN_NAME"));
+
+            String subPart = resultSet.getString("SUB_PART");
+            if (StringUtils.isEmpty(subPart))
+                ret.setSubPart(0);
+            else
+                ret.setSubPart(Integer.parseInt(subPart));
+
+            int unique = resultSet.getInt("NON_UNIQUE");
+            ret.setUnique(unique == 0);
+            ret.setIndexType(resultSet.getString("INDEX_TYPE"));
+            ret.setComment(resultSet.getString("INDEX_COMMENT"));
             return ret;
         });
     }

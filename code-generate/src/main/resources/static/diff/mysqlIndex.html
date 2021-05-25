@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MySQL数据库对比</title>
+    <title>MySQL索引对比</title>
     <script src="/static/unpkg/vue.min.js"></script>
     <script src="/static/unpkg/axios.min.js"></script>
     <script src="/static/unpkg/elemeIndex.js"></script>
@@ -52,7 +52,7 @@
             <el-button type="primary" icon="el-icon-edit" @click="generateSQL">脚本生成</el-button>
         </el-form-item>
         <div>
-            <span style="padding-left:20px;">共{{attData.length}}个字段，{{filteredTableData.length}}个差异</span>
+            <span style="padding-left:20px;">共{{attData.length}}个索引，{{filteredTableData.length}}个差异</span>
         </div>
     </el-form>
     <br>
@@ -72,24 +72,19 @@
                 width="200">
         </el-table-column>
         <el-table-column
-                prop="column"
-                label="字段名"
+                prop="index"
+                label="索引名"
                 width="200">
         </el-table-column>
         <el-table-column
                 prop="test"
                 label="测试环境"
-                width="400">
+                width="600">
         </el-table-column>
         <el-table-column
                 prop="prod"
                 label="生产环境"
-                width="400">
-        </el-table-column>
-        <el-table-column
-                prop="comment"
-                label="注释"
-                width="300">
+                width="600">
         </el-table-column>
     </el-table>
 
@@ -148,6 +143,7 @@
             }
         },
         methods: {
+            // 加载数据库列表
             loadDbs: function (isProd) {
                 let url = '/mysql/databases/' + (isProd ? '1' : '0');
                 return axios.get(url).then(response => {
@@ -175,12 +171,12 @@
                 }
                 this.attData = [];
 
-                let url = '/mysql/tables/';
+                let url = '/mysql/indexes/';
                 let urlTest = url + '0?db=' + this.searchCond.dbTestName;
                 let urlProd = url + '1?db=' + this.searchCond.dbProdName;
                 this.loading = true;
-                this.loadColumns(urlTest, false).then(() => {
-                    this.loadColumns(urlProd, true).then(this.compareDo)
+                this.loadIndexes(urlTest, false).then(() => {
+                    this.loadIndexes(urlProd, true).then(this.compareDo)
                 });
             },
             generateSQL: function () {
@@ -202,96 +198,57 @@
                 }, 100);
 
                 let db;
-                let sourceCol;   // 要使用的列定义
-                let targetCol;   // 要修改的列 旧定义
+                let sourceIdx;   // 要使用的定义
+                let targetIdx;   // 要修改的索引的旧定义
 
                 let sql = '';
                 for (let i = 0, j = this.filteredTableData.length; i < j; i++) {
                     let item = this.filteredTableData[i];
                     if (this.generateSqlTarget === 'test') {
                         db = this.searchCond.dbTestName;
-                        sourceCol = item.prodDefine;
-                        targetCol = item.testDefine;
+                        sourceIdx = item.prod;
+                        targetIdx = item.test;
                     } else {
                         db = this.searchCond.dbProdName;
-                        sourceCol = item.testDefine;
-                        targetCol = item.prodDefine;
+                        sourceIdx = item.test;
+                        targetIdx = item.prod;
                     }
-                    if (!item.column && sourceCol) {
-                        // 表不存在时，sourceCol是所有的列，此时要生成建表语句
-                        sql += this.generateTableSql(db, item.table, sourceCol) + ';\n\n';
+                    if (!item.index && sourceIdx) {
+                        // 表不存在时，忽略，请去表结构差异页面
                         continue;
                     }
-                    if (!sourceCol) {
+                    if (!sourceIdx) {
                         continue;// 目标有，源没有，这种不需要生成
                     }
 
-                    let addOrEdit;
-                    if (targetCol) {
-                        addOrEdit = 'CHANGE `' + targetCol.column + '` ';
-                    } else {
-                        addOrEdit = 'ADD COLUMN ';
+                    let addOrEdit = '';
+                    if (targetIdx && targetIdx !== '索引不存在') {
+                        addOrEdit = 'DROP INDEX `' + item.index + '`';
+                    }
+                    if (sourceIdx && sourceIdx !== '索引不存在') {
+                        if (addOrEdit.length > 0)
+                            addOrEdit += ',\r\n';
+                        addOrEdit += '  ADD ' + sourceIdx;
                     }
 
                     // ALTER TABLE xx CHANGE `id` `id` INT(11) NOT NULL  AUTO_INCREMENT  PRIMARY KEY会报错：key重复
                     // 可以后续处理索引差异对比时再说
-                    sql += 'ALTER TABLE `' + db + '`.`' + item.table + '` ' +
-                        addOrEdit + this.generateRowSql(sourceCol, false) + ';\n\n';
+                    sql += 'ALTER TABLE `' + db + '`.`' + item.table + '`\r\n  ' +
+                        addOrEdit + ';\n\n';
                 }
                 this.generateSql = sql;
             },
-            generateTableSql: function (db, table, colList) {
-                let sql = 'CREATE TABLE `' + db + '`.`' + table + '`(';
-                for (let i = 0, j = colList.length; i < j; i++) {
-                    let item = colList[i];
-                    sql += this.generateRowSql(item, true);
-                    if (i < j - 1) {
-                        sql += ',';
-                    }
-                }
-                sql += ')\n ENGINE=INNODB DEFAULT CHARSET=utf8mb4';
-                return sql;
-            },
-            generateRowSql: function (sourceCol, needPrimary) {
-                let defaultVal = '';
-                if (sourceCol.defaultVal !== null) {//&& sourceCol.defaultVal.length > 0
-                    if (sourceCol.defaultVal !== 'CURRENT_TIMESTAMP' &&
-                        sourceCol.defaultVal.indexOf('\'') < 0) {
-                        defaultVal = '\'' + sourceCol.defaultVal + '\'';
-                    } else {
-                        defaultVal = sourceCol.defaultVal;
-                    }
-                    defaultVal = ' DEFAULT ' + defaultVal;
-                }
-                let nullable = ' NOT NULL ';
-                if (sourceCol.nullable) {
-                    nullable = ' NULL ';
-                }
-                let autoInc = '';
-                if (sourceCol.auto) {
-                    autoInc = ' AUTO_INCREMENT ';
-                }
-                let primaryKey = '';
-                if (needPrimary && sourceCol.primaryKey) {
-                    primaryKey = ' PRIMARY KEY ';
-                }
-                let comment = '';
-                if (sourceCol.comment) {
-                    comment = ' COMMENT \'' + sourceCol.comment.replace(/\s+/g, ' ') + '\' ';
-                }
-                return '\n  `' + sourceCol.originColumn + '` ' + sourceCol.type +
-                    defaultVal + nullable + autoInc + primaryKey + comment;
-            },
             cellStyle(row, column, rowIndex, columnIndex) {
                 let style = 'text-align:left;margin-left:20px;';
-                if (row.column.label === "测试环境" && (row.row.test === '字段不存在' || row.row.test === '表不存在')) {
+                if (row.column.label === "测试环境" && (row.row.test === '索引不存在' || row.row.test === '表不存在')) {
                     style += 'color:red;font-weight:bold;';
-                } else if (row.column.label === "生产环境" && (row.row.prod === '字段不存在' || row.row.prod === '表不存在')) {
+                } else if (row.column.label === "生产环境" && (row.row.prod === '索引不存在' || row.row.prod === '表不存在')) {
                     style += 'color:red;font-weight:bold;';
                 }
                 return style;
             },
-            loadColumns: function (urlConfig, isProd) {
+            // 加载所有表的索引列表
+            loadIndexes: function (urlConfig, isProd) {
                 return axios.get(urlConfig).then(response => {
                     let arr = response.data;
                     if (isProd) {
@@ -320,28 +277,21 @@
                         loadedAtt[att] = {
                             test: att,
                             table: att,
-                            column: '',
+                            index: '',
                             prod: '表不存在',
-                            comment: '',
-                            testDefine: this.colsTest[att],
-                            prodDefine: null,
                         };
                         continue;
                     }
 
                     let colList = this.colsTest[att];
-                    for (let i = 0, j = colList.length; i < j; i++) {
-                        let col = colList[i];
-                        let key = (att + '.' + col.column).toLowerCase();
-
+                    for (let idxName in colList) {
+                        let idxDefine = colList[idxName];
+                        let key = (att + '.' + idxName).toLowerCase();
                         loadedAtt[key] = {
-                            test: this.combineCol(col),
+                            test: idxDefine,
                             table: att,
-                            column: col.originColumn,
-                            prod: '字段不存在',
-                            comment: col.comment,
-                            testDefine: col,
-                            prodDefine: null,
+                            index: idxName,
+                            prod: '索引不存在',
                         };
                     }
                 }
@@ -352,34 +302,24 @@
                         loadedAtt[att] = {
                             test: '表不存在',
                             table: att,
-                            column: '',
+                            index: '',
                             prod: att,
-                            comment: '',
-                            testDefine: null,
-                            prodDefine: this.colsProd[att],
                         };
                         continue;
                     }
 
                     let colList = this.colsProd[att];
-                    for (let i = 0, j = colList.length; i < j; i++) {
-                        let col = colList[i];
-                        let key = (att + '.' + col.column).toLowerCase();
+                    for (let idxName in colList) {
+                        let idxDefine = colList[idxName];
+                        let key = (att + '.' + idxName).toLowerCase();
                         if (loadedAtt[key]) {
-                            loadedAtt[key].prod = this.combineCol(col);
-                            loadedAtt[key].prodDefine = col;
-                            if (!loadedAtt[key].comment) {
-                                loadedAtt[key].comment = col.comment;
-                            }
+                            loadedAtt[key].prod = idxDefine;
                         } else {
                             loadedAtt[key] = {
-                                test: '字段不存在',
+                                test: '索引不存在',
                                 table: att,
-                                column: col.originColumn,
-                                prod: this.combineCol(col),
-                                comment: col.comment,
-                                testDefine: null,
-                                prodDefine: col,
+                                index: idxName,
+                                prod: idxDefine,
                             };
                         }
                     }
@@ -392,35 +332,15 @@
                     resultData.push({
                         key: att,
                         table: item.table,
-                        column: item.column,
+                        index: item.index,
                         test: item.test,
                         prod: item.prod,
-                        comment: item.comment,
                         testDefine: item.testDefine,
                         prodDefine: item.prodDefine,
                     });
                 }
                 Vue.set(this, 'attData', resultData.sort(this.sortByKey));
                 this.loading = false;
-            },
-            combineCol: function (col) {
-                let ret = col.type;
-                //if (col.size) {
-                //    ret += '(' + col.size + ')';
-                //}
-                if (col.primaryKey) {
-                    ret += ' 主键';
-                }
-                if (col.auto) {
-                    ret += ' 自增';
-                }
-                if (col.nullable) {
-                    ret += ' 可空';
-                }
-                if (col.defaultVal !== null && col.defaultVal.length > 0) {
-                    ret += ' 默认值:' + col.defaultVal;
-                }
-                return ret;
             },
             sortByKey: function (item1, item2) {
                 return item1.key.localeCompare(item2.key);
