@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -69,20 +69,18 @@ public class CodeController {
 
 
     @GetMapping(value = "/v1/code/down")
-    public ResponseEntity<byte[]> testDownload(@RequestParam String zipfile) throws IOException {
+    public ResponseEntity testDownload(@RequestParam String zipfile) throws IOException {
         if (StringUtils.isEmpty(zipfile)) {
             throw new IllegalArgumentException("文件不能为空");
         }
         zipfile = codeGenerateService.getRealPath(zipfile);
 
-        // 设置Header
-        String type = new MimetypesFileTypeMap().getContentType(zipfile);
         File file = new File(zipfile);
-        String downName = new String(file.getName().getBytes("utf-8"), "iso-8859-1");
+        String downName = new String(file.getName().getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment;filename=" + downName);
-        headers.add("Content-Type", type);
+        headers.add("Content-Type", "application/x-zip-compressed");
 
         // 输出二进制流
         byte[] arr;

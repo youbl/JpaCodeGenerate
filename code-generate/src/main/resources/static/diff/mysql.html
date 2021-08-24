@@ -26,8 +26,8 @@
 <div id="divApp">
     <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
-        <el-form-item label="测试库" prop="dbTestName">
-            <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择测试数据库" @change="testDbChange">
+        <el-form-item label="左库" prop="dbTestName">
+            <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库1" @change="testDbChange">
                 <el-option
                         v-for="item in dbsTest"
                         :key="item"
@@ -36,8 +36,8 @@
                 </el-option>
             </el-select>
         </el-form-item>
-        <el-form-item label="生产库" prop="dbProdName">
-            <el-select v-model="searchCond.dbProdName" filterable placeholder="请选择生产数据库">
+        <el-form-item label="右库" prop="dbProdName">
+            <el-select v-model="searchCond.dbProdName" filterable placeholder="请选择数据库2">
                 <el-option
                         v-for="item in dbsProd"
                         :key="item"
@@ -78,12 +78,12 @@
         </el-table-column>
         <el-table-column
                 prop="test"
-                label="测试环境"
+                label="左库"
                 width="400">
         </el-table-column>
         <el-table-column
                 prop="prod"
-                label="生产环境"
+                label="右库"
                 width="400">
         </el-table-column>
         <el-table-column
@@ -96,8 +96,8 @@
     <el-dialog title="生成数据库脚本" :visible.sync="generateSqlShow">
         <template>
             <el-radio-group v-model="generateSqlTarget" @change="doGenerateSql">
-                <el-radio :label="'prod'">以测试库为准，修改生产库</el-radio>
-                <el-radio :label="'test'">以生产库为准，修改测试库</el-radio>
+                <el-radio :label="'prod'">以左库为准，修改右库</el-radio>
+                <el-radio :label="'test'">以右库为准，修改左库</el-radio>
             </el-radio-group>
         </template>
         <div>
@@ -284,9 +284,9 @@
             },
             cellStyle(row, column, rowIndex, columnIndex) {
                 let style = 'text-align:left;margin-left:20px;';
-                if (row.column.label === "测试环境" && (row.row.test === '字段不存在' || row.row.test === '表不存在')) {
+                if (row.column.label === "左库" && (row.row.test === '字段不存在' || row.row.test === '表不存在')) {
                     style += 'color:red;font-weight:bold;';
-                } else if (row.column.label === "生产环境" && (row.row.prod === '字段不存在' || row.row.prod === '表不存在')) {
+                } else if (row.column.label === "右库" && (row.row.prod === '字段不存在' || row.row.prod === '表不存在')) {
                     style += 'color:red;font-weight:bold;';
                 }
                 return style;
@@ -306,17 +306,17 @@
             compareDo: function () {
                 if (!this.colsProd || !hasAnyProperty(this.colsProd)) {
                     this.loading = false;
-                    return alert('生产环境数据库加载失败，请重试');
+                    return alert('右库:数据库列表加载失败，请重试');
                 }
                 if (!this.colsTest || !hasAnyProperty(this.colsTest)) {
                     this.loading = false;
-                    return alert('测试环境数据库加载失败，请重试');
+                    return alert('左库:数据库列表加载失败，请重试');
                 }
                 let loadedAtt = {};
-                // 加载测试库, att是表名
+                // 加载左库, att是表名
                 for (let att in this.colsTest) {
                     if (!this.colsProd[att]) {
-                        // 生产环境不存在此表
+                        // 右库不存在此表
                         loadedAtt[att] = {
                             test: att,
                             table: att,
@@ -345,10 +345,10 @@
                         };
                     }
                 }
-                // 加载生产库
+                // 加载右库
                 for (let att in this.colsProd) {
                     if (!this.colsTest[att]) {
-                        // 生产环境不存在此表
+                        // 右库不存在此表
                         loadedAtt[att] = {
                             test: '表不存在',
                             table: att,

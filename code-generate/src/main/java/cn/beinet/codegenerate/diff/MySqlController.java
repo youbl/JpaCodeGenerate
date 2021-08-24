@@ -32,7 +32,7 @@ public class MySqlController {
     /**
      * 返回所有字段信息
      *
-     * @param isProd true使用生产环境连接串，false使用测试环境连接串
+     * @param isProd true使用右库连接串，false使用左库连接串
      * @param db     读取哪个数据库
      * @return 字段信息
      */
@@ -52,7 +52,7 @@ public class MySqlController {
     /**
      * 返回值第一个Map的Key是表名，子Map的key是索引名,Value是建索引语句
      *
-     * @param isProd true使用生产环境连接串，false使用测试环境连接串
+     * @param isProd true使用右库连接串，false使用左库连接串
      * @param db     读取哪个数据库
      * @return 索引信息
      */

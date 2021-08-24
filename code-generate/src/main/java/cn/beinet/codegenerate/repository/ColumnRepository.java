@@ -148,11 +148,11 @@ public class ColumnRepository {
          */
         DEFAULT("spring.datasource"),
         /**
-         * 测试环境数据库连接串
+         * 左库连接串
          */
         TEST("spring.datasourceTest"),
         /**
-         * 生产环境数据库连接串
+         * 右库连接串
          */
         PROD("spring.datasourceProd");
 
