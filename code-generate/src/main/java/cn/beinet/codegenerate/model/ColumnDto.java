@@ -4,6 +4,9 @@ import cn.beinet.codegenerate.util.StringHelper;
 import lombok.Data;
 import org.springframework.util.StringUtils;
 
+/**
+ * MySQL表结构获取生成的列对象
+ */
 @Data
 public class ColumnDto {
     /**

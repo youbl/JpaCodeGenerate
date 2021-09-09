@@ -3,10 +3,8 @@ package cn.beinet.codegenerate.diff;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.model.IndexDto;
 import cn.beinet.codegenerate.repository.ColumnRepository;
-import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,28 +15,27 @@ import java.util.Map;
 
 @RestController
 public class MySqlController {
-    private final Environment env;
 
-    public MySqlController(Environment env) {
-        this.env = env;
-    }
-
-    @GetMapping("mysql/databases/{isProd}")
-    public List<String> GetMySqlDbs(@PathVariable int isProd) {
-        ColumnRepository columnRepository = getRepository(isProd);
+    @GetMapping("mysql/databases")
+    public List<String> GetMySqlDbs(@RequestParam String ip,
+                                    @RequestParam String user,
+                                    @RequestParam String pwd) {
+        ColumnRepository columnRepository = getRepository(ip, user, pwd);
         return columnRepository.findDatabases();
     }
 
     /**
      * 返回所有字段信息
      *
-     * @param isProd true使用右库连接串，false使用左库连接串
-     * @param db     读取哪个数据库
+     * @param db 读取哪个数据库
      * @return 字段信息
      */
-    @GetMapping("mysql/tables/{isProd}")
-    public Map<String, List<ColumnDto>> GetMySqlTables(@PathVariable int isProd, @RequestParam String db) {
-        ColumnRepository columnRepository = getRepository(isProd);
+    @GetMapping("mysql/tables")
+    public Map<String, List<ColumnDto>> GetMySqlTables(@RequestParam String ip,
+                                                       @RequestParam String user,
+                                                       @RequestParam String pwd,
+                                                       @RequestParam String db) {
+        ColumnRepository columnRepository = getRepository(ip, user, pwd);
 
         List<ColumnDto> allCols = columnRepository.findColumnByTable(db, null);
         Map<String, List<ColumnDto>> ret = new HashMap<>();
@@ -52,13 +49,15 @@ public class MySqlController {
     /**
      * 返回值第一个Map的Key是表名，子Map的key是索引名,Value是建索引语句
      *
-     * @param isProd true使用右库连接串，false使用左库连接串
-     * @param db     读取哪个数据库
+     * @param db 读取哪个数据库
      * @return 索引信息
      */
-    @GetMapping("mysql/indexes/{isProd}")
-    public Map<String, Map<String, String>> GetMySqlIndexes(@PathVariable int isProd, @RequestParam String db) {
-        ColumnRepository columnRepository = getRepository(isProd);
+    @GetMapping("mysql/indexes")
+    public Map<String, Map<String, String>> GetMySqlIndexes(@RequestParam String ip,
+                                                            @RequestParam String user,
+                                                            @RequestParam String pwd,
+                                                            @RequestParam String db) {
+        ColumnRepository columnRepository = getRepository(ip, user, pwd);
 
         List<IndexDto> allIndexes = columnRepository.findIndexesByTable(db, null);
         Map<String, Map<String, String>> ret = new HashMap<>();
@@ -107,8 +106,16 @@ public class MySqlController {
         return ret;
     }
 
-    ColumnRepository getRepository(int isProd) {
-        ColumnRepository.DbEnv dbEnv = isProd == 1 ? ColumnRepository.DbEnv.PROD : ColumnRepository.DbEnv.TEST;
-        return new ColumnRepository(env, dbEnv);
+    ColumnRepository getRepository(String ip,
+                                   String user,
+                                   String pwd) {
+        int port = 3306;
+        int idx = ip.indexOf(':');
+        if (idx > 0) {
+            String tmp = ip.substring(idx + 1);
+            port = Integer.parseInt(tmp);
+            ip = ip.substring(0, idx);
+        }
+        return new ColumnRepository(ip, port, user, pwd);
     }
 }

@@ -3,6 +3,9 @@ package cn.beinet.codegenerate.model;
 import cn.beinet.codegenerate.util.StringHelper;
 import lombok.Data;
 
+/**
+ * MySQL表结构获取生成的索引对象
+ */
 @Data
 public class IndexDto {
     /**

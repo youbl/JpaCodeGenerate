@@ -14,20 +14,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ColumnRepository {
-    private final Environment env;
 
     private JdbcTemplate jdbcTemplate;
-    private final String configPrefix;
+
+    private final String url;
+    private final String userName;
+    private final String pwd;
 
     public ColumnRepository(Environment env, DbEnv dbEnv) {
-        this.env = env;
-        this.configPrefix = dbEnv.getConfig();
+        String configPrefix = dbEnv.getConfig();
+        this.url = env.getProperty(configPrefix + ".url");
+        this.userName = env.getProperty(configPrefix + ".username");
+        this.pwd = env.getProperty(configPrefix + ".password");
+    }
+
+
+    public ColumnRepository(String ip, int port, String userName, String pwd) {
+        this.url = "jdbc:mysql://" + ip + ":" + port +
+                "/mysql?characterEncoding=utf8&allowMultiQueries=true&serverTimezone=Asia/Shanghai&useSSL=false";
+        this.userName = userName;
+        this.pwd = pwd;
     }
 
     public List<String> findDatabases() {
-        String sql = "SELECT DISTINCT table_schema FROM information_schema.tables " +
-                "WHERE table_schema NOT IN ('performance_schema', 'mysql', 'information_schema', 'sys') " +
-                "ORDER BY table_schema";
+        String sql = "SELECT DISTINCT schema_name FROM information_schema.SCHEMATA " +
+                "WHERE schema_name NOT IN ('performance_schema', 'mysql', 'information_schema', 'sys') " +
+                "ORDER BY schema_name";
         return getJdbcTemplate().query(sql, new MyRowMapper());
     }
 
@@ -132,9 +144,9 @@ public class ColumnRepository {
         if (jdbcTemplate == null) {
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             //dataSource.setDriverClassName(env.getProperty("xxx.driver-class-name"));
-            dataSource.setUrl(env.getProperty(configPrefix + ".url"));
-            dataSource.setUsername(env.getProperty(configPrefix + ".username"));
-            dataSource.setPassword(env.getProperty(configPrefix + ".password"));
+            dataSource.setUrl(url);
+            dataSource.setUsername(userName);
+            dataSource.setPassword(pwd);
 
             //创建JdbcTemplate对象，设置数据源
             jdbcTemplate = new JdbcTemplate(dataSource);
