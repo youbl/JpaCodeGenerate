@@ -27,6 +27,17 @@
     <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
         <el-form-item label="左库" prop="dbTestName">
+            <el-form-item label="IP">
+                <el-input v-model="searchCond.dbTestIp" placeholder="请输入IP，端口请加冒号"></el-input>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <el-input v-model="searchCond.dbTestUser" placeholder="请输入用户名"></el-input>
+            </el-form-item>
+            <el-form-item label="密码">
+                <el-input v-model="searchCond.dbTestPwd" placeholder="请输入密码"></el-input>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestDb"></el-button>
+
             <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库1" @change="testDbChange">
                 <el-option
                         v-for="item in dbsTest"
@@ -36,7 +47,19 @@
                 </el-option>
             </el-select>
         </el-form-item>
+        <br>
         <el-form-item label="右库" prop="dbProdName">
+            <el-form-item label="IP">
+                <el-input v-model="searchCond.dbProdIp" placeholder="请输入IP，端口请加冒号"></el-input>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <el-input v-model="searchCond.dbProdUser" placeholder="请输入用户名"></el-input>
+            </el-form-item>
+            <el-form-item label="密码">
+                <el-input v-model="searchCond.dbProdPwd" placeholder="请输入密码"></el-input>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdDb"></el-button>
+
             <el-select v-model="searchCond.dbProdName" filterable placeholder="请选择数据库2">
                 <el-option
                         v-for="item in dbsProd"
@@ -46,6 +69,7 @@
                 </el-option>
             </el-select>
         </el-form-item>
+        <br>
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="compareDB">对 比</el-button>
             <el-checkbox v-model="searchCond.onlyDiff">只显示差异项</el-checkbox>
@@ -110,7 +134,14 @@
         data: {
             loading: false,
             searchCond: {
+                dbTestIp: '10.0.0.1',
+                dbTestUser: 'readonly',
+                dbTestPwd: '123456',
                 dbTestName: '',
+
+                dbProdIp: '10.2.2.2',
+                dbProdUser: 'readonly',
+                dbProdPwd: '123456',
                 dbProdName: '',
                 onlyDiff: true,
             },
@@ -129,7 +160,10 @@
             generateSql: '',
         },
         created: function () {
-            this.loadDbs(true).then(() => this.loadDbs(false));
+            if (this.searchCond.dbProdIp)
+                this.loadDbs(true);
+            if (this.searchCond.dbTestIp)
+                this.loadDbs(false);
         },
         computed: {
             filteredTableData: function () {
@@ -143,14 +177,45 @@
             }
         },
         methods: {
+            loadTestDb: function () {
+                this.loadDbs(false);
+            },
+            loadProdDb: function () {
+                this.loadDbs(true);
+            },
+            combineDbPara: function (isProd) {
+                if (isProd) {
+                    if (!this.searchCond.dbProdIp || !this.searchCond.dbProdUser || !this.searchCond.dbProdPwd) {
+                        alert('请输入右库IP/用户/密码');
+                        return;
+                    }
+                    return 'ip=' + this.searchCond.dbProdIp +
+                        '&user=' + encodeURIComponent(this.searchCond.dbProdUser) +
+                        '&pwd=' + encodeURIComponent(this.searchCond.dbProdPwd);
+                }
+                if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
+                    alert('请输入左库IP/用户/密码');
+                    return;
+                }
+                return 'ip=' + this.searchCond.dbTestIp +
+                    '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
+            },
+
             // 加载数据库列表
             loadDbs: function (isProd) {
-                let url = '/mysql/databases/' + (isProd ? '1' : '0');
+                let url = '/mysql/databases?' + this.combineDbPara(isProd);
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.dbsProd = response.data;
+                        if (this.dbsProd.length > 0) {
+                            this.searchCond.dbProdName = this.dbsProd[0];
+                        }
                     } else {
                         this.dbsTest = response.data;
+                        if (this.dbsTest.length > 0) {
+                            this.searchCond.dbTestName = this.dbsTest[0];
+                        }
                     }
                 }).catch(error => {
                     this.ajaxError(error);
@@ -171,9 +236,10 @@
                 }
                 this.attData = [];
 
-                let url = '/mysql/indexes/';
-                let urlTest = url + '0?db=' + this.searchCond.dbTestName;
-                let urlProd = url + '1?db=' + this.searchCond.dbProdName;
+                let url = '/mysql/indexes?';
+                let urlTest = url + this.combineDbPara(false) + '&db=' + this.searchCond.dbTestName;
+                let urlProd = url + this.combineDbPara(true) + '&db=' + this.searchCond.dbProdName;
+
                 this.loading = true;
                 this.loadIndexes(urlTest, false).then(() => {
                     this.loadIndexes(urlProd, true).then(this.compareDo)

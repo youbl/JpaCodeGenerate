@@ -139,14 +139,14 @@
         data: {
             loading: false,
             searchCond: {
-                dbTestIp: '',
-                dbTestUser: '',
-                dbTestPwd: '',
+                dbTestIp: '10.0.0.1',
+                dbTestUser: 'readonly',
+                dbTestPwd: '123456',
                 dbTestName: '',
 
-                dbProdIp: '',
-                dbProdUser: '',
-                dbProdPwd: '',
+                dbProdIp: '10.2.2.2',
+                dbProdUser: 'readonly',
+                dbProdPwd: '123456',
                 dbProdName: '',
                 onlyDiff: true,
             },
@@ -165,7 +165,10 @@
             generateSql: '',
         },
         created: function () {
-            //this.loadDbs(true).then(() => this.loadDbs(false));
+            if (this.searchCond.dbProdIp)
+                this.loadDbs(true);
+            if (this.searchCond.dbTestIp)
+                this.loadDbs(false);
         },
         computed: {
             filteredTableData: function () {
@@ -208,8 +211,14 @@
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.dbsProd = response.data;
+                        if (this.dbsProd.length > 0) {
+                            this.searchCond.dbProdName = this.dbsProd[0];
+                        }
                     } else {
                         this.dbsTest = response.data;
+                        if (this.dbsTest.length > 0) {
+                            this.searchCond.dbTestName = this.dbsTest[0];
+                        }
                     }
                 }).catch(error => {
                     this.ajaxError(error);
