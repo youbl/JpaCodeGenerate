@@ -29,7 +29,10 @@ public class NacosService {
     public List<String> getNamespaces(String url) {
         try {
             NacosNameSpaces nameSpaces = feignNacos.getNamespaces(new URI(url));
-            return nameSpaces.getData().stream().map(NacosNameSpaces.NameSpace::getNamespace).collect(Collectors.toList());
+            return nameSpaces.getData().stream()
+                    .map(NacosNameSpaces.NameSpace::getNamespace)
+                    .sorted()
+                    .collect(Collectors.toList());
         } catch (Exception exp) {
             throw new RuntimeException(exp);
         }
@@ -41,7 +44,10 @@ public class NacosService {
             URI uri = new URI(url);
             NacosToken token = feignNacos.login(uri, user, pwd);
             NacosFiles files = feignNacos.getConfigFiles(uri, nameSpace, token.getAccessToken());
-            return files.getPageItems().stream().map(NacosFiles.File::getDataId).collect(Collectors.toList());
+            return files.getPageItems().stream()
+                    .map(NacosFiles.File::getDataId)
+                    .sorted()
+                    .collect(Collectors.toList());
         } catch (Exception exp) {
             throw new RuntimeException(exp);
         }
