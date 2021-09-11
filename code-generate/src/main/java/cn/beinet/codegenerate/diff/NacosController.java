@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 @RestController
 public class NacosController {
@@ -36,12 +37,12 @@ public class NacosController {
 
     // 获取指定文件配置
     @GetMapping("nacos/concfig")
-    public Map<String, Object> getFiles(@RequestParam String url,
-                                        @RequestParam String user,
-                                        @RequestParam String pwd,
-                                        @RequestParam String nameSpace,
-                                        @RequestParam String dataId) {
+    public Properties getFiles(@RequestParam String url,
+                               @RequestParam String user,
+                               @RequestParam String pwd,
+                               @RequestParam String nameSpace,
+                               @RequestParam String dataId) {
         String ymlStr = nacosService.getFile(url, user, pwd, nameSpace, dataId, "DEFAULT_GROUP");
-        return nacosService.parseYml(ymlStr);
+        return nacosService.parseYmlToKV(ymlStr);
     }
 }

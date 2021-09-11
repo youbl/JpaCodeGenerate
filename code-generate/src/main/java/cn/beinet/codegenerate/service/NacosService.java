@@ -5,6 +5,7 @@ import cn.beinet.codegenerate.rpc.dto.NacosFiles;
 import cn.beinet.codegenerate.rpc.dto.NacosNameSpaces;
 import cn.beinet.codegenerate.rpc.dto.NacosToken;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,7 +58,14 @@ public class NacosService {
         }
     }
 
-    public Map<String, Object> parseYml(String yml) {
+    /**
+     * 转换为Map<String, Map>形式，如 {"aa":1, "spring":{"name":"xx", "bb":"zz"}}
+     * 不是我需要的KeyValue形式
+     *
+     * @param yml yml格式的字符串
+     * @return map
+     */
+    public Map<String, Object> parseYmlToMap(String yml) {
         try (InputStream inputStream = new ByteArrayInputStream(yml.getBytes())) {
             InputStreamResource resource = new InputStreamResource(inputStream);
             YamlMapFactoryBean yamlMapFactoryBean = new YamlMapFactoryBean();
@@ -64,6 +73,24 @@ public class NacosService {
             yamlMapFactoryBean.afterPropertiesSet();
             Map<String, Object> object = yamlMapFactoryBean.getObject();
             return object;
+        } catch (Exception exp) {
+            throw new RuntimeException(exp);
+        }
+    }
+
+    /**
+     * 转换为KeyValue形式
+     *
+     * @param yml yml格式的字符串
+     * @return prop
+     */
+    public Properties parseYmlToKV(String yml) {
+        try (InputStream inputStream = new ByteArrayInputStream(yml.getBytes())) {
+            InputStreamResource resource = new InputStreamResource(inputStream);
+            YamlPropertiesFactoryBean yamlBean = new YamlPropertiesFactoryBean();
+            yamlBean.setResources(resource);//(new ClassPathResource("application.yml"));
+            yamlBean.afterPropertiesSet();
+            return yamlBean.getObject();
         } catch (Exception exp) {
             throw new RuntimeException(exp);
         }
