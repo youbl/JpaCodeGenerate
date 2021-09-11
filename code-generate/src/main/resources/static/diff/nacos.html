@@ -101,7 +101,7 @@
         </el-form-item>
         <div>
             <span style="padding-left:20px;">共{{attData.length}}个配置项，{{filteredTableData.length}}个差异项</span>
-            <span style="color:red;">注意：只比对配置中心配置，没有比对代码中的yml配置</span>
+            <span style="color:red;"></span>
         </div>
     </el-form>
     <br>
@@ -120,14 +120,14 @@
                 width="420">
         </el-table-column>
         <el-table-column
-                label="测试环境"
+                label="对比源"
                 width="460">
             <template slot-scope="scope">
                 <el-input v-model="scope.row.test"></el-input>
             </template>
         </el-table-column>
         <el-table-column
-                label="生产环境"
+                label="对比目标"
                 width="460">
             <template slot-scope="scope">
                 <el-input v-model="scope.row.prod"></el-input>
@@ -135,10 +135,12 @@
         </el-table-column>
         <el-table-column
                 label="操作"
-                width="100">
+                width="300">
             <template slot-scope="scope">
-                <el-button type="primary" @click="operateIgnoreKey(scope.row.key)">{{getBtnTxt(scope.row.key)}}
-                </el-button>
+                <!--                <el-button type="primary" @click="operateIgnoreKey(scope.row.key)">{{getBtnTxt(scope.row.key)}}-->
+                <!--                </el-button>-->
+                <el-button type="primary" @click="openTest(scope.row.key)">去改源</el-button>
+                <el-button type="primary" @click="openProd(scope.row.key)">改目标</el-button>
             </template>
         </el-table-column>
     </el-table>
@@ -176,22 +178,16 @@
                 'spring.datasource.username': 1,
                 'spring.datasource.password': 1,
                 'spring.jpa.show_sql': 1,
-                'spring.jpa.hibernate.ddl-auto': 1,
+                //'spring.jpa.hibernate.ddl-auto': 1,
                 'spring.redis.host': 1,
                 'spring.redis.port': 1,
                 'spring.redis.database': 1,
                 'spring.redis.password': 1,
-                'spring.redis.timeout': 1,
+                //'spring.redis.timeout': 1,
                 'spring.rabbitmq.host': 1,
                 'spring.rabbitmq.username': 1,
                 'spring.rabbitmq.password': 1,
                 'spring.rabbitmq.port': 1,
-                'RedisCacheHost': 1,
-                'RedisPwd': 1,
-                'RedisSpace': 1,
-                'DefaultRabbitMqConn': 1,
-                'RabbitMQPwd': 1,
-                'connectionStrings.DB_DEFAULT.connectionString': 1,
             },
             ignoreKeyByProject: {} // 每个项目要忽略的key列表
         },
@@ -222,6 +218,13 @@
                 let ip = isProd ? this.searchCond.nacosProdIp : this.searchCond.nacosTestIp;
                 if (!ip)
                     return '';
+                if (!ip.endsWith('/')) {
+                    ip += '/';
+                    if (isProd)
+                        this.searchCond.nacosProdIp = ip;
+                    else
+                        this.searchCond.nacosTestIp = ip;
+                }
                 let ret = 'url=' + encodeURIComponent(ip);
                 if (!full)
                     return ret;
@@ -231,7 +234,7 @@
                 let file = isProd ? this.searchCond.nacosProdFile : this.searchCond.nacosTestFile;
                 return ret + '&user=' + encodeURIComponent(user) +
                     '&pwd=' + encodeURIComponent(pwd) +
-                    '&nameSpace=' + encodeURIComponent(ns)+
+                    '&nameSpace=' + encodeURIComponent(ns) +
                     '&dataId=' + encodeURIComponent(file);
             },
             loadTestNacosNs: function () {
@@ -286,9 +289,6 @@
             prodNacosChange: function () {
                 this.loadNacosFile(true);
             },
-            appNameChanged: function () {
-                Vue.set(this, 'attData', []);
-            },
             compareConfig: function (formName) {
                 this.$refs[formName].validate((valid) => {
                     if (!valid) {
@@ -314,6 +314,26 @@
                         });
                 });
             },
+            // 打开编辑配置页
+            openTest: function () {
+                let url = this.searchCond.nacosTestIp
+                    + '#/configeditor?serverId=center&dataId='
+                    + this.searchCond.nacosTestFile
+                    + '&group=DEFAULT_GROUP&namespace='
+                    + this.searchCond.nacosTestNs
+                    + '&edasAppName=&edasAppId=&searchDataId=&searchGroup=&pageSize=10&pageNo=1';
+                window.open(url);
+            },
+            openProd: function () {
+                let url = this.searchCond.nacosProdIp
+                    + '#/configeditor?serverId=center&dataId='
+                    + this.searchCond.nacosProdFile
+                    + '&group=DEFAULT_GROUP&namespace='
+                    + this.searchCond.nacosProdNs
+                    + '&edasAppName=&edasAppId=&searchDataId=&searchGroup=&pageSize=10&pageNo=1';
+                window.open(url);
+            },
+            // 展示忽略按钮的文字
             getBtnTxt: function (key) {
                 if (this.isIgnoreKeyByProj(key))
                     return '恢复';
@@ -404,32 +424,24 @@
 
                 return axios.get(urlConfig).then(response => {
                     let resultData = {};
-                    let txt = isProd ? '生产' : '测试';
-                    if (!response.data.name || response.data.name !== this.searchCond.appName) {
-                        return alert(txt + '加载到的name有问题:' + response.data.name);
+                    let txt = isProd ? '目标' : '源';
+                    if (!response.data) {
+                        return alert(txt + '环境配置加载有误');
                     }
-                    if (!response.data.propertySources || response.data.propertySources.length <= 0) {
-                        return alert(txt + '环境配置为空');
-                    }
-                    for (let i = 0, j = response.data.propertySources.length; i < j; i++) {
-                        let item = response.data.propertySources[i];
-                        // 忽略 /application.yml 和 /application-test.yml
-                        if (!item.source || !item.name || item.name.indexOf('/application') > 0) {
+
+                    for (let att in response.data) {
+                        if (this.isIgnoreKeyGlobal(att)) {
                             continue;
                         }
-                        for (let att in item.source) {
-                            if (this.isIgnoreKeyGlobal(att)) {
-                                continue;
-                            }
-                            if (resultData[att]) {
-                                continue;// 以最前面的att为准
-                            }
-                            resultData[att] = item.source[att] + '';
+                        if (resultData[att]) {
+                            continue;// 以最前面的att为准
                         }
+                        resultData[att] = response.data[att] + '';
                     }
-                    if (!hasAnyProperty(resultData)) {
-                        return alert(txt + '环境配置为空');
-                    }
+                    // 为空也要比较
+                    //if (!hasAnyProperty(resultData)) {
+                    //    return alert(txt + '环境配置为空');
+                    //}
                     if (isProd) {
                         this.configProd = resultData;
                     } else {
@@ -442,11 +454,11 @@
             compareDo: function () {
                 if (!this.configProd) {
                     this.loading = false;
-                    return alert('生产环境配置加载失败，请重试');
+                    return alert('目标配置加载失败，请重试');
                 }
                 if (!this.configTest) {
                     this.loading = false;
-                    return alert('测试环境配置加载失败，请重试');
+                    return alert('源配置加载失败，请重试');
                 }
                 let loadedAtt = {};
                 for (let att in this.configTest) {

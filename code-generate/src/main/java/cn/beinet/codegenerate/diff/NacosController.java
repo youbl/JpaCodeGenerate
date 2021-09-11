@@ -45,4 +45,10 @@ public class NacosController {
         String ymlStr = nacosService.getFile(url, user, pwd, nameSpace, dataId, "DEFAULT_GROUP");
         return nacosService.parseYmlToKV(ymlStr);
     }
+
+    // 没有app的概念了，不方便忽略
+//    @GetMapping("nacos/ignore")
+//    public void ignoreCompare(@RequestParam String key) {
+//
+//    }
 }
