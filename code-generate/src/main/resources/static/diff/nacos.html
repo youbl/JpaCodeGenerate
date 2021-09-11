@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>配置对比</title>
+    <script src="/static/unpkg/vue.min.js"></script>
+    <script src="/static/unpkg/axios.min.js"></script>
+    <script src="/static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+
+        <el-form-item label="对比的源" style="font-weight: bold;">
+            <el-form-item label="url">
+                <el-input v-model="searchCond.nacosTestIp" placeholder="请输入nacos地址"></el-input>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <el-input v-model="searchCond.nacosTestUser" placeholder="请输入用户名"></el-input>
+            </el-form-item>
+            <el-form-item label="密码">
+                <el-input v-model="searchCond.nacosTestPwd" placeholder="请输入密码" show-password></el-input>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestNacosNs"></el-button>
+
+            <el-form-item label="命名空间">
+                <el-select v-model="searchCond.nacosTestNs" filterable placeholder="请选择命名空间"
+                           @change="testNacosChange">
+                    <el-option
+                            v-for="item in namespaceTestArr"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+                <el-select v-model="searchCond.nacosTestFile" filterable placeholder="请选择文件">
+                    <el-option
+                            v-for="item in fileTestArr"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form-item>
+        <br>
+
+        <el-form-item label="对比目标" style="font-weight: bold;">
+            <el-form-item label="url">
+                <el-input v-model="searchCond.nacosProdIp" placeholder="请输入nacos地址"></el-input>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <el-input v-model="searchCond.nacosProdUser" placeholder="请输入用户名"></el-input>
+            </el-form-item>
+            <el-form-item label="密码">
+                <el-input v-model="searchCond.nacosProdPwd" placeholder="请输入密码" show-password></el-input>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdNacosNs"></el-button>
+
+            <el-form-item label="命名空间">
+                <el-select v-model="searchCond.nacosProdNs" filterable placeholder="请选择命名空间"
+                           @change="prodNacosChange">
+                    <el-option
+                            v-for="item in namespaceProdArr"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+                <el-select v-model="searchCond.nacosProdFile" filterable placeholder="请选择文件">
+                    <el-option
+                            v-for="item in fileProdArr"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form-item>
+        <br>
+
+        <el-form-item>
+            <el-button type="primary" icon="el-icon-search" @click="compareConfig('searchForm')">对 比</el-button>
+            <el-checkbox v-model="searchCond.onlyDiff">只显示差异项</el-checkbox>
+        </el-form-item>
+        <div>
+            <span style="padding-left:20px;">共{{attData.length}}个配置项，{{filteredTableData.length}}个差异项</span>
+            <span style="color:red;">注意：只比对配置中心配置，没有比对代码中的yml配置</span>
+        </div>
+    </el-form>
+    <br>
+
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              :data="filteredTableData"
+              :header-row-class-name="'tableHeader'"
+              style="width: 100%">
+        <el-table-column
+                prop="key"
+                label="键名"
+                width="420">
+        </el-table-column>
+        <el-table-column
+                label="测试环境"
+                width="460">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.test"></el-input>
+            </template>
+        </el-table-column>
+        <el-table-column
+                label="生产环境"
+                width="460">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.prod"></el-input>
+            </template>
+        </el-table-column>
+        <el-table-column
+                label="操作"
+                width="100">
+            <template slot-scope="scope">
+                <el-button type="primary" @click="operateIgnoreKey(scope.row.key)">{{getBtnTxt(scope.row.key)}}
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+</div>
+<script>
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            searchCond: {
+                nacosTestIp: 'http://10.51.30.102/nacos/',
+                nacosTestUser: 'nacos',
+                nacosTestPwd: 'nacos',
+                nacosTestNs: '',
+                nacosTestFile: '',
+
+                nacosProdIp: 'http://10.51.30.102/nacos/',
+                nacosProdUser: 'nacos',
+                nacosProdPwd: 'nacos',
+                nacosProdNs: '',
+                nacosProdFile: '',
+
+                onlyDiff: true,
+            },
+            namespaceTestArr: [],
+            namespaceProdArr: [],
+            fileTestArr: [],
+            fileProdArr: [],
+
+            loading: false,
+            configTest: {},
+            configProd: {},
+            attData: [],
+            ignoreKeys: {  // 不加载的key列表，不作对比和展示. 注：下面的“1”无具体意义
+                'spring.datasource.url': 1,
+                'spring.datasource.username': 1,
+                'spring.datasource.password': 1,
+                'spring.jpa.show_sql': 1,
+                'spring.jpa.hibernate.ddl-auto': 1,
+                'spring.redis.host': 1,
+                'spring.redis.port': 1,
+                'spring.redis.database': 1,
+                'spring.redis.password': 1,
+                'spring.redis.timeout': 1,
+                'spring.rabbitmq.host': 1,
+                'spring.rabbitmq.username': 1,
+                'spring.rabbitmq.password': 1,
+                'spring.rabbitmq.port': 1,
+                'RedisCacheHost': 1,
+                'RedisPwd': 1,
+                'RedisSpace': 1,
+                'DefaultRabbitMqConn': 1,
+                'RabbitMQPwd': 1,
+                'connectionStrings.DB_DEFAULT.connectionString': 1,
+            },
+            ignoreKeyByProject: {} // 每个项目要忽略的key列表
+        },
+        created: function () {
+            if (this.searchCond.nacosTestIp)
+                this.loadTestNacosNs();
+            if (this.searchCond.nacosProdIp)
+                this.loadProdNacosNs();
+        },
+        computed: {
+            filteredTableData: function () {
+                if (this.searchCond.onlyDiff) {
+                    // 过滤掉不相等的项，也过滤掉只有环境差异的url
+                    return this.attData.filter(item => {
+                        if (this.isIgnoreKeyByProj(item.key))
+                            return false;
+                        if (item.test === item.prod)
+                            return false;
+                        let testVal = item.test.replace('test', '');
+                        return (testVal !== item.prod && testVal !== item.prod.replace('prod', ''));
+                    });
+                }
+                return this.attData;
+            }
+        },
+        methods: {
+            getPara: function (isProd, full) {
+                let ip = isProd ? this.searchCond.nacosProdIp : this.searchCond.nacosTestIp;
+                if (!ip)
+                    return '';
+                let ret = 'url=' + encodeURIComponent(ip);
+                if (!full)
+                    return ret;
+                let ns = isProd ? this.searchCond.nacosProdNs : this.searchCond.nacosTestNs;
+                let user = isProd ? this.searchCond.nacosProdUser : this.searchCond.nacosTestUser;
+                let pwd = isProd ? this.searchCond.nacosProdPwd : this.searchCond.nacosTestPwd;
+                let file = isProd ? this.searchCond.nacosProdFile : this.searchCond.nacosTestFile;
+                return ret + '&user=' + encodeURIComponent(user) +
+                    '&pwd=' + encodeURIComponent(pwd) +
+                    '&nameSpace=' + encodeURIComponent(ns)+
+                    '&dataId=' + encodeURIComponent(file);
+            },
+            loadTestNacosNs: function () {
+                this.loadNacosNs(false).then(() => {
+                    return this.loadNacosFile(false)
+                });
+            },
+            loadProdNacosNs: function () {
+                this.loadNacosNs(true).then(() => {
+                    return this.loadNacosFile(true)
+                });
+            },
+            loadNacosNs: function (isProd) {
+                let url = '/nacos/namespaces?' + this.getPara(isProd, false);
+                return axios.get(url).then(response => {
+                    if (isProd) {
+                        this.namespaceProdArr = response.data;
+                        if (this.namespaceProdArr.length > 0) {
+                            this.searchCond.nacosProdNs = this.namespaceProdArr[0];
+                        }
+                    } else {
+                        this.namespaceTestArr = response.data;
+                        if (this.namespaceTestArr.length > 0) {
+                            this.searchCond.nacosTestNs = this.namespaceTestArr[0];
+                        }
+                    }
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            loadNacosFile: function (isProd) {
+                let url = '/nacos/files?' + this.getPara(isProd, true);
+                return axios.get(url).then(response => {
+                    if (isProd) {
+                        this.fileProdArr = response.data;
+                        if (this.fileProdArr.length > 0) {
+                            this.searchCond.nacosProdFile = this.fileProdArr[0];
+                        }
+                    } else {
+                        this.fileTestArr = response.data;
+                        if (this.fileTestArr.length > 0) {
+                            this.searchCond.nacosTestFile = this.fileTestArr[0];
+                        }
+                    }
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            testNacosChange: function () {
+                this.loadNacosFile(false);
+            },
+            prodNacosChange: function () {
+                this.loadNacosFile(true);
+            },
+            appNameChanged: function () {
+                Vue.set(this, 'attData', []);
+            },
+            compareConfig: function (formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (!valid) {
+                        return;
+                    }
+                    if (!this.searchCond.nacosTestFile || !this.searchCond.nacosProdFile) {
+                        alert('文件必选');
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.configTest = {};
+                    this.configProd = {};
+
+                    this.attData = [];
+                    if (!this.searchCond.appName) {
+                        this.searchCond.appName = 'mike-platform';
+                    }
+                    this.loadConfigs(false)
+                        //.then(this.loadIgnoreKeyByProj)
+                        .then(() => {
+                            this.loadConfigs(true).then(this.compareDo)
+                        });
+                });
+            },
+            getBtnTxt: function (key) {
+                if (this.isIgnoreKeyByProj(key))
+                    return '恢复';
+                return '忽略';
+            },
+            operateIgnoreKey: function (key) {
+                if (this.isIgnoreKeyByProj(key))
+                    return this.delIgnoreKey(key);
+                return this.addIgnoreKey(key);
+            },
+            // 保存忽略的key
+            addIgnoreKey: function (key) {
+                let appNam = this.searchCond.appName;
+                Vue.set(this.ignoreKeyByProject[appNam], key, 1);
+                this.saveIgnoreKey();
+            },
+            // 移除已忽略的key，就是不忽略了
+            delIgnoreKey: function (key) {
+                let appNam = this.searchCond.appName;
+                Vue.delete(this.ignoreKeyByProject[appNam], key);
+                this.saveIgnoreKey();
+            },
+            // 移除已忽略的key，就是不忽略了
+            saveIgnoreKey: function () {
+                let appNam = this.searchCond.appName;
+                let attVal = '';
+                for (let att in this.ignoreKeyByProject[appNam]) {
+                    if (attVal.length > 0)
+                        attVal += ',';
+                    attVal += att;
+                }
+
+                let para = {};
+                para.AttName = 'ignoreCompareKey';
+                para.AttVal = attVal;
+
+                let url = '/v1/projects/' + this.findIdByName(appNam) + '/att';
+                return axios.post(url, para).then((response) => {
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+            },
+            // 加载当前项目忽略的key列表
+            loadIgnoreKeyByProj: function () {
+                let appNam = this.searchCond.appName;
+                if (this.ignoreKeyByProject[appNam]) {
+                    return new Promise(resolve => {
+                        resolve();
+                    });
+                }
+                let url = '/v1/projects/att/' + this.findIdByName(appNam) + '?att=ignoreCompareKey';
+                return axios.get(url).then((response) => {
+                    if (!response.data || response.data.length <= 0) {
+                        Vue.set(this.ignoreKeyByProject, appNam, {});
+                    } else {
+                        let arr = response.data.split(',');
+                        let obj = {};
+                        for (let i = 0, j = arr.length; i < j; i++) {
+                            let item = arr[i].trim();
+                            if (item.length <= 0)
+                                continue;
+                            obj[item] = 1;
+                        }
+                        Vue.set(this.ignoreKeyByProject, appNam, obj);
+                    }
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+            },
+            isIgnoreKeyGlobal: function (att) {
+                if (this.ignoreKeys[att]) {
+                    return true;
+                }
+                if (att.indexOf('logging.level.') === 0) {
+                    return true; // 忽略 日志配置
+                }
+                return false;
+            },
+            isIgnoreKeyByProj: function (att) {
+                let appNam = this.searchCond.appName;
+                if (this.ignoreKeyByProject[appNam] && this.ignoreKeyByProject[appNam][att]) {
+                    return true;
+                }
+                return false;
+            },
+            loadConfigs: function (isProd) {
+                let urlConfig = '/nacos/concfig?' + this.getPara(isProd, true);
+
+                return axios.get(urlConfig).then(response => {
+                    let resultData = {};
+                    let txt = isProd ? '生产' : '测试';
+                    if (!response.data.name || response.data.name !== this.searchCond.appName) {
+                        return alert(txt + '加载到的name有问题:' + response.data.name);
+                    }
+                    if (!response.data.propertySources || response.data.propertySources.length <= 0) {
+                        return alert(txt + '环境配置为空');
+                    }
+                    for (let i = 0, j = response.data.propertySources.length; i < j; i++) {
+                        let item = response.data.propertySources[i];
+                        // 忽略 /application.yml 和 /application-test.yml
+                        if (!item.source || !item.name || item.name.indexOf('/application') > 0) {
+                            continue;
+                        }
+                        for (let att in item.source) {
+                            if (this.isIgnoreKeyGlobal(att)) {
+                                continue;
+                            }
+                            if (resultData[att]) {
+                                continue;// 以最前面的att为准
+                            }
+                            resultData[att] = item.source[att] + '';
+                        }
+                    }
+                    if (!hasAnyProperty(resultData)) {
+                        return alert(txt + '环境配置为空');
+                    }
+                    if (isProd) {
+                        this.configProd = resultData;
+                    } else {
+                        this.configTest = resultData;
+                    }
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            compareDo: function () {
+                if (!this.configProd) {
+                    this.loading = false;
+                    return alert('生产环境配置加载失败，请重试');
+                }
+                if (!this.configTest) {
+                    this.loading = false;
+                    return alert('测试环境配置加载失败，请重试');
+                }
+                let loadedAtt = {};
+                for (let att in this.configTest) {
+                    loadedAtt[att] = 1;
+                    let test = this.configTest[att];
+                    let prod = this.configProd[att];
+                    let row = {
+                        key: att,
+                        test: test === undefined ? '' : test,
+                        prod: prod === undefined ? '' : prod,
+                    };
+                    this.attData.push(row);
+                }
+                for (let att in this.configProd) {
+                    if (loadedAtt[att]) {
+                        continue;
+                    }
+                    let test = this.configTest[att];
+                    let prod = this.configProd[att];
+                    let row = {
+                        key: att,
+                        test: test === undefined ? '' : test,
+                        prod: prod === undefined ? '' : prod,
+                    };
+                    this.attData.push(row);
+                }
+                this.loading = false;
+            },
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+
+    /**
+     * 判断对象有属性
+     * @param obj 对象
+     * @returns {boolean} 有或没有
+     */
+    function hasAnyProperty(obj) {
+        if (!obj)
+            return false;
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+</script>
+</body>
+</html>
