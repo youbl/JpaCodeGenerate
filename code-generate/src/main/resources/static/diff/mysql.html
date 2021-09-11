@@ -167,8 +167,12 @@
             generateSqlShow: false,
             generateSqlTarget: 'prod',
             generateSql: '',
+
+            defaultName: '',
         },
         created: function () {
+            this.defaultName = getQueryString('name');
+
             if (this.searchCond.dbProdIp)
                 this.loadDbs(true);
             if (this.searchCond.dbTestIp)
@@ -215,18 +219,29 @@
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.dbsProd = response.data;
-                        if (this.dbsProd.length > 0) {
-                            this.searchCond.dbProdName = this.dbsProd[0];
-                        }
+                        this.setByDefault('dbProdName', this.dbsProd);
                     } else {
                         this.dbsTest = response.data;
-                        if (this.dbsTest.length > 0) {
-                            this.searchCond.dbTestName = this.dbsTest[0];
-                        }
+                        this.setByDefault('dbTestName', this.dbsTest);
                     }
                 }).catch(error => {
                     this.ajaxError(error);
                 });
+            },
+            setByDefault: function (prop, arr) {
+                if (arr.length <= 0) {
+                    this.searchCond[prop] = '';
+                    return;
+                }
+                if (this.defaultName) {
+                    for (let i = 0, j = arr.length; i < j; i++) {
+                        if (arr[i].indexOf(this.defaultName) >= 0) {
+                            this.searchCond[prop] = arr[i];
+                            return;
+                        }
+                    }
+                }
+                this.searchCond[prop] = arr[0];
             },
             testDbChange: function (testDb) {
                 for (let i = 0, j = this.dbsProd.length; i < j; i++) {
@@ -526,6 +541,44 @@
         return false;
     }
 
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
+    }
 </script>
 </body>
 </html>

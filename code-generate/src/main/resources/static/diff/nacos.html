@@ -189,9 +189,13 @@
                 'spring.rabbitmq.password': 1,
                 'spring.rabbitmq.port': 1,
             },
-            ignoreKeyByProject: {} // 每个项目要忽略的key列表
+            ignoreKeyByProject: {},// 每个项目要忽略的key列表
+
+            defaultName: '',
         },
         created: function () {
+            this.defaultName = getQueryString('name');
+
             if (this.searchCond.nacosTestIp)
                 this.loadTestNacosNs();
             if (this.searchCond.nacosProdIp)
@@ -270,18 +274,29 @@
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.fileProdArr = response.data;
-                        if (this.fileProdArr.length > 0) {
-                            this.searchCond.nacosProdFile = this.fileProdArr[0];
-                        }
+                        this.setByDefault('nacosProdFile', this.fileProdArr);
                     } else {
                         this.fileTestArr = response.data;
-                        if (this.fileTestArr.length > 0) {
-                            this.searchCond.nacosTestFile = this.fileTestArr[0];
-                        }
+                        this.setByDefault('nacosTestFile', this.fileTestArr);
                     }
                 }).catch(error => {
                     this.ajaxError(error);
                 });
+            },
+            setByDefault: function (prop, arr) {
+                if (arr.length <= 0) {
+                    this.searchCond[prop] = '';
+                    return;
+                }
+                if (this.defaultName) {
+                    for (let i = 0, j = arr.length; i < j; i++) {
+                        if (arr[i].indexOf(this.defaultName) >= 0) {
+                            this.searchCond[prop] = arr[i];
+                            return;
+                        }
+                    }
+                }
+                this.searchCond[prop] = arr[0];
             },
             testNacosChange: function () {
                 this.loadNacosFile(false);
@@ -518,6 +533,44 @@
             }
         }
         return false;
+    }
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
     }
 
 </script>
