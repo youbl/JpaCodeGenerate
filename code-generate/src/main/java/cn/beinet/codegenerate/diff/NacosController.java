@@ -19,14 +19,14 @@ public class NacosController {
 
 
     // 获取命名空间列表
-    @GetMapping("nacos/namespaces")
+    @GetMapping("v1/nacos/namespaces")
     public List<String> getNamespaces(@RequestParam String url) {
         return nacosService.getNamespaces(url);
     }
 
 
     // 获取指定命名空间的文件列表
-    @GetMapping("nacos/files")
+    @GetMapping("v1/nacos/files")
     public List<String> getFiles(@RequestParam String url,
                                  @RequestParam String user,
                                  @RequestParam String pwd,
@@ -36,7 +36,7 @@ public class NacosController {
 
 
     // 获取指定文件配置
-    @GetMapping("nacos/concfig")
+    @GetMapping("v1/nacos/concfig")
     public Properties getFiles(@RequestParam String url,
                                @RequestParam String user,
                                @RequestParam String pwd,

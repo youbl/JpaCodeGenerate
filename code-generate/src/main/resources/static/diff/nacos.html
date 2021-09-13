@@ -49,7 +49,8 @@
                             :value="item">
                     </el-option>
                 </el-select>
-                <el-select v-model="searchCond.nacosTestFile" filterable placeholder="请选择文件">
+                <el-select v-model="searchCond.nacosTestFile" filterable placeholder="请选择文件"
+                           @change="testNacosFileChange">
                     <el-option
                             v-for="item in fileTestArr"
                             :key="item"
@@ -195,6 +196,8 @@
         },
         created: function () {
             this.defaultName = getQueryString('name');
+            if (!this.defaultName)
+                this.defaultName = 'beinet-dev';
 
             if (this.searchCond.nacosTestIp)
                 this.loadTestNacosNs();
@@ -252,25 +255,21 @@
                 });
             },
             loadNacosNs: function (isProd) {
-                let url = '/nacos/namespaces?' + this.getPara(isProd, false);
+                let url = '/v1/nacos/namespaces?' + this.getPara(isProd, false);
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.namespaceProdArr = response.data;
-                        if (this.namespaceProdArr.length > 0) {
-                            this.searchCond.nacosProdNs = this.namespaceProdArr[0];
-                        }
+                        this.setByDefault('nacosProdNs', this.namespaceProdArr);
                     } else {
                         this.namespaceTestArr = response.data;
-                        if (this.namespaceTestArr.length > 0) {
-                            this.searchCond.nacosTestNs = this.namespaceTestArr[0];
-                        }
+                        this.setByDefault('nacosTestNs', this.namespaceTestArr);
                     }
                 }).catch(error => {
                     this.ajaxError(error);
                 });
             },
             loadNacosFile: function (isProd) {
-                let url = '/nacos/files?' + this.getPara(isProd, true);
+                let url = '/v1/nacos/files?' + this.getPara(isProd, true);
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.fileProdArr = response.data;
@@ -303,6 +302,18 @@
             },
             prodNacosChange: function () {
                 this.loadNacosFile(true);
+            },
+            testNacosFileChange: function (testFile) {
+                if (!testFile)
+                    return;
+                testFile = testFile.replace('-dev.yml', '').replace('-test.yml', '');
+                for (let i = 0, j = this.fileProdArr.length; i < j; i++) {
+                    let item = this.fileProdArr[i];
+                    if (item.indexOf(testFile) === 0) {
+                        this.searchCond.nacosProdFile = item;
+                        break;
+                    }
+                }
             },
             compareConfig: function (formName) {
                 this.$refs[formName].validate((valid) => {
@@ -435,7 +446,7 @@
                 return false;
             },
             loadConfigs: function (isProd) {
-                let urlConfig = '/nacos/concfig?' + this.getPara(isProd, true);
+                let urlConfig = '/v1/nacos/concfig?' + this.getPara(isProd, true);
 
                 return axios.get(urlConfig).then(response => {
                     let resultData = {};
@@ -504,13 +515,17 @@
             },
             ajaxError: function (error) {
                 if (error.response && error.response.data) {
-                    let msg = error.response.data['Msg'];
+                    let msg = error.response.data['error'];
                     if (msg === 'Unauthorized') {
                         location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
                         return;
                     }
                     console.log(JSON.stringify(error.response.data));
-                    alert(msg);
+                    if (msg === 'Internal Server Error') {
+                        alert('获取失败，可能是没权限');
+                    } else {
+                        alert(msg);
+                    }
                 } else {
                     console.log(JSON.stringify(error));
                     alert('未知错误');
