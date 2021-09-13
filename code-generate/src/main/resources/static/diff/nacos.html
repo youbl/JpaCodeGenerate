@@ -29,13 +29,13 @@
 
         <el-form-item label="对比的源" style="font-weight: bold;">
             <el-form-item label="url">
-                <el-input v-model="searchCond.nacosTestIp" placeholder="请输入nacos地址"></el-input>
+                <input type="text" v-model="searchCond.nacosTestIp" style="width:240px"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <el-input v-model="searchCond.nacosTestUser" placeholder="请输入用户名"></el-input>
+                <input type="text" v-model="searchCond.nacosTestUser" style="width:60px"/>
             </el-form-item>
             <el-form-item label="密码">
-                <el-input v-model="searchCond.nacosTestPwd" placeholder="请输入密码" show-password></el-input>
+                <input type="password" v-model="searchCond.nacosTestPwd" style="width:60px"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestNacosNs"></el-button>
 
@@ -64,13 +64,13 @@
 
         <el-form-item label="对比目标" style="font-weight: bold;">
             <el-form-item label="url">
-                <el-input v-model="searchCond.nacosProdIp" placeholder="请输入nacos地址"></el-input>
+                <input type="text" v-model="searchCond.nacosProdIp" style="width:240px"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <el-input v-model="searchCond.nacosProdUser" placeholder="请输入用户名"></el-input>
+                <input type="text" v-model="searchCond.nacosProdUser" style="width:60px"/>
             </el-form-item>
             <el-form-item label="密码">
-                <el-input v-model="searchCond.nacosProdPwd" placeholder="请输入密码" show-password></el-input>
+                <input type="password" v-model="searchCond.nacosProdPwd" style="width:60px"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdNacosNs"></el-button>
 

@@ -28,13 +28,13 @@
              style="text-align: left">
         <el-form-item label="左库" prop="dbTestName" style="font-weight: bold;">
             <el-form-item label="IP">
-                <el-input v-model="searchCond.dbTestIp" placeholder="请输入IP，端口请加冒号"></el-input>
+                <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <el-input v-model="searchCond.dbTestUser" placeholder="请输入用户名"></el-input>
+                <input type="text" v-model="searchCond.dbTestUser" style="width:60px"/>
             </el-form-item>
             <el-form-item label="密码">
-                <el-input v-model="searchCond.dbTestPwd" placeholder="请输入密码" show-password></el-input>
+                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestDb"></el-button>
 
@@ -52,13 +52,13 @@
         <br>
         <el-form-item label="右库" prop="dbProdName" style="font-weight: bold;">
             <el-form-item label="IP">
-                <el-input v-model="searchCond.dbProdIp" placeholder="请输入IP，端口请加冒号"></el-input>
+                <input type="text" v-model="searchCond.dbProdIp" style="width:240px"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <el-input v-model="searchCond.dbProdUser" placeholder="请输入用户名"></el-input>
+                <input type="text" v-model="searchCond.dbProdUser" style="width:60px"/>
             </el-form-item>
             <el-form-item label="密码">
-                <el-input v-model="searchCond.dbProdPwd" placeholder="请输入密码" show-password></el-input>
+                <input type="password" v-model="searchCond.dbProdPwd" style="width:60px"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdDb"></el-button>
 
@@ -241,9 +241,15 @@
                 this.searchCond[prop] = arr[0];
             },
             testDbChange: function (testDb) {
+                if (!testDb)
+                    return;
+                testDb = testDb.replace('-dev', '')
+                    .replace('-test', '')
+                    .replace('-prev', '');
+
                 for (let i = 0, j = this.dbsProd.length; i < j; i++) {
                     let item = this.dbsProd[i];
-                    if (item === testDb) {
+                    if (item.indexOf(testDb) === 0) {
                         this.searchCond.dbProdName = item;
                         break;
                     }
