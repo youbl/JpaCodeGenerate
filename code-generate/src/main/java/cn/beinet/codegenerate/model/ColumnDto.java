@@ -77,6 +77,34 @@ public class ColumnDto {
      * 字段类型
      */
     private String type;
+
+    /**
+     * MySQL8.0不返回整型长度，所以这里要替换，兼容8.0跟5.7对比
+     *
+     * @return
+     */
+    public String getType() {
+        if (StringUtils.isEmpty(type))
+            return "";
+
+        int idx = type.indexOf('(');
+        if (idx < 0)
+            return type;
+        String[] numType = new String[]{
+                "int",
+                "bigint",
+                "tinyint",
+                "smallint",
+        };
+        for (String numTp : numType) {
+            if (type.startsWith(numTp)) {
+                type = type.replaceAll("\\([^)]*\\)", "");
+                break;
+            }
+        }
+        return type;
+    }
+
     /**
      * 字段注释
      */
