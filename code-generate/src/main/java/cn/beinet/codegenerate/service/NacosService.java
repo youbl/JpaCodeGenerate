@@ -110,10 +110,14 @@ public class NacosService {
         String[] containKeys = new String[]{
                 ".password",
                 ".pwd",
-                ".private_key",
-                ".public_key",
+                ".private-key",
+                ".public-key",
                 ".secret-key",
                 ".access-key",
+                ".private_key",
+                ".public_key",
+                ".secret_key",
+                ".access_key",
         };
         String[] endKeys = new String[]{
                 ".sk",
