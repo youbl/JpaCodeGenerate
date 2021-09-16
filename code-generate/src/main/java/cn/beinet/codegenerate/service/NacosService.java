@@ -6,7 +6,6 @@ import cn.beinet.codegenerate.rpc.dto.NacosNameSpaces;
 import cn.beinet.codegenerate.rpc.dto.NacosToken;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
@@ -87,18 +86,54 @@ public class NacosService {
     /**
      * 转换为KeyValue形式
      *
-     * @param yml yml格式的字符串
+     * @param yml     yml格式的字符串
+     * @param hidePwd 是否隐藏密码
      * @return prop
      */
-    public Properties parseYmlToKV(String yml) {
+    public Properties parseYmlToKV(String yml, boolean hidePwd) {
         try (InputStream inputStream = new ByteArrayInputStream(yml.getBytes())) {
             InputStreamResource resource = new InputStreamResource(inputStream);
             YamlPropertiesFactoryBean yamlBean = new YamlPropertiesFactoryBean();
             yamlBean.setResources(resource);//(new ClassPathResource("application.yml"));
             yamlBean.afterPropertiesSet();
-            return yamlBean.getObject();
+            Properties ret = yamlBean.getObject();
+            if (hidePwd) {
+                hidePwd(ret);
+            }
+            return ret;
         } catch (Exception exp) {
             throw new RuntimeException(exp);
+        }
+    }
+
+    private void hidePwd(Properties props) {
+        String[] containKeys = new String[]{
+                ".password",
+                ".pwd",
+                ".private_key",
+                ".public_key",
+                ".secret-key",
+                ".access-key",
+        };
+        String[] endKeys = new String[]{
+                ".sk",
+                ".ak",
+                ".key",
+        };
+        for (Map.Entry<Object, Object> item : props.entrySet()) {
+            String key = (item.getKey() + "").toLowerCase();
+            for (String pwdKey : containKeys) {
+                if (key.contains(pwdKey)) {
+                    item.setValue("******");
+                    break;
+                }
+            }
+            for (String pwdKey : endKeys) {
+                if (key.endsWith(pwdKey)) {
+                    item.setValue("******");
+                    break;
+                }
+            }
         }
     }
 }

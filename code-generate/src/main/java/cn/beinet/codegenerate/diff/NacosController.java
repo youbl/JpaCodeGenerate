@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 @RestController
@@ -43,7 +42,7 @@ public class NacosController {
                                @RequestParam String nameSpace,
                                @RequestParam String dataId) {
         String ymlStr = nacosService.getFile(url, user, pwd, nameSpace, dataId, "DEFAULT_GROUP");
-        return nacosService.parseYmlToKV(ymlStr);
+        return nacosService.parseYmlToKV(ymlStr, true);
     }
 
     // 没有app的概念了，不方便忽略
