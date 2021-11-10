@@ -65,7 +65,7 @@ public class MySqlController {
 
         // 收集每个索引的字段列表，拼接sql
         for (IndexDto index : allIndexes) {
-            String tbName = index.getTable();
+            String tbName = index.getOriginTable();
             Map<String, String> tableIndexes = ret.computeIfAbsent(tbName, tableName -> new HashMap<>());
             String sql = tableIndexes.get(index.getIndexName());
             if (!StringUtils.isEmpty(sql))

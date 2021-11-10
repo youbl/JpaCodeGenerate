@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.controller;
 
 import cn.beinet.codegenerate.service.CodeGenerateService;
+import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import cn.beinet.codegenerate.model.ColumnDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +21,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
+@AllArgsConstructor
 public class CodeController {
 
-    @Autowired
-    CodeGenerateService codeGenerateService;
+    private final CodeGenerateService codeGenerateService;
 
 
     /**
