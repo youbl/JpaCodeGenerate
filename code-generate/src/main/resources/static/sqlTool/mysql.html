@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MySQL执行工具</title>
+    <script src="/static/unpkg/vue.min.js"></script>
+    <script src="/static/unpkg/axios.min.js"></script>
+    <script src="/static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <el-form-item label="数据库连接信息" style="font-weight: bold;">
+            <el-form-item label="IP">
+                <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <input type="text" v-model="searchCond.dbTestUser" style="width:60px"/>
+            </el-form-item>
+            <el-form-item label="密码">
+                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"/>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
+            <el-form-item label="刷新数据库列表">
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库">
+                    <el-option
+                            v-for="item in dbsTest"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form-item>
+        <br>
+        <el-form-item label="SQL,只能查询" prop="sql" style="font-weight: bold;">
+            <input type="textarea" :row="20" v-model="searchCond.sql" style="width:240px"/>
+        </el-form-item>
+        <br>
+        <el-form-item>
+            <el-button type="primary" icon="el-icon-search" @click="executeSql">执 行</el-button>
+        </el-form-item>
+        <div>
+            <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{}}</span>
+        </div>
+    </el-form>
+    <br>
+
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              :data="filteredTableData"
+              :header-row-class-name="'tableHeader'"
+              style="width: 100%">
+        <el-table-column
+                prop="table"
+                label="表名"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                prop="column"
+                label="字段名"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                prop="test"
+                label="左库"
+                width="400">
+        </el-table-column>
+        <el-table-column
+                prop="prod"
+                label="右库"
+                width="400">
+        </el-table-column>
+        <el-table-column
+                prop="comment"
+                label="注释"
+                width="300">
+        </el-table-column>
+    </el-table>
+</div>
+<script>
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loading: false,
+            searchCond: {
+                dbTestIp: '10.0.0.1',
+                dbTestUser: 'readonly',
+                dbTestPwd: '123456',
+                dbTestName: '',
+                sql: 'SELECT 1 FROM DUAL',
+            },
+
+            dbsTest: {},
+            defaultName: '',
+        },
+        created: function () {
+            this.defaultName = getQueryString('name');
+            if (this.searchCond.dbTestIp)
+                this.loadDbs();
+        },
+        computed: {
+            filteredTableData: function () {
+            }
+        },
+        methods: {
+            combineDbPara: function () {
+                if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
+                    alert('请输入数据库IP/用户/密码');
+                    return;
+                }
+                return 'ip=' + this.searchCond.dbTestIp +
+                    '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
+            },
+            loadDbs: function () {
+                let url = '/mysql/databases?' + this.combineDbPara();
+                return axios.get(url).then(response => {
+                    this.dbsTest = response.data;
+                    this.setByDefault('dbTestName', this.dbsTest);
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            setByDefault: function (prop, arr) {
+                if (arr.length <= 0) {
+                    this.searchCond[prop] = '';
+                    return;
+                }
+                if (this.defaultName) {
+                    for (let i = 0, j = arr.length; i < j; i++) {
+                        if (arr[i].indexOf(this.defaultName) >= 0) {
+                            this.searchCond[prop] = arr[i];
+                            return;
+                        }
+                    }
+                }
+                this.searchCond[prop] = arr[0];
+            },
+            executeSql: function () {
+                if (!this.searchCond.dbTestName) {
+                    return alert('数据库必选');
+                }
+                this.attData = [];
+
+                let url = 'mysql/executeSql?';
+                let urlTest = url + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
+                this.loading = true;
+                return axios.post(urlTest, this.searchCond.sql).then(response => {
+                    this.loading = false;
+                    this.dbsTest = response.data;
+                    this.setByDefault('dbTestName', this.dbsTest);
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+
+    /**
+     * 判断对象有属性
+     * @param obj 对象
+     * @returns {boolean} 有或没有
+     */
+    function hasAnyProperty(obj) {
+        if (!obj)
+            return false;
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
+    }
+</script>
+</body>
+</html>
