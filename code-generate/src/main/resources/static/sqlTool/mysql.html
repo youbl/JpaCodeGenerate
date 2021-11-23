@@ -50,14 +50,14 @@
         </el-form-item>
         <br>
         <el-form-item label="SQL,只能查询" prop="sql" style="font-weight: bold;">
-            <input type="textarea" :row="20" v-model="searchCond.sql" style="width:240px"/>
+            <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL" style="width:1240px"/>
         </el-form-item>
         <br>
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执 行</el-button>
         </el-form-item>
         <div>
-            <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{}}</span>
+            <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
         </div>
     </el-form>
     <br>
@@ -67,33 +67,11 @@
               element-loading-spinner="el-icon-loading"
               element-loading-background="rgba(0, 0, 0, 0.8)"
               border
-              :data="filteredTableData"
-              :header-row-class-name="'tableHeader'"
-              style="width: 100%">
-        <el-table-column
-                prop="table"
-                label="表名"
-                width="200">
-        </el-table-column>
-        <el-table-column
-                prop="column"
-                label="字段名"
-                width="200">
-        </el-table-column>
-        <el-table-column
-                prop="test"
-                label="左库"
-                width="400">
-        </el-table-column>
-        <el-table-column
-                prop="prod"
-                label="右库"
-                width="400">
-        </el-table-column>
-        <el-table-column
-                prop="comment"
-                label="注释"
-                width="300">
+              :data="resultData"
+              :header-row-class-name="'tableHeader'">
+        <el-table-column :label="key"
+                         :prop="key"
+                         v-for="(value, key, index) in resultData[0]">
         </el-table-column>
     </el-table>
 </div>
@@ -112,6 +90,8 @@
 
             dbsTest: {},
             defaultName: '',
+            costTime: 0,
+            resultData: [],
         },
         created: function () {
             this.defaultName = getQueryString('name');
@@ -162,13 +142,23 @@
                 }
                 this.attData = [];
 
-                let url = 'mysql/executeSql?';
+                let url = '/mysql/executeSql?';
                 let urlTest = url + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
+                if (this.loading) {
+                    return alert('执行中，请稍候');
+                }
                 this.loading = true;
-                return axios.post(urlTest, this.searchCond.sql).then(response => {
+                let beginTime = new Date();
+                let body = {
+                    sql: this.searchCond.sql,
+                };
+                return axios.post(urlTest, body).then(response => {
+                    this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
-                    this.dbsTest = response.data;
-                    this.setByDefault('dbTestName', this.dbsTest);
+                    if (response.data.success === false) {
+                        return alert(response.data.stackTrace);
+                    }
+                    this.resultData = response.data;
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
