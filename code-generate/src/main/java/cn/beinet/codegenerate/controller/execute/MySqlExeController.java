@@ -21,9 +21,10 @@ public class MySqlExeController {
                                                           @RequestParam String pwd,
                                                           @RequestParam String db,
                                                           @RequestBody SqlDto sql) {
+        String sqlStr = formatSql(sql.getSql());
         MySqlExecuteRepository repository = new MySqlExecuteRepository(ip, 3306, user, pwd, db);
-        List<Map<String, Object>> result = repository.executeSql(formatSql(sql.getSql()));
-        return GlobalExceptionFilter.ResponseData.ok(result);
+        List<Map<String, Object>> result = repository.executeSql(sqlStr);
+        return GlobalExceptionFilter.ResponseData.ok(sqlStr, result);
     }
 
     private String formatSql(String originSql) {
@@ -50,7 +51,7 @@ public class MySqlExeController {
         }
 
         // 末尾添加limit 100
-        Pattern regLimit = Pattern.compile("(?i)\\slimit\\s+\\d+$");
+        Pattern regLimit = Pattern.compile("(?i)\\slimit\\s+\\d+(,\\s*\\d+)?$");
         if (!regLimit.matcher(originSql).find()) {
             originSql += " limit 100";
         }

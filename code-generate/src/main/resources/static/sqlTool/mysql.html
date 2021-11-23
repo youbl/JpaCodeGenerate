@@ -49,9 +49,22 @@
             </el-form-item>
         </el-form-item>
         <br>
-        <el-form-item label="SQL,只能查询" prop="sql" style="font-weight: bold;">
-            <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL" style="width:1240px"/>
-        </el-form-item>
+        <table>
+            <tr>
+                <td style="width: 1010px;">
+                    <el-form-item label="SQL,只能查询" prop="sql" style="font-weight: bold;">
+                        <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
+                                  style="width:1000px"/>
+                    </el-form-item>
+                </td>
+                <td>
+                    <div style="font-weight: bold;">历史SQL列表</div>
+                    <div v-for="(item, idx) in usingSqls" style="font-size: 12px;">
+                        {{idx+1}}: <a href="javascript:void(0)" @click="setSql(item)">{{item}}</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
         <br>
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执 行</el-button>
@@ -92,17 +105,42 @@
             defaultName: '',
             costTime: 0,
             resultData: [],
+
+            usingSqls: [],
+            usingKey: 'usingSqls',
         },
         created: function () {
+            this.usingSqls = this.loadUsingSqls();
+
             this.defaultName = getQueryString('name');
             if (this.searchCond.dbTestIp)
                 this.loadDbs();
         },
-        computed: {
-            filteredTableData: function () {
-            }
-        },
+        computed: {},
         methods: {
+            setSql: function (sql) {
+                this.searchCond.sql = sql;
+            },
+            loadUsingSqls: function () {
+                let obj = localStorage.getItem(this.usingKey);
+                if (obj == null)
+                    return [];
+                return JSON.parse(obj);
+            },
+            saveUsingSqls: function (sql) {
+                this.addAndDistinct(sql, this.usingSqls);
+                if (this.usingSqls.length > 20) {
+                    this.usingSqls.length = 20;
+                }
+                localStorage.setItem(this.usingKey, JSON.stringify(this.usingSqls));
+            },
+            addAndDistinct: function (item, arr) {
+                for (let i = 0, j = arr.length; i < j; i++) {
+                    if (arr[i] == item)
+                        return;
+                }
+                arr.splice(0, 0, item);// 插入第1位
+            },
             combineDbPara: function () {
                 if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
                     alert('请输入数据库IP/用户/密码');
@@ -159,6 +197,7 @@
                         return alert(response.data.code + ':' + response.data.errMsg);
                     }
                     this.resultData = response.data.result;
+                    this.saveUsingSqls(response.data.errMsg);
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
