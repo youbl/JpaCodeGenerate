@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.controller.execute;
 
+import cn.beinet.codegenerate.GlobalExceptionFilter;
 import cn.beinet.codegenerate.controller.execute.dto.SqlDto;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,13 +16,14 @@ import java.util.regex.Pattern;
 public class MySqlExeController {
 
     @PostMapping("mysql/executeSql")
-    public List<Map<String, Object>> GetMySqlDbs(@RequestParam String ip,
-                                                 @RequestParam String user,
-                                                 @RequestParam String pwd,
-                                                 @RequestParam String db,
-                                                 @RequestBody SqlDto sql) {
+    public GlobalExceptionFilter.ResponseData GetMySqlDbs(@RequestParam String ip,
+                                                          @RequestParam String user,
+                                                          @RequestParam String pwd,
+                                                          @RequestParam String db,
+                                                          @RequestBody SqlDto sql) {
         MySqlExecuteRepository repository = new MySqlExecuteRepository(ip, 3306, user, pwd, db);
-        return repository.executeSql(formatSql(sql.getSql()));
+        List<Map<String, Object>> result = repository.executeSql(formatSql(sql.getSql()));
+        return GlobalExceptionFilter.ResponseData.ok(result);
     }
 
     private String formatSql(String originSql) {

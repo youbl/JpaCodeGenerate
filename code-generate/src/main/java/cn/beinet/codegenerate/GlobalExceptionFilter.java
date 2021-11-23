@@ -16,7 +16,7 @@ public class GlobalExceptionFilter {
     @ExceptionHandler(value = Exception.class)
     public ResponseData exceptionHandler(Exception e) {
         //System.out.println("未知异常！原因是:" + e);
-        return new ResponseData(false, e.getMessage());
+        return ResponseData.fail(e.getMessage());
     }
 
 
@@ -25,20 +25,35 @@ public class GlobalExceptionFilter {
     public static class ResponseData {
 
         /**
-         * 统一成功编码定义
+         * 编码：200成功，其它失败
          */
-        public static final String RESPONSE_SUCCESS_CODE = "0";
-
-        /**
-         * 成功标识：true，业务请求成功，false：业务请求失败
-         */
-        private boolean success;
+        private int code;
 
         /**
          * 异常堆栈
          */
-        private String stackTrace;
+        private String errMsg;
 
+        /**
+         * 源数据
+         */
+        private Object result;
+
+        public static ResponseData fail(String msg) {
+            return new ResponseData(500, msg, null);
+        }
+
+        public static ResponseData fail(int code, String msg) {
+            return new ResponseData(code, msg, null);
+        }
+
+        public static ResponseData ok(Object obj) {
+            return new ResponseData(200, "", obj);
+        }
+
+        public static ResponseData ok(String msg, Object obj) {
+            return new ResponseData(200, msg, obj);
+        }
     }
 
 }

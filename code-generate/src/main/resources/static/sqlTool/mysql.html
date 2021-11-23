@@ -155,10 +155,10 @@
                 return axios.post(urlTest, body).then(response => {
                     this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
-                    if (response.data.success === false) {
-                        return alert(response.data.stackTrace);
+                    if (response.data.code !== 200) {
+                        return alert(response.data.code + ':' + response.data.errMsg);
                     }
-                    this.resultData = response.data;
+                    this.resultData = response.data.result;
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
