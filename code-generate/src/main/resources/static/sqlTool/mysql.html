@@ -27,6 +27,14 @@
     <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
         <el-form-item label="数据库连接信息" style="font-weight: bold;">
+            <el-select v-model="selectDbName" filterable placeholder="请选择环境" @change="dbSelected">
+                <el-option
+                        v-for="item in sqlConns"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                </el-option>
+            </el-select>
             <el-form-item label="IP">
                 <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
             </el-form-item>
@@ -93,12 +101,48 @@
         el: '#divApp',
         data: {
             loading: false,
+
+            selectDbName: '生产-1',
+            sqlConns: [
+                {
+                    name: '生产-1',
+                    dbTestIp: '10.0.0.1',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '123456',
+                    dbTestName: '',
+                    sql: 'SELECT 1 FROM DUAL',
+                },
+                {
+                    name: '生产-2',
+                    dbTestIp: '10.0.0.1',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '123456',
+                    dbTestName: '',
+                    sql: 'SELECT 1 FROM DUAL',
+                },
+                {
+                    name: '生产-3',
+                    dbTestIp: '10.0.0.1',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '123456',
+                    dbTestName: '',
+                    sql: 'SELECT 1 FROM DUAL',
+                },
+                {
+                    name: '测试环境',
+                    dbTestIp: '10.0.0.1',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '123456',
+                    dbTestName: '',
+                    sql: 'SELECT 1 FROM DUAL',
+                },
+            ],
             searchCond: {
-                dbTestIp: '10.0.0.1',
-                dbTestUser: 'readonly',
-                dbTestPwd: '123456',
+                dbTestIp: '',
+                dbTestUser: '',
+                dbTestPwd: '',
                 dbTestName: '',
-                sql: 'SELECT 1 FROM DUAL',
+                sql: '',
             },
 
             dbsTest: {},
@@ -111,6 +155,7 @@
         },
         created: function () {
             this.usingSqls = this.loadUsingSqls();
+            this.searchCond = this.sqlConns[0];
 
             this.defaultName = getQueryString('name');
             if (this.searchCond.dbTestIp)
@@ -118,6 +163,15 @@
         },
         computed: {},
         methods: {
+            dbSelected: function () {
+                for (let i = 0, j = this.sqlConns.length; i < j; i++) {
+                    if (this.sqlConns[i].name === this.selectDbName) {
+                        this.searchCond = this.sqlConns[i];
+                        this.loadDbs();
+                        break;
+                    }
+                }
+            },
             setSql: function (sql) {
                 this.searchCond.sql = sql;
             },
