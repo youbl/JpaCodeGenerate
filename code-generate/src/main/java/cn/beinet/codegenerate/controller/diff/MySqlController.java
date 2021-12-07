@@ -24,6 +24,15 @@ public class MySqlController {
         return columnRepository.findDatabases();
     }
 
+    @GetMapping("mysql/tableNames")
+    public List<String> GetMySqlTableNames(@RequestParam String ip,
+                                           @RequestParam String user,
+                                           @RequestParam String pwd,
+                                           @RequestParam String db) {
+        ColumnRepository columnRepository = getRepository(ip, user, pwd);
+        return columnRepository.findTables(db);
+    }
+
     /**
      * 返回所有字段信息
      *

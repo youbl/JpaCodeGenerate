@@ -46,7 +46,7 @@
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
             <el-form-item label="刷新数据库列表">
-                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库">
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库" @change="dbChange">
                     <el-option
                             v-for="item in dbsTest"
                             :key="item"
@@ -56,7 +56,13 @@
                 </el-select>
             </el-form-item>
         </el-form-item>
-        <br>
+        <div>
+            当前数据库的表：<br>
+            <a v-for="item in tableList" style="display: inline-block; width:300px;"
+               href="javascript:void(0)" @click="getSqlByTable(item)">
+                {{item}}
+            </a>
+        </div>
         <table>
             <tr>
                 <td style="width: 1010px;">
@@ -147,6 +153,8 @@
 
             dbsTest: {},
             defaultName: '',
+            tableList: [],
+
             costTime: 0,
             resultData: [],
 
@@ -171,6 +179,9 @@
                         break;
                     }
                 }
+            },
+            dbChange: function () {
+                this.loadTables();
             },
             setSql: function (sql) {
                 this.searchCond.sql = sql;
@@ -209,9 +220,26 @@
                 return axios.get(url).then(response => {
                     this.dbsTest = response.data;
                     this.setByDefault('dbTestName', this.dbsTest);
+
+                    this.loadTables();
                 }).catch(error => {
                     this.ajaxError(error);
                 });
+            },
+            loadTables: function () {
+                if (!this.searchCond.dbTestName)
+                    return;
+                let url = '/mysql/tableNames?' + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
+                return axios.get(url).then(response => {
+                    this.tableList = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            getSqlByTable: function (tbName) {
+                this.searchCond.sql = 'SELECT * FROM `' + this.searchCond.dbTestName +
+                    '`.`' + tbName +
+                    '` \nWHERE 1=1\nORDER BY 1 DESC';
             },
             setByDefault: function (prop, arr) {
                 if (arr.length <= 0) {
