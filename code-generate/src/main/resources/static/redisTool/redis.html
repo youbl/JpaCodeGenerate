@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Redis执行工具</title>
+    <script src="/static/unpkg/vue.min.js"></script>
+    <script src="/static/unpkg/axios.min.js"></script>
+    <script src="/static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <el-form-item label="Redis连接信息" style="font-weight: bold;">
+            <el-select v-model="selectConn" filterable placeholder="请选择环境" @change="connSelected">
+                <el-option
+                        v-for="item in redisConnList"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                </el-option>
+            </el-select>
+            <el-form-item label="IP">
+                <input type="text" v-model="searchCond.redisIP" style="width:240px"/>
+            </el-form-item>
+            <el-form-item label="密码">
+                <input type="password" v-model="searchCond.redisPwd" style="width:60px"/>
+            </el-form-item>
+            <el-form-item label="DB索引">
+                <input type="text" v-model="searchCond.redisDbIdx" style="width:30px"/>
+            </el-form-item>
+        </el-form-item>
+        <table>
+            <tr>
+                <td style="width: 1010px;">
+                    <el-form-item label="Redis命令,只能查询" prop="redisCmd" style="font-weight: bold;">
+                        <el-input type="text" v-model="searchCond.redisCmd" placeholder="请输入命令"
+                                  style="width:500px"/>
+                    </el-form-item>
+                </td>
+                <td>
+                    <div style="font-weight: bold;">历史命令列表</div>
+                    <div v-for="(item, idx) in usingRedisCmds" style="font-size: 12px;">
+                        {{idx+1}}: <a href="javascript:void(0)" @click="setRedisCmd(item)">{{item}}</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <br>
+        <el-form-item>
+            <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd">执 行</el-button>
+        </el-form-item>
+        <div>
+            <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
+        </div>
+    </el-form>
+    <br>
+
+
+    <el-input type="textarea" :rows="100" v-model="redisResult"
+              style="width:1000px"/>
+</div>
+<script>
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loading: false,
+
+            selectConn: '生产-1',
+            redisConnList: [
+                {
+                    name: '生产-1',
+                    redisIP: '10.0.0.1',
+                    redisPwd: '123456',
+                    redisDbIdx: '0',
+                    redisCmd: '',
+                },
+            ],
+            searchCond: {
+                redisIP: '',
+                redisPwd: '',
+                redisDbIdx: '0',
+                redisCmd: '',
+            },
+
+            costTime: 0,
+            redisResult: '',
+
+            usingRedisCmds: [],
+            usingKey: 'usingRedisCmds',
+        },
+        created: function () {
+            this.usingRedisCmds = this.loadUsingRedisCmds();
+            this.searchCond = this.redisConnList[0];
+        },
+        computed: {},
+        methods: {
+            connSelected: function () {
+                for (let i = 0, j = this.redisConnList.length; i < j; i++) {
+                    if (this.redisConnList[i].name === this.selectConn) {
+                        this.searchCond = this.redisConnList[i];
+                        break;
+                    }
+                }
+            },
+            setRedisCmd: function (cmd) {
+                this.searchCond.redisCmd = cmd;
+            },
+            loadUsingRedisCmds: function () {
+                let obj = localStorage.getItem(this.usingKey);
+                if (obj == null)
+                    return [];
+                return JSON.parse(obj);
+            },
+            saveUsingRedisCmds: function (cmd) {
+                this.addAndDistinct(cmd, this.usingRedisCmds);
+                if (this.usingRedisCmds.length > 20) {
+                    this.usingRedisCmds.length = 20;
+                }
+                localStorage.setItem(this.usingKey, JSON.stringify(this.usingRedisCmds));
+            },
+            addAndDistinct: function (item, arr) {
+                for (let i = 0, j = arr.length; i < j; i++) {
+                    if (arr[i] == item)
+                        return;
+                }
+                arr.splice(0, 0, item);// 插入第1位
+            },
+            combineDbPara: function () {
+                if (!this.searchCond.redisIP) {
+                    alert('请输入IP');
+                    return;
+                }
+                return 'ip=' + this.searchCond.redisIP +
+                    '&db=' + encodeURIComponent(this.searchCond.redisDbIdx) +
+                    '&pwd=' + encodeURIComponent(this.searchCond.redisPwd);
+            },
+            executeRedisCmd: function () {
+                if (!this.searchCond.redisDbIdx) {
+                    this.searchCond.redisDbIdx = '0';
+                }
+                this.attData = [];
+
+                let url = '/redis/executeCmd?';
+                let urlTest = url + this.combineDbPara();
+                if (this.loading) {
+                    return alert('执行中，请稍候');
+                }
+                this.loading = true;
+                let beginTime = new Date();
+                let body = {
+                    cmd: this.searchCond.redisCmd,
+                };
+                return axios.post(urlTest, body).then(response => {
+                    this.costTime = Math.floor((new Date()) - beginTime);
+                    this.loading = false;
+                    if (response.data.code !== 200) {
+                        return alert(response.data.code + ':' + response.data.errMsg);
+                    }
+                    this.redisResult = response.data.result;
+                    this.saveUsingRedisCmds(response.data.errMsg);
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+
+    /**
+     * 判断对象有属性
+     * @param obj 对象
+     * @returns {boolean} 有或没有
+     */
+    function hasAnyProperty(obj) {
+        if (!obj)
+            return false;
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
+    }
+</script>
+</body>
+</html>
