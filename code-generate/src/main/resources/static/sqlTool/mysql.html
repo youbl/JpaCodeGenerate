@@ -82,6 +82,7 @@
         <br>
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执 行</el-button>
+            <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出结果为CSV</el-button>
         </el-form-item>
         <div>
             <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
@@ -272,6 +273,7 @@
                 let body = {
                     sql: this.searchCond.sql,
                 };
+                this.resultData = [];
                 return axios.post(urlTest, body).then(response => {
                     this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
@@ -285,7 +287,37 @@
                     this.ajaxError(error);
                 });
             },
-
+            exportResult: function () {
+                if (!this.resultData || !this.resultData.length) {
+                    return alert('没有结果可导出');
+                }
+                let dataHeader = '';
+                let dataContent = '';
+                for (let i = 0, j = this.resultData.length; i < j; i++) {
+                    let row = this.resultData[i];
+                    if (i > 0) {
+                        dataContent += '\r\n';
+                    }
+                    for (let att in row) {
+                        if (i === 0) {
+                            dataHeader += '"' + att + '",';
+                        }
+                        let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
+                        dataContent += '"\t' + cell + '",';  // \t是避免数字变成科学计数
+                    }
+                }
+                this.downloadData(dataHeader + '\r\n' + dataContent);
+            },
+            downloadData: function (data) {
+                // “\ufeff” BOM头
+                let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(data);
+                let downloadLink = document.createElement("a");
+                downloadLink.href = uri;
+                downloadLink.download = "sqlReslut-beinet.csv";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            },
             ajaxError: function (error) {
                 if (error.response && error.response.data) {
                     let msg = error.response.data['Msg'];
