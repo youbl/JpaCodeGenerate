@@ -69,7 +69,7 @@
             <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd">执 行</el-button>
         </el-form-item>
         <div>
-            <span style="padding-left:20px;">耗时: {{costTime}}ms，过期：{{redisResult.ttl}}秒，数据长度：{{redisResult.result.length}}</span>
+            <span style="padding-left:20px;">耗时: {{costTime}}ms，类型：{{redisResult.type}}，过期：{{redisResult.ttl}}秒，数据长度：{{redisResult.result.length}}</span>
         </div>
     </el-form>
     <br>

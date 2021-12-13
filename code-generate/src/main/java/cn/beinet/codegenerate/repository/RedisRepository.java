@@ -52,6 +52,11 @@ public class RedisRepository {
      */
     public RedisResultDto get(String key) {
         RedisResultDto ret = new RedisResultDto();
+        if (key.indexOf('*') > 0) {
+            ret.setResult(getKeysByLike(key));
+            return ret;
+        }
+
         DataType type = getType(key);
         ret.setType(type.toString());
         if (type.equals(DataType.NONE)) {
@@ -76,6 +81,16 @@ public class RedisRepository {
         ret.setResult(result);
         ret.setTtl(getTTL(key));
         return ret;
+    }
+
+    public String getKeysByLike(String key) {
+        int idx = key.indexOf('*');
+        if (idx < 2) {
+            return "keys至少要输入前2个字符";
+        }
+
+        Set list = getRedisTemplate().keys(key);
+        return serialObj(list);
     }
 
     public String getSimple(String key) {
