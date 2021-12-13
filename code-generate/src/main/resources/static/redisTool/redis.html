@@ -36,25 +36,28 @@
                 </el-option>
             </el-select>
             <el-form-item label="IP">
-                <input type="text" v-model="searchCond.redisIP" style="width:240px"/>
+                <input type="text" v-model.trim="searchCond.redisIP" style="width:240px"/>
+            </el-form-item>
+            <el-form-item label="端口">
+                <input type="text" v-model.trim="searchCond.redisPort" style="width:30px"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model="searchCond.redisPwd" style="width:60px"/>
+                <input type="password" v-model.trim="searchCond.redisPwd" style="width:60px"/>
             </el-form-item>
             <el-form-item label="DB索引">
-                <input type="text" v-model="searchCond.redisDbIdx" style="width:30px"/>
+                <input type="text" v-model.trim="searchCond.redisDbIdx" style="width:30px"/>
             </el-form-item>
         </el-form-item>
         <table>
             <tr>
                 <td style="width: 1010px;">
-                    <el-form-item label="Redis命令,只能查询" prop="redisCmd" style="font-weight: bold;">
-                        <el-input type="text" v-model="searchCond.redisCmd" placeholder="请输入命令"
+                    <el-form-item label="Redis的Key" prop="redisCmd" style="font-weight: bold;">
+                        <el-input type="text" v-model.trim="searchCond.redisCmd" placeholder="请输入Redis的KEY"
                                   style="width:500px"/>
                     </el-form-item>
                 </td>
                 <td>
-                    <div style="font-weight: bold;">历史命令列表</div>
+                    <div style="font-weight: bold;">历史KEY列表</div>
                     <div v-for="(item, idx) in usingRedisCmds" style="font-size: 12px;">
                         {{idx+1}}: <a href="javascript:void(0)" @click="setRedisCmd(item)">{{item}}</a>
                     </div>
@@ -66,14 +69,14 @@
             <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd">执 行</el-button>
         </el-form-item>
         <div>
-            <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
+            <span style="padding-left:20px;">耗时: {{costTime}}ms，过期：{{redisResult.ttl}}秒，数据长度：{{redisResult.result.length}}</span>
         </div>
     </el-form>
     <br>
 
 
-    <el-input type="textarea" :rows="100" v-model="redisResult"
-              style="width:1000px"/>
+    <el-input type="textarea" :rows="100" v-model="redisResult.result"
+              style="width:100%"/>
 </div>
 <script>
     const vueApp = new Vue({
@@ -86,20 +89,26 @@
                 {
                     name: '生产-1',
                     redisIP: '10.0.0.1',
+                    redisPort: 6379,
                     redisPwd: '123456',
-                    redisDbIdx: '0',
+                    redisDbIdx: 0,
                     redisCmd: '',
                 },
             ],
             searchCond: {
                 redisIP: '',
+                redisPort: 6379,
                 redisPwd: '',
-                redisDbIdx: '0',
+                redisDbIdx: 0,
                 redisCmd: '',
             },
 
             costTime: 0,
-            redisResult: '',
+            redisResult: {
+                type: '',
+                result: '',
+                ttl: 0,
+            },
 
             usingRedisCmds: [],
             usingKey: 'usingRedisCmds',
@@ -144,15 +153,19 @@
             combineDbPara: function () {
                 if (!this.searchCond.redisIP) {
                     alert('请输入IP');
-                    return;
+                    return '';
                 }
                 return 'ip=' + this.searchCond.redisIP +
-                    '&db=' + encodeURIComponent(this.searchCond.redisDbIdx) +
+                    '&port=' + this.searchCond.redisPort +
+                    '&db=' + this.searchCond.redisDbIdx +
                     '&pwd=' + encodeURIComponent(this.searchCond.redisPwd);
             },
             executeRedisCmd: function () {
                 if (!this.searchCond.redisDbIdx) {
-                    this.searchCond.redisDbIdx = '0';
+                    this.searchCond.redisDbIdx = 0;
+                }
+                if (!this.searchCond.redisPort) {
+                    this.searchCond.redisPort = 6379;
                 }
                 this.attData = [];
 
@@ -179,7 +192,12 @@
                     this.ajaxError(error);
                 });
             },
-
+            jsonFormat: function (str) {
+                if (!str) {
+                    return str;
+                }
+                return JSON.stringify(JSON.parse(str), null, 4);
+            },
             ajaxError: function (error) {
                 if (error.response && error.response.data) {
                     let msg = error.response.data['Msg'];
