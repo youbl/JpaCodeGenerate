@@ -102,6 +102,16 @@
                          v-for="(value, key, index) in resultData[0]">
         </el-table-column>
     </el-table>
+
+    <el-dialog :title="'表定义:' + selectedTable" :visible.sync="generateSqlShow">
+        <div>
+            <el-input
+                    type="textarea"
+                    :rows="20"
+                    v-model="generateSql">
+            </el-input>
+        </div>
+    </el-dialog>
 </div>
 <script>
     const vueApp = new Vue({
@@ -161,10 +171,15 @@
 
             usingSqls: [],
             usingKey: 'usingSqls',
+
+            generateSqlShow: false,
+            selectedTable: '',
+            generateSql: '',
         },
         created: function () {
             this.usingSqls = this.loadUsingSqls();
-            this.searchCond = this.sqlConns[0];
+            this.dbSelected();
+            // this.searchCond = this.sqlConns[0];
 
             this.defaultName = getQueryString('name');
             if (this.searchCond.dbTestIp)
@@ -194,6 +209,7 @@
                 return JSON.parse(obj);
             },
             saveUsingSqls: function (sql) {
+                this.searchCond.sql = sql;
                 this.addAndDistinct(sql, this.usingSqls);
                 if (this.usingSqls.length > 20) {
                     this.usingSqls.length = 20;
@@ -238,9 +254,24 @@
                 });
             },
             getSqlByTable: function (tbName) {
+                if (!this.searchCond.dbTestName)
+                    return;
+                this.selectedTable = tbName;
+                let url = '/mysql/tables/ddl?' +
+                    this.combineDbPara() +
+                    '&db=' + this.searchCond.dbTestName +
+                    '&tableName=' + encodeURIComponent(tbName);
+                return axios.get(url).then(response => {
+                    this.generateSql = response.data;
+                    this.generateSqlShow = true;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+                /*
                 this.searchCond.sql = 'SELECT * FROM `' + this.searchCond.dbTestName +
                     '`.`' + tbName +
                     '` \nWHERE 1=1\nORDER BY 1 DESC';
+                 */
             },
             setByDefault: function (prop, arr) {
                 if (arr.length <= 0) {

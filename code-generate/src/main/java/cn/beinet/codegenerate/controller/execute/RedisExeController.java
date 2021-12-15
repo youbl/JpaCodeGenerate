@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RedisExeController {
 
-    @PostMapping("redis/executeCmd")
+    @PostMapping("v1/redis/executeCmd")
     public GlobalExceptionFilter.ResponseData GetMySqlDbs(@RequestParam String ip,
                                                           @RequestParam int port,
                                                           @RequestParam String pwd,

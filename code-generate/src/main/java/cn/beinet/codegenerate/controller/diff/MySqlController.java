@@ -39,6 +39,22 @@ public class MySqlController {
      * @param db 读取哪个数据库
      * @return 字段信息
      */
+    @GetMapping("mysql/tables/ddl")
+    public String GetMySqlTableDDL(@RequestParam String ip,
+                                   @RequestParam String user,
+                                   @RequestParam String pwd,
+                                   @RequestParam String db,
+                                   @RequestParam String tableName) {
+        ColumnRepository columnRepository = getRepository(ip, user, pwd);
+        return columnRepository.getTableDDL(db, tableName);
+    }
+
+    /**
+     * 返回所有字段信息
+     *
+     * @param db 读取哪个数据库
+     * @return 字段信息
+     */
     @GetMapping("mysql/tables")
     public Map<String, List<ColumnDto>> GetMySqlTables(@RequestParam String ip,
                                                        @RequestParam String user,

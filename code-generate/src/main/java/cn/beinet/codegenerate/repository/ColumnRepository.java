@@ -48,6 +48,12 @@ public class ColumnRepository {
         return getJdbcTemplate().query(sql, new Object[]{database}, new MyRowMapper());
     }
 
+    public String getTableDDL(String database, String tableName) {
+        String sql = "SHOW CREATE TABLE `" + database + "`.`" + tableName + "`";
+        List<String> ret = getJdbcTemplate().query(sql, new MyRowMapper(2));
+        return ret.get(0);
+    }
+
     /**
      * 返回指定表的字段定义
      *
@@ -127,6 +133,16 @@ public class ColumnRepository {
     }
 
     static class MyRowMapper implements RowMapper<String> {
+        private int colIndex;
+
+        public MyRowMapper() {
+            this(1);
+        }
+
+        public MyRowMapper(int colIndex) {
+            this.colIndex = colIndex;
+        }
+
         /**
          * 把数据库的行，转换为字符串返回
          *
@@ -136,7 +152,7 @@ public class ColumnRepository {
          * @throws SQLException 数据库异常
          */
         public String mapRow(ResultSet resultSet, int i) throws SQLException {
-            return resultSet.getString(1);
+            return resultSet.getString(colIndex);
         }
     }
 
