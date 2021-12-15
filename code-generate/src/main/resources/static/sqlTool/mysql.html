@@ -111,6 +111,12 @@
                     v-model="generateSql">
             </el-input>
         </div>
+        <br>
+        <template>
+            <el-button type="primary" @click="generateSelectSql">生成 SELECT 语句</el-button>
+            <el-button type="primary" @click="generateUpdateSql">生成 UPDATE 语句</el-button>
+            <el-button type="primary" @click="generateInsertSql">生成 INSERT 语句</el-button>
+        </template>
     </el-dialog>
 </div>
 <script>
@@ -254,7 +260,7 @@
                 });
             },
             getSqlByTable: function (tbName) {
-                if (!this.searchCond.dbTestName)
+                if (!this.searchCond.dbTestName || !tbName)
                     return;
                 this.selectedTable = tbName;
                 let url = '/mysql/tables/ddl?' +
@@ -273,6 +279,71 @@
                     '` \nWHERE 1=1\nORDER BY 1 DESC';
                  */
             },
+            generateSelectSql: function () {
+                let fieldList = this.generateFields();
+                if (!fieldList || fieldList.length <= 0) {
+                    return '未找到字段';
+                }
+                let sql = 'SELECT ';
+                for (let i = 0, j = fieldList.length; i < j; i++) {
+                    if (i > 0)
+                        sql += ',\n       ';
+                    sql += 'a.`' + fieldList[i] + '`';
+                }
+                sql += '\n  FROM `' + this.searchCond.dbTestName + '`.`'
+                    + this.selectedTable + '` a\n WHERE 1=1\n ORDER BY 1 DESC LIMIT 200;';
+                this.searchCond.sql = sql;
+                this.generateSqlShow = false;
+            },
+            generateUpdateSql: function () {
+                let fieldList = this.generateFields();
+                if (!fieldList || fieldList.length <= 0) {
+                    return '未找到字段';
+                }
+                let sql = 'UPDATE `' + this.searchCond.dbTestName + '`.`'
+                    + this.selectedTable + '`\n   SET ';
+                for (let i = 0, j = fieldList.length; i < j; i++) {
+                    if (i > 0)
+                        sql += ',\n       ';
+                    sql += '`' + fieldList[i] + '`=\'{' + fieldList[i] + '}\'';
+                }
+                sql += '\n WHERE id={id};';
+                this.searchCond.sql = sql;
+                this.generateSqlShow = false;
+            },
+            generateInsertSql: function () {
+                let fieldList = this.generateFields();
+                if (!fieldList || fieldList.length <= 0) {
+                    return '未找到字段';
+                }
+                let sql = 'INSERT INTO `' + this.searchCond.dbTestName + '`.`'
+                    + this.selectedTable + '`\n(\n       ';
+                for (let i = 0, j = fieldList.length; i < j; i++) {
+                    if (i > 0)
+                        sql += ',\n       ';
+                    sql += '`' + fieldList[i] + '`';
+                }
+                sql += '\n)VALUES(\n       ';
+                for (let i = 0, j = fieldList.length; i < j; i++) {
+                    if (i > 0)
+                        sql += ',\n       ';
+                    sql += '\'{' + fieldList[i] + '}\'';
+                }
+                sql += '\n);';
+                this.searchCond.sql = sql;
+                this.generateSqlShow = false;
+            },
+            generateFields: function () {
+                let fieldList = [];
+
+                let regex = /[\r\n]+\s+`([^`]+)`/g;  // 一定要有最后的g
+                let match = '';
+                while (match = regex.exec(this.generateSql)) {
+                    fieldList.push(match[1]);
+                }
+                return fieldList;
+            },
+
             setByDefault: function (prop, arr) {
                 if (arr.length <= 0) {
                     this.searchCond[prop] = '';
