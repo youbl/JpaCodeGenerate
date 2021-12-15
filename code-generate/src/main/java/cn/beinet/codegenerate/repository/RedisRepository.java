@@ -35,7 +35,7 @@ public class RedisRepository {
     private final String pwd;
 
     private StringRedisTemplate redisTemplate;
-    private ObjectMapper objectMapper = createObjectMapper();
+    private final ObjectMapper objectMapper = createObjectMapper();
 
     public RedisRepository(String ip, int port, int dbIndex, String pwd) {
         this.ip = ip;
@@ -64,18 +64,27 @@ public class RedisRepository {
         }
 
         String result;
-        switch (getType(key)) {
-            case HASH:
-                result = HGetAll(key);
-            case SET:
-                result = SMembers(key);
-            case LIST:
-                result = LRange(key);
-            case ZSET:
-                result = ZRange(key);
+        try {
+            switch (type) {
+                case HASH:
+                    result = HGetAll(key);
+                    break;
+                case SET:
+                    result = SMembers(key);
+                    break;
+                case LIST:
+                    result = LRange(key);
+                    break;
+                case ZSET:
+                    result = ZRange(key);
+                    break;
                 // case STRING:
-            default:
-                result = getSimple(key);
+                default:
+                    result = getSimple(key);
+                    break;
+            }
+        } catch (Exception exp) {
+            result = "获取出错:" + exp.getMessage();
         }
 // 	NONE("none"), STRING("string"), LIST("list"), SET("set"), ZSET("zset"), HASH("hash"),
         ret.setResult(result);
@@ -89,7 +98,7 @@ public class RedisRepository {
             return "keys至少要输入前2个字符";
         }
 
-        Set list = getRedisTemplate().keys(key);
+        Set<String> list = getRedisTemplate().keys(key);
         return serialObj(list);
     }
 
@@ -100,25 +109,25 @@ public class RedisRepository {
 
     // 取hash的所有值
     public String HGetAll(String key) {
-        Map map = getRedisTemplate().opsForHash().entries(key);
+        Map<Object, Object> map = getRedisTemplate().opsForHash().entries(key);
         return serialObj(map);
     }
 
     // 取set的所有值
     public String SMembers(String key) {
-        Set list = getRedisTemplate().opsForSet().members(key);
+        Set<String> list = getRedisTemplate().opsForSet().members(key);
         return serialObj(list);
     }
 
     // 取list的所有值
     public String LRange(String key) {
-        List list = getRedisTemplate().opsForList().range(key, 0, -1);
+        List<String> list = getRedisTemplate().opsForList().range(key, 0, -1);
         return serialObj(list);
     }
 
     // 取zset的所有值
     public String ZRange(String key) {
-        Set list = getRedisTemplate().opsForZSet().range(key, 0, -1);
+        Set<String> list = getRedisTemplate().opsForZSet().range(key, 0, -1);
         return serialObj(list);
     }
 

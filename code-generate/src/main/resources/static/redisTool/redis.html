@@ -185,6 +185,7 @@
                     if (response.data.code !== 200) {
                         return alert(response.data.code + ':' + response.data.errMsg);
                     }
+                    response.data.result.result = this.jsonFormat(response.data.result.result);
                     this.redisResult = response.data.result;
                     this.saveUsingRedisCmds(response.data.errMsg);
                 }).catch(error => {
@@ -196,7 +197,11 @@
                 if (!str) {
                     return str;
                 }
-                return JSON.stringify(JSON.parse(str), null, 4);
+                try {
+                    return JSON.stringify(JSON.parse(str), null, 4);
+                } catch (e) {
+                    return str;
+                }
             },
             ajaxError: function (error) {
                 if (error.response && error.response.data) {
