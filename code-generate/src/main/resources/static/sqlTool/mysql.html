@@ -99,6 +99,7 @@
               :header-row-class-name="'tableHeader'">
         <el-table-column :label="key"
                          :prop="key"
+                         sortable
                          v-for="(value, key, index) in resultData[0]">
         </el-table-column>
     </el-table>
@@ -113,7 +114,7 @@
         </div>
         <br>
         <template>
-            <el-button type="primary" @click="generateSelectSql">生成 SELECT 语句</el-button>
+            <el-button type="primary" @click="generateSelectSql">生成 SELECT 语句并查询</el-button>
             <el-button type="primary" @click="generateUpdateSql">生成 UPDATE 语句</el-button>
             <el-button type="primary" @click="generateInsertSql">生成 INSERT 语句</el-button>
         </template>
@@ -239,8 +240,12 @@
                     '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
             },
             loadDbs: function () {
+                let currentIp = this.searchCond.dbTestIp;
                 let url = '/mysql/databases?' + this.combineDbPara();
                 return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert(currentIp + '出错:\n' + response.data.errMsg);
+                    }
                     this.dbsTest = response.data;
                     this.setByDefault('dbTestName', this.dbsTest);
 
@@ -291,9 +296,13 @@
                     sql += 'a.`' + fieldList[i] + '`';
                 }
                 sql += '\n  FROM `' + this.searchCond.dbTestName + '`.`'
-                    + this.selectedTable + '` a\n WHERE 1=1\n ORDER BY 1 DESC LIMIT 200;';
+                    + this.selectedTable + '` a\n WHERE 1=1\n ORDER BY '
+                    + this.generatePrimaryKey()
+                    + ' DESC LIMIT 200;';
                 this.searchCond.sql = sql;
                 this.generateSqlShow = false;
+
+                this.executeSql();
             },
             generateUpdateSql: function () {
                 let fieldList = this.generateFields();
@@ -307,7 +316,7 @@
                         sql += ',\n       ';
                     sql += '`' + fieldList[i] + '`=\'{' + fieldList[i] + '}\'';
                 }
-                sql += '\n WHERE id={id};';
+                sql += '\n WHERE ' + this.generatePrimaryKey() + '={xxx};';
                 this.searchCond.sql = sql;
                 this.generateSqlShow = false;
             },
@@ -342,6 +351,13 @@
                     fieldList.push(match[1]);
                 }
                 return fieldList;
+            },
+            generatePrimaryKey: function () {
+                let regex = /PRIMARY\s+KEY\s+\(([^\)]+)\)/g;
+                if (regex.test(this.generateSql)) {
+                    return RegExp.$1;
+                }
+                return '1';
             },
 
             setByDefault: function (prop, arr) {
