@@ -81,6 +81,7 @@
         </table>
         <br>
         <el-form-item>
+            <el-checkbox v-model="showAsTextBox">结果用textbox展示</el-checkbox>
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执 行</el-button>
             <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出结果为CSV</el-button>
         </el-form-item>
@@ -98,9 +99,14 @@
               :data="resultData"
               :header-row-class-name="'tableHeader'">
         <el-table-column :label="key"
-                         :prop="key"
                          sortable
+                         :sort-by="key"
                          v-for="(value, key, index) in resultData[0]">
+            <template slot-scope="scope">
+                <input v-show="showAsTextBox" type="text" :value="scope.row[key]" style="width:100%"
+                       @click="showFieldValue(scope.row, key)">
+                <span v-show="!showAsTextBox">{{scope.row[key]}}</span>
+            </template>
         </el-table-column>
     </el-table>
 
@@ -117,6 +123,20 @@
             <el-button type="primary" @click="generateSelectSql">生成 SELECT 语句并查询</el-button>
             <el-button type="primary" @click="generateUpdateSql">生成 UPDATE 语句</el-button>
             <el-button type="primary" @click="generateInsertSql">生成 INSERT 语句</el-button>
+        </template>
+    </el-dialog>
+
+    <el-dialog :title="'字段值详情:' + selectedTable + '.' + selectedField" :visible.sync="fieldValueShow">
+        <div>
+            <el-input
+                    type="textarea"
+                    :rows="20"
+                    v-model="selectedFieldValue">
+            </el-input>
+        </div>
+        <br>
+        <template>
+            <el-button type="primary" @click="formatJson">JSON格式化</el-button>
         </template>
     </el-dialog>
 </div>
@@ -182,6 +202,11 @@
             generateSqlShow: false,
             selectedTable: '',
             generateSql: '',
+
+            showAsTextBox: true,
+            fieldValueShow: false,
+            selectedField: '',
+            selectedFieldValue: '',
         },
         created: function () {
             this.usingSqls = this.loadUsingSqls();
@@ -358,6 +383,19 @@
                     return RegExp.$1;
                 }
                 return '1';
+            },
+
+            showFieldValue: function (row, key) {
+                this.fieldValueShow = true;
+                this.selectedField = key;
+                this.selectedFieldValue = row[key];
+            },
+            formatJson: function () {
+                try {
+                    this.selectedFieldValue = JSON.stringify(JSON.parse(this.selectedFieldValue), null, 4);
+                } catch (e) {
+                    alert('错误:' + e);
+                }
             },
 
             setByDefault: function (prop, arr) {
