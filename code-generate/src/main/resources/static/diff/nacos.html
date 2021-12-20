@@ -213,14 +213,22 @@
                             return false;
                         if (item.test === item.prod)
                             return false;
-                        let testVal = item.test.replace('test', '');
-                        return (testVal !== item.prod && testVal !== item.prod.replace('prod', ''));
+                        let testVal = this.removeEnvStr(item.test);
+                        return (item.test !== item.prod
+                            && testVal !== item.prod
+                            && testVal !== this.removeEnvStr(item.prod));
                     });
                 }
                 return this.attData;
             }
         },
         methods: {
+            removeEnvStr: function (str) {
+                return str.replace(/dev/g, '')
+                    .replace(/test/g, '')
+                    .replace(/pre/g, '')
+                    .replace(/prod/g, '');
+            },
             getPara: function (isProd, full) {
                 let ip = isProd ? this.searchCond.nacosProdIp : this.searchCond.nacosTestIp;
                 if (!ip)

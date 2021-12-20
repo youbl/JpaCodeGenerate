@@ -56,14 +56,6 @@
                 </el-select>
             </el-form-item>
         </el-form-item>
-        <div>
-            当前数据库的表：<br>
-            <a v-for="item in tableList" style="display: inline-block; width:300px;"
-               href="javascript:void(0)" @click="getSqlByTable(item)">
-                {{item}}
-            </a>
-        </div>
-        <hr>
         <table>
             <tr>
                 <td style="width: 1010px;">
@@ -75,12 +67,25 @@
                 </td>
                 <td>
                     <div style="font-weight: bold;">
+                        数据库表清单:
+                    </div>
+                    <div style="height: 500px; width: 250px; overflow: scroll;font-size: 12px;">
+                        <a v-for="item in tableList" :title="item"
+                           href="javascript:void(0)" @click="getSqlByTable(item)">
+                            {{item}}
+                        </a><br>
+                    </div>
+                </td>
+                <td>
+                    <div style="font-weight: bold;">
                         历史SQL列表
                         <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1)">清空</el-button>
                     </div>
-                    <div v-for="(item, idx) in usingSqls" style="font-size: 12px;">
-                        <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
-                        {{idx+1}}: <a href="javascript:void(0)" @click="setSql(item)">{{item}}</a>
+                    <div style="height: 500px; width: 400px; overflow-y: scroll;">
+                        <div v-for="(item, idx) in usingSqls" style="font-size: 12px;">
+                            <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
+                            {{idx+1}}: <a href="javascript:void(0)" @click="setSql(item)">{{item}}</a>
+                        </div>
                     </div>
                 </td>
             </tr>
