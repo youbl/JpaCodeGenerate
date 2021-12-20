@@ -19,6 +19,7 @@
     </el-tabs>
 </div>
 <script>
+    const VERSION = '2';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -27,19 +28,19 @@
 
             pages: [
                 {
-                    useUrl: '/sql/sqlTool/mysql.html',
+                    useUrl: '/sqlTool/mysql.html?name=processor',
                     title: 'mysql查询',
                 },
                 {
-                    useUrl: '/sql/redisTool/redis.html',
+                    useUrl: '/redisTool/redis.html',
                     title: 'redis键查询',
                 },
                 {
-                    useUrl: '/diff/mysql.html',
+                    useUrl: '/diff/mysql.html?name=processor',
                     title: 'mysql字段对比',
                 },
                 {
-                    useUrl: '/diff/mysqlIndex.html',
+                    useUrl: '/diff/mysqlIndex.html?name=processor',
                     title: 'mysql索引对比',
                 },
                 {
@@ -66,7 +67,7 @@
                     showedSubTab = parseInt(showedSubTab, 10);
                 }
                 this.activeName = this.arr[showedSubTab].title;
-                this.arr[showedSubTab].url = this.arr[showedSubTab].useUrl;
+                this.arr[showedSubTab].url = addParaToUrl(this.arr[showedSubTab].useUrl, 'ver=' + VERSION);
             }
 
             this.adjustAllIframe();
@@ -74,7 +75,7 @@
         methods: {
             handleTabClick: function (tab, event) {
                 // 避免无效的iframe加载
-                this.arr[tab.index].url = this.arr[tab.index].useUrl;
+                this.arr[tab.index].url = addParaToUrl(this.arr[tab.index].useUrl, 'ver=' + VERSION);
             },
             adjustAllIframe: function () {
                 let iframes = document.getElementsByTagName('IFRAME');
@@ -92,6 +93,11 @@
         },
     });
 
+    function addParaToUrl(url, para) {
+        if (url.indexOf('?') >= 0)
+            return url + '&' + para;
+        return url + '?' + para;
+    }
 
     /**
      * 获取url里的变量值

@@ -27,6 +27,14 @@
     <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
         <el-form-item label="左库" prop="dbTestName" style="font-weight: bold;">
+            <el-select v-model="selectTestDbName" filterable placeholder="请选择环境" @change="dbSelected(false)">
+                <el-option
+                        v-for="item in sqlConns"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                </el-option>
+            </el-select>
             <el-form-item label="IP">
                 <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
             </el-form-item>
@@ -51,6 +59,14 @@
         </el-form-item>
         <br>
         <el-form-item label="右库" prop="dbProdName" style="font-weight: bold;">
+            <el-select v-model="selectProdDbName" filterable placeholder="请选择环境" @change="dbSelected(true)">
+                <el-option
+                        v-for="item in sqlConns"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                </el-option>
+            </el-select>
             <el-form-item label="IP">
                 <input type="text" v-model="searchCond.dbProdIp" style="width:240px"/>
             </el-form-item>
@@ -142,15 +158,34 @@
         el: '#divApp',
         data: {
             loading: false,
+            selectTestDbName: '测试-1',
+            selectProdDbName: '生产-2',
+            sqlConns: [
+                {
+                    name: '生产-2',
+                    dbTestIp: '10.1.1.1',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '1231357',
+                    dbTestName: '',
+                },
+                {
+                    name: '测试-1',
+                    dbTestIp: '10.1.1.2',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '1231357',
+                    dbTestName: '',
+                },
+            ],
+
             searchCond: {
-                dbTestIp: '10.0.0.1',
-                dbTestUser: 'readonly',
-                dbTestPwd: '123456',
+                dbTestIp: '',
+                dbTestUser: '',
+                dbTestPwd: '',
                 dbTestName: '',
 
-                dbProdIp: '10.2.2.2',
-                dbProdUser: 'readonly',
-                dbProdPwd: '123456',
+                dbProdIp: '',
+                dbProdUser: '',
+                dbProdPwd: '',
                 dbProdName: '',
                 onlyDiff: true,
             },
@@ -173,10 +208,8 @@
         created: function () {
             this.defaultName = getQueryString('name');
 
-            if (this.searchCond.dbProdIp)
-                this.loadDbs(true);
-            if (this.searchCond.dbTestIp)
-                this.loadDbs(false);
+            this.dbSelected(true);
+            this.dbSelected(false);
         },
         computed: {
             filteredTableData: function () {
@@ -190,6 +223,29 @@
             }
         },
         methods: {
+            dbSelected: function (flg) {
+                let selectDbName = flg ? this.selectProdDbName : this.selectTestDbName;
+                if (!selectDbName)
+                    return;
+                for (let i = 0, j = this.sqlConns.length; i < j; i++) {
+                    if (this.sqlConns[i].name === selectDbName) {
+                        this.setDbFromOption(flg, this.sqlConns[i]);
+                        this.loadDbs(flg);
+                        break;
+                    }
+                }
+            },
+            setDbFromOption: function (flg, conns) {
+                if (flg) {
+                    this.searchCond.dbProdIp = conns.dbTestIp;
+                    this.searchCond.dbProdUser = conns.dbTestUser;
+                    this.searchCond.dbProdPwd = conns.dbTestPwd;
+                } else {
+                    this.searchCond.dbTestIp = conns.dbTestIp;
+                    this.searchCond.dbTestUser = conns.dbTestUser;
+                    this.searchCond.dbTestPwd = conns.dbTestPwd;
+                }
+            },
             loadTestDb: function () {
                 this.loadDbs(false);
             },

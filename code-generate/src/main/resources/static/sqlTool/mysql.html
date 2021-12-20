@@ -63,17 +63,23 @@
                 {{item}}
             </a>
         </div>
+        <hr>
         <table>
             <tr>
                 <td style="width: 1010px;">
-                    <el-form-item label="SQL,只能查询" prop="sql" style="font-weight: bold;">
-                        <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
-                                  style="width:1000px"/>
-                    </el-form-item>
+                    <el-button size="small" type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
+                    <span>在下方输入SQL，不支持更新语句。另：如果SQL没有LIMIT，默认会添加LIMIT 200</span>
+                    <p></p>
+                    <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
+                              style="width:1000px"/>
                 </td>
                 <td>
-                    <div style="font-weight: bold;">历史SQL列表</div>
+                    <div style="font-weight: bold;">
+                        历史SQL列表
+                        <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1)">清空</el-button>
+                    </div>
                     <div v-for="(item, idx) in usingSqls" style="font-size: 12px;">
+                        <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
                         {{idx+1}}: <a href="javascript:void(0)" @click="setSql(item)">{{item}}</a>
                     </div>
                 </td>
@@ -82,7 +88,7 @@
         <br>
         <el-form-item>
             <el-checkbox v-model="showAsTextBox">结果用textbox展示</el-checkbox>
-            <el-button type="primary" icon="el-icon-search" @click="executeSql">执 行</el-button>
+            <el-button type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
             <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出结果为CSV</el-button>
         </el-form-item>
         <div>
@@ -209,13 +215,9 @@
             selectedFieldValue: '',
         },
         created: function () {
+            this.defaultName = getQueryString('name');
             this.usingSqls = this.loadUsingSqls();
             this.dbSelected();
-            // this.searchCond = this.sqlConns[0];
-
-            this.defaultName = getQueryString('name');
-            if (this.searchCond.dbTestIp)
-                this.loadDbs();
         },
         computed: {},
         methods: {
@@ -234,6 +236,14 @@
             setSql: function (sql) {
                 this.searchCond.sql = sql;
             },
+            removeSql: function (idx) {
+                if (idx === -1) {
+                    this.usingSqls = [];
+                } else {
+                    this.usingSqls.splice(idx, 1);
+                }
+                this.saveToStorage();
+            },
             loadUsingSqls: function () {
                 let obj = localStorage.getItem(this.usingKey);
                 if (obj == null)
@@ -246,6 +256,9 @@
                 if (this.usingSqls.length > 20) {
                     this.usingSqls.length = 20;
                 }
+                this.saveToStorage();
+            },
+            saveToStorage: function () {
                 localStorage.setItem(this.usingKey, JSON.stringify(this.usingSqls));
             },
             addAndDistinct: function (item, arr) {
