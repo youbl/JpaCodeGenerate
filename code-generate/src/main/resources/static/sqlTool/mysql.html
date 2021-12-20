@@ -65,26 +65,26 @@
                     <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
                               style="width:1000px"/>
                 </td>
-                <td>
+                <td v-show="tableList.length">
                     <div style="font-weight: bold;">
-                        数据库表清单:
+                        数据库表清单-{{tableList.length}}个
                     </div>
                     <div style="height: 500px; width: 250px; overflow: scroll;font-size: 12px;">
                         <a v-for="item in tableList" :title="item"
                            href="javascript:void(0)" @click="getSqlByTable(item)">
-                            {{item}}
-                        </a><br>
+                            {{item}}<br>
+                        </a>
                     </div>
                 </td>
-                <td>
+                <td v-show="usingSqls.length">
                     <div style="font-weight: bold;">
-                        历史SQL列表
+                        历史SQL列表-{{usingSqls.length}}个
                         <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1)">清空</el-button>
                     </div>
                     <div style="height: 500px; width: 400px; overflow-y: scroll;">
                         <div v-for="(item, idx) in usingSqls" style="font-size: 12px;">
                             <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
-                            {{idx+1}}: <a href="javascript:void(0)" @click="setSql(item)">{{item}}</a>
+                            {{idx+1}}: <a href="javascript:void(0)" @click="setSql(idx)">{{item.sql}}</a>【{{item.cnt}}条/{{item.ms}}ms】
                         </div>
                     </div>
                 </td>
@@ -156,6 +156,7 @@
         el: '#divApp',
         data: {
             loading: false,
+            historySqlMaxLength: 30, // 历史SQL最多存储多少条
 
             selectDbName: '生产-1',
             sqlConns: [
@@ -238,8 +239,9 @@
             dbChange: function () {
                 this.loadTables();
             },
-            setSql: function (sql) {
-                this.searchCond.sql = sql;
+            setSql: function (idx) {
+                let item = this.usingSqls[idx];
+                this.searchCond.sql = item.sql;
             },
             removeSql: function (idx) {
                 if (idx === -1) {
@@ -255,11 +257,16 @@
                     return [];
                 return JSON.parse(obj);
             },
-            saveUsingSqls: function (sql) {
+            saveUsingSqls: function (sql, rowCnt, costMs) {
+                let item = {
+                    sql: sql,
+                    cnt: rowCnt,
+                    ms: costMs,
+                };
                 this.searchCond.sql = sql;
-                this.addAndDistinct(sql, this.usingSqls);
-                if (this.usingSqls.length > 20) {
-                    this.usingSqls.length = 20;
+                this.addAndDistinct(item, this.usingSqls);
+                if (this.usingSqls.length > this.historySqlMaxLength) {
+                    this.usingSqls.length = this.historySqlMaxLength;
                 }
                 this.saveToStorage();
             },
@@ -268,7 +275,7 @@
             },
             addAndDistinct: function (item, arr) {
                 for (let i = 0, j = arr.length; i < j; i++) {
-                    if (arr[i] == item)
+                    if (arr[i].sql == item.sql)
                         return;
                 }
                 arr.splice(0, 0, item);// 插入第1位
@@ -455,7 +462,7 @@
                         return alert(response.data.code + ':' + response.data.errMsg);
                     }
                     this.resultData = response.data.result;
-                    this.saveUsingSqls(response.data.errMsg);
+                    this.saveUsingSqls(response.data.errMsg, this.resultData.length, this.costTime);
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
