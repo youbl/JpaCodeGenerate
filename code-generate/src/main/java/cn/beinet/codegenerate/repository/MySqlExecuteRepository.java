@@ -5,6 +5,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class MySqlExecuteRepository {
 
@@ -55,6 +56,14 @@ public class MySqlExecuteRepository {
             dataSource.setUrl(url);
             dataSource.setUsername(userName);
             dataSource.setPassword(pwd);
+
+            Properties properties = new Properties();
+            // 转换MySQL的 0000-00-00 日期，避免错误 Zero date value prohibited
+            properties.setProperty("zeroDateTimeBehavior", "convertToNull");
+            properties.setProperty("characterEncoding", "utf8");
+            properties.setProperty("useSSL", "false");
+            properties.setProperty("serverTimezone", "Asia/Shanghai");
+            dataSource.setConnectionProperties(properties);
 
             //创建JdbcTemplate对象，设置数据源
             jdbcTemplate = new JdbcTemplate(dataSource);

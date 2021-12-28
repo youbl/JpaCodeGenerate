@@ -6,6 +6,7 @@
     <script src="/static/unpkg/vue.min.js"></script>
     <script src="/static/unpkg/axios.min.js"></script>
     <script src="/static/unpkg/elemeIndex.js"></script>
+    <script src="/static/sql-formatter.min.js"></script>
     <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -59,6 +60,7 @@
         <table>
             <tr>
                 <td style="width: 1010px;">
+                    <el-checkbox v-model="showAsTextBox">文本框展示结果</el-checkbox>
                     <el-button size="small" type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
                     <span>在下方输入SQL，不支持更新语句。另：如果SQL没有LIMIT，默认会添加LIMIT 200</span>
                     <p></p>
@@ -70,10 +72,14 @@
                         数据库表清单-{{tableList.length}}个
                     </div>
                     <div style="height: 500px; width: 250px; overflow: scroll;font-size: 12px;">
-                        <a v-for="item in tableList" :title="item"
-                           href="javascript:void(0)" @click="getSqlByTable(item)">
-                            {{item}}<br>
-                        </a>
+                        <ul>
+                            <li v-for="(item,idx) in tableList">
+                                <a :title="item"
+                                   href="javascript:void(0)" @click="getSqlByTable(item)">
+                                    {{item}}
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </td>
                 <td v-show="usingSqls.length">
@@ -82,18 +88,24 @@
                         <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1)">清空</el-button>
                     </div>
                     <div style="height: 500px; width: 400px; overflow-y: scroll;">
-                        <div v-for="(item, idx) in usingSqls" style="font-size: 12px;">
-                            <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
-                            {{idx+1}}: <a href="javascript:void(0)" @click="setSql(idx)">{{item.sql}}</a>【{{item.cnt}}条/{{item.ms}}ms】
-                        </div>
+                        <ul>
+                            <li v-for="(item, idx) in usingSqls" style="font-size: 12px;">
+                                <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
+                                <span>
+                                    {{idx+1}}:【{{item.cnt}}条/{{item.ms}}ms/{{item.dbName}}】<br>
+                                    <a href="javascript:void(0)" @click="setSql(idx)">{{item.sql}}</a>
+                                </span>
+                            </li>
+                        </ul>
                     </div>
                 </td>
             </tr>
         </table>
         <br>
         <el-form-item>
-            <el-checkbox v-model="showAsTextBox">结果用textbox展示</el-checkbox>
+            <el-checkbox v-model="showAsTextBox">文本框展示结果</el-checkbox>
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
+            <el-button @click="formatSql">格式化SQL</el-button>
             <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出结果为CSV</el-button>
         </el-form-item>
         <div>
@@ -137,14 +149,12 @@
         </template>
     </el-dialog>
 
-    <el-dialog :title="'字段值详情:' + selectedTable + '.' + selectedField" :visible.sync="fieldValueShow">
-        <div>
-            <el-input
-                    type="textarea"
-                    :rows="20"
-                    v-model="selectedFieldValue">
-            </el-input>
-        </div>
+    <el-dialog :title="'字段值详情:' + selectedTable + '.' + selectedField + '（按ESC关窗）'" :visible.sync="fieldValueShow">
+        <el-input
+                type="textarea"
+                :rows="20"
+                v-model="selectedFieldValue">
+        </el-input>
         <br>
         <template>
             <el-button type="primary" @click="formatJson">JSON格式化</el-button>
@@ -241,6 +251,14 @@
             },
             setSql: function (idx) {
                 let item = this.usingSqls[idx];
+
+                if (item.insName !== this.selectDbName ||
+                    item.dbName !== this.searchCond.dbTestName) {
+                    this.selectDbName = item.insName;
+                    this.defaultName = item.dbName;
+
+                    this.dbSelected();
+                }
                 this.searchCond.sql = item.sql;
             },
             removeSql: function (idx) {
@@ -257,11 +275,13 @@
                     return [];
                 return JSON.parse(obj);
             },
-            saveUsingSqls: function (sql, rowCnt, costMs) {
+            saveUsingSqls: function (sql, rowCnt, costMs, instanceName, dbName) {
                 let item = {
                     sql: sql,
                     cnt: rowCnt,
                     ms: costMs,
+                    insName: instanceName,
+                    dbName: dbName,
                 };
                 this.searchCond.sql = sql;
                 this.addAndDistinct(item, this.usingSqls);
@@ -438,6 +458,10 @@
                 }
                 this.searchCond[prop] = arr[0];
             },
+            formatSql: function () {
+                this.searchCond.sql = sqlFormatter.format(this.searchCond.sql,
+                    {language: 'sql', indent: '  '});
+            },
             executeSql: function () {
                 if (!this.searchCond.dbTestName) {
                     return alert('数据库必选');
@@ -462,7 +486,11 @@
                         return alert(response.data.code + ':' + response.data.errMsg);
                     }
                     this.resultData = response.data.result;
-                    this.saveUsingSqls(response.data.errMsg, this.resultData.length, this.costTime);
+                    this.saveUsingSqls(response.data.errMsg,
+                        this.resultData.length,
+                        this.costTime,
+                        this.selectDbName,
+                        this.searchCond.dbTestName);
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
