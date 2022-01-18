@@ -62,7 +62,7 @@
                 <td style="width: 1010px;">
                     <el-checkbox v-model="showAsTextBox">文本框展示结果</el-checkbox>
                     <el-button size="small" type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
-                    <span>在下方输入SQL，不支持更新语句。另：如果SQL没有LIMIT，默认会添加LIMIT 200</span>
+                    <span>不支持更新语句。另：如果SQL没有LIMIT，默认添加LIMIT 200</span>
                     <p></p>
                     <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
                               style="width:1000px"/>
@@ -82,22 +82,48 @@
                         </ul>
                     </div>
                 </td>
-                <td v-show="usingSqls.length">
-                    <div style="font-weight: bold;">
-                        历史SQL列表-{{usingSqls.length}}个
-                        <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1)">清空</el-button>
-                    </div>
-                    <div style="height: 500px; width: 400px; overflow-y: scroll;">
-                        <ul>
-                            <li v-for="(item, idx) in usingSqls" style="font-size: 12px;">
-                                <el-button size="mini" circle icon="el-icon-delete" @click="removeSql(idx)"></el-button>
-                                <span>
+                <td>
+                    <el-tabs v-model="activeName" type="card" @tab-click="handleTabClick">
+                        <el-tab-pane :label="'历史SQL-'+usingSqls.length+'个'" name="historySql">
+                            <div>
+                                <el-button size="mini" round icon="el-icon-download" @click="exportSql(1)">导出
+                                </el-button>
+                                <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1, 1)">清空
+                                </el-button>
+                            </div>
+                            <div style="height: 500px; width: 400px; overflow-y: scroll;">
+                                <ul>
+                                    <li v-for="(item, idx) in usingSqls" style="font-size: 12px;">
+                                        <el-button size="mini" circle icon="el-icon-delete"
+                                                   @click="removeSql(idx, 1)"></el-button>
+                                        <span>
                                     {{idx+1}}:【{{item.cnt}}条/{{item.ms}}ms/{{item.dbName}}】<br>
-                                    <a href="javascript:void(0)" @click="setSql(idx)">{{item.sql}}</a>
+                                    <a href="javascript:void(0)" @click="setSql(idx, 1)">{{item.sql}}</a>
                                 </span>
-                            </li>
-                        </ul>
-                    </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </el-tab-pane>
+                        <el-tab-pane :label="'已存SQL-'+savedSqls.length+'个'" name="savedSql">
+                            <div>
+                                <el-button size="mini" round icon="el-icon-download" @click="exportSql(2)">导出
+                                </el-button>
+                                <el-button size="mini" round icon="el-icon-delete" @click="removeSql(-1, 2)">清空
+                                </el-button>
+                            </div>
+                            <div style="height: 500px; width: 400px; overflow-y: scroll;">
+                                <ul>
+                                    <li v-for="(item, idx) in savedSqls" style="font-size: 12px;">
+                                        <el-button size="mini" circle icon="el-icon-delete"
+                                                   @click="removeSql(idx, 2)"></el-button>
+                                        <span>
+                                    {{idx+1}}:<a href="javascript:void(0)" @click="setSql(idx, 2)" :title="item.sql">【{{item.title}}/{{item.dbName}}】</a>
+                                </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </el-tab-pane>
+                    </el-tabs>
                 </td>
             </tr>
         </table>
@@ -105,8 +131,10 @@
         <el-form-item>
             <el-checkbox v-model="showAsTextBox">文本框展示结果</el-checkbox>
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
+            <el-button icon="el-icon-save" @click="saveMySql">保存SQL</el-button>
             <el-button @click="formatSql">格式化SQL</el-button>
             <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出结果为CSV</el-button>
+            <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
         </el-form-item>
         <div>
             <span style="padding-left:20px;">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
@@ -119,6 +147,7 @@
               element-loading-spinner="el-icon-loading"
               element-loading-background="rgba(0, 0, 0, 0.8)"
               border
+              height="600"
               :data="resultData"
               :header-row-class-name="'tableHeader'">
         <el-table-column :label="key"
@@ -160,11 +189,19 @@
             <el-button type="primary" @click="formatJson">JSON格式化</el-button>
         </template>
     </el-dialog>
+
+    <el-dialog title="保存SQL" :visible.sync="savedSqlShow">
+        <div>
+            保存说明：<input type="text" style="width: 200px" v-model.trim="savedTxt">
+            <el-button type="primary" @click="saveMySqlDo">存入LocalStorage</el-button>
+        </div>
+    </el-dialog>
 </div>
 <script>
     const vueApp = new Vue({
         el: '#divApp',
         data: {
+            activeName: 'historySql',
             loading: false,
             historySqlMaxLength: 30, // 历史SQL最多存储多少条
 
@@ -220,6 +257,10 @@
 
             usingSqls: [],
             usingKey: 'usingSqls',
+            savedSqls: [],
+            savedKey: 'savedSqls',
+            savedSqlShow: false,
+            savedTxt: '',
 
             generateSqlShow: false,
             selectedTable: '',
@@ -232,11 +273,14 @@
         },
         created: function () {
             this.defaultName = getQueryString('name');
-            this.usingSqls = this.loadUsingSqls();
+            this.usingSqls = this.loadSqls(this.usingKey);
+            this.savedSqls = this.loadSqls(this.savedKey);
             this.dbSelected();
         },
         computed: {},
         methods: {
+            handleTabClick: function (tab, event) {
+            },
             dbSelected: function () {
                 for (let i = 0, j = this.sqlConns.length; i < j; i++) {
                     if (this.sqlConns[i].name === this.selectDbName) {
@@ -249,8 +293,21 @@
             dbChange: function () {
                 this.loadTables();
             },
-            setSql: function (idx) {
-                let item = this.usingSqls[idx];
+            getArrSql: function (flg) {
+                return flg === 1 ? this.usingSqls : this.savedSqls;
+            },
+            getArrSqlKey: function (flg) {
+                return flg === 1 ? this.usingKey : this.savedKey;
+            },
+            setArrSql: function (flg, arr) {
+                if (flg === 1)
+                    this.usingSqls = arr;
+                else
+                    this.savedSqls = arr;
+            },
+            setSql: function (idx, flg) {
+                let arrSql = this.getArrSql(flg);
+                let item = arrSql[idx];
 
                 if (item.insName !== this.selectDbName ||
                     item.dbName !== this.searchCond.dbTestName) {
@@ -261,22 +318,40 @@
                 }
                 this.searchCond.sql = item.sql;
             },
-            removeSql: function (idx) {
-                if (idx === -1) {
-                    this.usingSqls = [];
-                } else {
-                    this.usingSqls.splice(idx, 1);
+            exportSql: function (flg) {
+                let arrSql = this.getArrSql(flg);
+                if (!arrSql || !arrSql.length) {
+                    return alert('没有历史SQL可导出');
                 }
-                this.saveToStorage();
+                let dataContent = '';
+                for (let i = 0, j = arrSql.length; i < j; i++) {
+                    let row = arrSql[i];
+                    if (i > 0) {
+                        dataContent += '\r\n';
+                    }
+                    let cell = (row.sql + '').replace(/"/g, '""'); // csv里的双引号转义为2个
+                    dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
+                }
+                this.downloadData('历史SQL\r\n' + dataContent);
             },
-            loadUsingSqls: function () {
-                let obj = localStorage.getItem(this.usingKey);
+            removeSql: function (idx, flg) {
+                if (idx === -1) {
+                    this.setArrSql(flg, []);
+                } else {
+                    let arrSql = this.getArrSql(flg);
+                    arrSql.splice(idx, 1);
+                }
+                this.saveToStorage(flg);
+            },
+            loadSqls: function (key) {
+                let obj = localStorage.getItem(key);
                 if (obj == null)
                     return [];
                 return JSON.parse(obj);
             },
-            saveUsingSqls: function (sql, rowCnt, costMs, instanceName, dbName) {
+            saveUsingSqls: function (title, sql, rowCnt, costMs, instanceName, dbName, flg) {
                 let item = {
+                    title: title,
                     sql: sql,
                     cnt: rowCnt,
                     ms: costMs,
@@ -284,14 +359,18 @@
                     dbName: dbName,
                 };
                 this.searchCond.sql = sql;
-                this.addAndDistinct(item, this.usingSqls);
-                if (this.usingSqls.length > this.historySqlMaxLength) {
-                    this.usingSqls.length = this.historySqlMaxLength;
+
+                let arrSql = this.getArrSql(flg);
+                this.addAndDistinct(item, arrSql);
+                if (flg === 1 && arrSql.length > this.historySqlMaxLength) {
+                    arrSql.length = this.historySqlMaxLength;
                 }
-                this.saveToStorage();
+                this.saveToStorage(flg);
             },
-            saveToStorage: function () {
-                localStorage.setItem(this.usingKey, JSON.stringify(this.usingSqls));
+            saveToStorage: function (flg) {
+                let key = this.getArrSqlKey(flg);
+                let arrSql = this.getArrSql(flg);
+                localStorage.setItem(key, JSON.stringify(arrSql));
             },
             addAndDistinct: function (item, arr) {
                 for (let i = 0, j = arr.length; i < j; i++) {
@@ -373,6 +452,24 @@
                 this.generateSqlShow = false;
 
                 this.executeSql();
+            },
+            saveMySql: function () {
+                this.savedSqlShow = true;
+            },
+            saveMySqlDo: function () {
+                if (this.savedTxt.length === 0) {
+                    return alert('请输入SQL文本');
+                }
+                this.saveUsingSqls(
+                    this.savedTxt,
+                    this.searchCond.sql,
+                    0,
+                    0,
+                    this.selectDbName,
+                    this.searchCond.dbTestName,
+                    2);
+                this.savedSqlShow = false;
+                this.activeName = 'savedSql';
             },
             generateUpdateSql: function () {
                 let fieldList = this.generateFields();
@@ -486,11 +583,13 @@
                         return alert(response.data.code + ':' + response.data.errMsg);
                     }
                     this.resultData = response.data.result;
-                    this.saveUsingSqls(response.data.errMsg,
+                    this.saveUsingSqls('',
+                        response.data.errMsg,  // 后端实际使用的sql
                         this.resultData.length,
                         this.costTime,
                         this.selectDbName,
-                        this.searchCond.dbTestName);
+                        this.searchCond.dbTestName,
+                        1);
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
