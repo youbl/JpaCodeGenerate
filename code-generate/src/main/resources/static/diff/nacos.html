@@ -99,6 +99,7 @@
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="compareConfig('searchForm')">对 比</el-button>
             <el-checkbox v-model="searchCond.onlyDiff">只显示差异项</el-checkbox>
+            <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
         </el-form-item>
         <div>
             <span style="padding-left:20px;">共{{attData.length}}个配置项，{{filteredTableData.length}}个差异项</span>
@@ -138,8 +139,9 @@
                 label="操作"
                 width="300">
             <template slot-scope="scope">
-                <!--                <el-button type="primary" @click="operateIgnoreKey(scope.row.key)">{{getBtnTxt(scope.row.key)}}-->
-                <!--                </el-button>-->
+                <el-button type="primary" @click="operateIgnoreKey(scope.row.key)">
+                    {{getBtnTxt(scope.row.key)}}
+                </el-button>
                 <el-button type="primary" @click="openTest(scope.row.key)">去改源</el-button>
                 <el-button type="primary" @click="openProd(scope.row.key)">改目标</el-button>
             </template>
@@ -197,7 +199,7 @@
         created: function () {
             this.defaultName = getQueryString('name');
             if (!this.defaultName)
-                this.defaultName = 'beinet-dev';
+                this.defaultName = 'rpa-scheduler';
 
             if (this.searchCond.nacosTestIp)
                 this.loadTestNacosNs();
@@ -338,11 +340,8 @@
                     this.configProd = {};
 
                     this.attData = [];
-                    if (!this.searchCond.appName) {
-                        this.searchCond.appName = 'mike-platform';
-                    }
                     this.loadConfigs(false)
-                        //.then(this.loadIgnoreKeyByProj)
+                        .then(this.loadIgnoreKeyByProj)
                         .then(() => {
                             this.loadConfigs(true).then(this.compareDo)
                         });
@@ -380,60 +379,47 @@
             },
             // 保存忽略的key
             addIgnoreKey: function (key) {
-                let appNam = this.searchCond.appName;
+                let appNam = this.getCompareKey();
                 Vue.set(this.ignoreKeyByProject[appNam], key, 1);
-                this.saveIgnoreKey();
+                let url = '/v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                return axios.post(url).then((response) => {
+                }).catch((error) => {
+                    this.ajaxError(error);
+                });
             },
             // 移除已忽略的key，就是不忽略了
             delIgnoreKey: function (key) {
-                let appNam = this.searchCond.appName;
+                let appNam = this.getCompareKey();
                 Vue.delete(this.ignoreKeyByProject[appNam], key);
-                this.saveIgnoreKey();
-            },
-            // 移除已忽略的key，就是不忽略了
-            saveIgnoreKey: function () {
-                let appNam = this.searchCond.appName;
-                let attVal = '';
-                for (let att in this.ignoreKeyByProject[appNam]) {
-                    if (attVal.length > 0)
-                        attVal += ',';
-                    attVal += att;
-                }
-
-                let para = {};
-                para.AttName = 'ignoreCompareKey';
-                para.AttVal = attVal;
-
-                let url = '/v1/projects/' + this.findIdByName(appNam) + '/att';
-                return axios.post(url, para).then((response) => {
-                }).catch(function (error) {
+                let url = '/v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                return axios.delete(url).then((response) => {
+                }).catch((error) => {
                     this.ajaxError(error);
                 });
             },
             // 加载当前项目忽略的key列表
             loadIgnoreKeyByProj: function () {
-                let appNam = this.searchCond.appName;
+                let appNam = this.getCompareKey();
                 if (this.ignoreKeyByProject[appNam]) {
                     return new Promise(resolve => {
                         resolve();
                     });
                 }
-                let url = '/v1/projects/att/' + this.findIdByName(appNam) + '?att=ignoreCompareKey';
+                let url = '/v1/nacos/ignore?app=' + encodeURIComponent(appNam);
                 return axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
                         Vue.set(this.ignoreKeyByProject, appNam, {});
                     } else {
-                        let arr = response.data.split(',');
                         let obj = {};
-                        for (let i = 0, j = arr.length; i < j; i++) {
-                            let item = arr[i].trim();
+                        for (let i = 0, j = response.data.length; i < j; i++) {
+                            let item = response.data[i].trim();
                             if (item.length <= 0)
                                 continue;
                             obj[item] = 1;
                         }
                         Vue.set(this.ignoreKeyByProject, appNam, obj);
                     }
-                }).catch(function (error) {
+                }).catch((error) => {
                     this.ajaxError(error);
                 });
             },
@@ -447,11 +433,20 @@
                 return false;
             },
             isIgnoreKeyByProj: function (att) {
-                let appNam = this.searchCond.appName;
+                let appNam = this.getCompareKey();
                 if (this.ignoreKeyByProject[appNam] && this.ignoreKeyByProject[appNam][att]) {
                     return true;
                 }
                 return false;
+            },
+            getCompareKey: function () {
+                let key = this.searchCond.nacosProdIp + '-' +
+                    this.searchCond.nacosProdNs + '-' +
+                    this.searchCond.nacosProdFile + '-' +
+                    this.searchCond.nacosTestIp + '-' +
+                    this.searchCond.nacosTestNs + '-' +
+                    this.searchCond.nacosTestFile;
+                return key;
             },
             loadConfigs: function (isProd) {
                 let urlConfig = '/v1/nacos/concfig?' + this.getPara(isProd, true);
