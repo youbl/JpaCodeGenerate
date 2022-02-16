@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.util;
 
+import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Random;
@@ -63,5 +64,35 @@ public final class StringHelper {
             throw new IllegalArgumentException("endExclusive必须大于startInclusive");
         }
         return startInclusive + RANDOM.nextInt(endExclusive - startInclusive);
+    }
+
+    /**
+     * 拼接成字符串计算MD5
+     *
+     * @param objArr 对象列表
+     * @return MD5
+     */
+    public static String md5(Object... objArr) {
+        if (objArr == null || objArr.length <= 0) {
+            throw new RuntimeException("md5参数不能为空");
+        }
+        String useStr;
+        if (objArr.length > 1) {
+            StringBuilder sb = new StringBuilder();
+            int idx = 0;
+            for (Object item : objArr) {
+                if (idx > 0)
+                    sb.append('-');
+                sb.append(item);
+                idx++;
+            }
+            useStr = sb.toString();
+        } else {
+            useStr = String.valueOf(objArr[0]);
+        }
+        if (useStr.length() <= 0) {
+            throw new RuntimeException("md5参数全部为空");
+        }
+        return DigestUtils.md5DigestAsHex(useStr.getBytes());
     }
 }

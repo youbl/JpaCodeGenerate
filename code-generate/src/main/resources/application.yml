@@ -19,3 +19,8 @@ spring:
     mapper:
       accept_case_insensitive_properties: true
 
+  ldap:
+    urls: ldap://beinet.cn:389
+    username: cn=ldapauth,${spring.ldap.base}
+    password: beinet.cn
+    base: OU=OrgUnit,DC=beinet,DC=cn

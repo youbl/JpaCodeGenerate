@@ -84,7 +84,8 @@
                             :value="item">
                     </el-option>
                 </el-select>
-                <el-select v-model="searchCond.nacosProdFile" filterable placeholder="请选择文件">
+                <el-select v-model="searchCond.nacosProdFile" filterable placeholder="请选择文件"
+                           @change="prodNacosFileChange">
                     <el-option
                             v-for="item in fileProdArr"
                             :key="item"
@@ -167,15 +168,15 @@
 
                 onlyDiff: true,
             },
-            namespaceTestArr: [],
-            namespaceProdArr: [],
-            fileTestArr: [],
-            fileProdArr: [],
+            namespaceTestArr: [],   // 左边的命名空间列表
+            namespaceProdArr: [],   // 右边的命名空间列表
+            fileTestArr: [],        // 左边的配置文件列表
+            fileProdArr: [],        // 右边的配置文件列表
 
             loading: false,
-            configTest: {},
-            configProd: {},
-            attData: [],
+            configTest: {},         // 左边的配置明细
+            configProd: {},         // 右边的配置明细
+            attData: [],            // 左右合并的所有配置key和左值、右值列表
             ignoreKeys: {  // 不加载的key列表，不作对比和展示. 注：下面的“1”无具体意义
                 'spring.datasource.url': 1,
                 'spring.datasource.username': 1,
@@ -225,6 +226,11 @@
             }
         },
         methods: {
+            init: function () {
+                this.configTest = {};
+                this.configProd = {};
+                this.attData = [];
+            },
             removeEnvStr: function (str) {
                 return str.replace(/dev/g, '')
                     .replace(/test/g, '')
@@ -279,6 +285,8 @@
                 });
             },
             loadNacosFile: function (isProd) {
+                this.init();
+
                 let url = '/v1/nacos/files?' + this.getPara(isProd, true);
                 return axios.get(url).then(response => {
                     if (isProd) {
@@ -314,6 +322,8 @@
                 this.loadNacosFile(true);
             },
             testNacosFileChange: function (testFile) {
+                this.init();
+
                 if (!testFile)
                     return;
                 testFile = testFile.replace('-dev.yml', '').replace('-test.yml', '');
@@ -324,6 +334,9 @@
                         break;
                     }
                 }
+            },
+            prodNacosFileChange: function () {
+                this.init();
             },
             compareConfig: function (formName) {
                 this.$refs[formName].validate((valid) => {
@@ -336,10 +349,7 @@
                     }
 
                     this.loading = true;
-                    this.configTest = {};
-                    this.configProd = {};
-
-                    this.attData = [];
+                    this.init();
                     this.loadConfigs(false)
                         .then(this.loadIgnoreKeyByProj)
                         .then(() => {
