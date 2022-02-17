@@ -55,6 +55,8 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     // 无须登录认证的url正则
     private static final Pattern patternRequest = Pattern.compile("(?i)^/actuator/?|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map)$");// |html?
 
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String url = request.getRequestURI(); //request.getRequestURL() 带有域名，所以不用
@@ -74,7 +76,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
 
         // 判断cookie是否有效
         String token = RequestHelper.getCookie(TOKEN_COOKIE_NAME, request);
-        log.debug("取得token: {}", token);
+        log.info("url:{} token: {}", url, token);
         if (!validateToken(token)) {
             log.debug("token无效: {}", token);
             addToken("", response);
@@ -151,7 +153,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      * @param response 响应上下文
      */
     private void addToken(String username, HttpServletResponse response) {
-        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String now = LocalDateTime.now().format(FORMATTER);
 
         Cookie loginCookie = new Cookie(TOKEN_COOKIE_NAME, "");
         loginCookie.setPath("/");
@@ -177,9 +179,17 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         }
         // 0为用户名，1为时间，2为md5
         String[] arr = token.split(TOKEN_SPLIT);
-        if (arr.length != 3 || arr[0].isEmpty() || arr[1].isEmpty()) {
+        if (arr.length != 3 || arr[0].isEmpty() || arr[1].isEmpty() || arr[2].isEmpty()) {
             return false;
         }
+        long loginTime = Long.parseLong(arr[1]);
+        long now = Long.parseLong(LocalDateTime.now().format(FORMATTER));
+        long diff = now - loginTime;
+        // 1000000为1天，要求每天登录
+        if (diff < 0 || diff > 1000000) {
+            return false;
+        }
+
         String countToken = buildToken(arr[0], arr[1]);
         return (countToken.equalsIgnoreCase(token));
     }
@@ -193,7 +203,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      */
     private String buildToken(String username, String date) {
         String ret = username + TOKEN_SPLIT + date + TOKEN_SPLIT;
-        String md5 = StringHelper.md5(ret, TOKEN_SALT);
+        String md5 = StringHelper.md5(ret, TOKEN_SALT, username);
         return ret + md5;
     }
 
