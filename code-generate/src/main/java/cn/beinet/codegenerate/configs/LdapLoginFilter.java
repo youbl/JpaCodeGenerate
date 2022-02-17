@@ -33,14 +33,21 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     // token校验md5的盐值
     private static final String TOKEN_SALT = "beinet.cn";
 
+    // token cookie名
     private static final String TOKEN_COOKIE_NAME = "beinetUser";
+    // token不同信息的分隔符
     private static final String TOKEN_SPLIT = ":";
 
+    // 登录用户名使用的字段名
     private static final String USER_PARA = "beinetUser";
+    // 登录密码使用的字段名
     private static final String PWD_PARA = "beinetPwd";
 
-    private static final String loginPage = "login.html";
-    private static final String loginActionPage = "login";
+    // 登录输入页地址
+    private static final String loginPage = "/login.html";
+    // 登录认证地址
+    private static final String loginActionPage = "/login";
+    // 无须登录认证的url正则
     private static final Pattern patternRequest = Pattern.compile("(?i)^/actuator/?|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map)$");// |html?
 
     @Override
@@ -64,9 +71,9 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         if (!validateToken(token)) {
             addToken("", response);
             if (StringUtils.isEmpty(token)) {
-                endResponse(response, "未登录");
+                endResponse(request, response, "未登录");
             } else {
-                endResponse(response, "token无效");
+                endResponse(request, response, "token无效");
             }
             return;
         }
@@ -74,7 +81,12 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-
+    /**
+     * 判断指定url是否需要登录
+     *
+     * @param url url
+     * @return 是否要登录
+     */
     private boolean needValidation(String url) {
         // 登录页跳过
         if (url.endsWith(loginPage))
@@ -84,28 +96,43 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         return !matcher.find();
     }
 
+    /**
+     * 提取用户名密码，并进行登录
+     *
+     * @param request  请求上下文
+     * @param response 响应上下文
+     */
     private void processLoginRequest(HttpServletRequest request, HttpServletResponse response) {
         String username = request.getParameter(USER_PARA);
         String pwd = request.getParameter(PWD_PARA);
         if (!validateUser(username, pwd)) {
             //throw new RuntimeException("账号或密码错误");
             addToken("", response);
-            endResponse(response, "账号或密码错误");
+            endResponse(request, response, "账号或密码错误");
             return;
         }
 
         addToken(username, response);
-        redirect(request, response);
+        redirect(response, "index.html");
     }
 
-    private void redirect(HttpServletRequest request, HttpServletResponse response) {
-        String url = request.getRequestURI(); //request.getRequestURL() 带有域名，所以不用
-        if (url.endsWith(loginActionPage)) {
-            response.setStatus(302);
-            response.setHeader("Location", "index.html");//设置新请求的URL
-        }
+    /**
+     * 重定向到index首页
+     *
+     * @param response 响应上下文
+     * @param url      跳转地址
+     */
+    private void redirect(HttpServletResponse response, String url) {
+        response.setStatus(302);
+        response.setHeader("Location", url);//设置新请求的URL
     }
 
+    /**
+     * 为响应添加登录cookie
+     *
+     * @param username 用户名，为空表示删除token
+     * @param response 响应上下文
+     */
     private void addToken(String username, HttpServletResponse response) {
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
@@ -121,6 +148,12 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         response.addCookie(loginCookie);
     }
 
+    /**
+     * 校验token格式和md5是否正确
+     *
+     * @param token token
+     * @return 是否正确token
+     */
     private boolean validateToken(String token) {
         if (StringUtils.isEmpty(token)) {
             return false;
@@ -134,12 +167,26 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         return (countToken.equalsIgnoreCase(token));
     }
 
+    /**
+     * 根据用户名和登录时间，计算md5，并拼接token返回
+     *
+     * @param username 用户名
+     * @param date     登录时间
+     * @return token
+     */
     private String buildToken(String username, String date) {
         String ret = username + TOKEN_SPLIT + date + TOKEN_SPLIT;
         String md5 = StringHelper.md5(ret, TOKEN_SALT);
         return ret + md5;
     }
 
+    /**
+     * 去ldap验证用户名密码是否正确
+     *
+     * @param username 用户名
+     * @param pwd      密码
+     * @return 是否正确
+     */
     private boolean validateUser(String username, String pwd) {
         if (!StringUtils.hasLength(username) || !StringUtils.hasLength(pwd)) {
             return false;
@@ -156,7 +203,32 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         return ldapTemplate.authenticate("", filter, pwd);
     }
 
-    private void endResponse(HttpServletResponse response, String msg) {
+    /**
+     * 判断是否ajax请求
+     *
+     * @param request 当前请求上下文
+     * @return 是否
+     */
+    private static boolean isAjax(HttpServletRequest request) {
+        String header = request.getHeader("accept");
+        if (header != null && header.contains("application/json"))
+            return true;
+        header = request.getHeader("x-requested-with");
+        return header != null && header.equalsIgnoreCase("XMLHttpRequest");
+    }
+
+    /**
+     * 终止响应，并返回错误信息
+     *
+     * @param request  请求上下文
+     * @param response 响应上下文
+     * @param msg      错误信息
+     */
+    private void endResponse(HttpServletRequest request, HttpServletResponse response, String msg) {
+        if (!isAjax(request)) {
+            redirect(response, loginPage);
+            return;
+        }
         response.setContentType("application/json; charset=UTF-8");
         try {
             String ret = "{\"ret\":500, \"msg\":\"" + msg.replaceAll("[\"']", "") + "\"}";
