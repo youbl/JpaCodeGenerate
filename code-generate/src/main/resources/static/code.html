@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>代码生成器</title>
-    <script src="/static/unpkg/vue.min.js"></script>
-    <script src="/static/unpkg/axios.min.js"></script>
-    <script src="/static/unpkg/vue-multiselect.min.js"></script>
-    <link rel="stylesheet" href="/static/unpkg/vue-multiselect.min.css">
-    <script src="/static/rowColor.js"></script>
-    <script src="/static/qs.min.js"></script>
+    <script src="./static/unpkg/vue.min.js"></script>
+    <script src="./static/unpkg/axios.min.js"></script>
+    <script src="./static/unpkg/vue-multiselect.min.js"></script>
+    <link rel="stylesheet" href="./static/unpkg/vue-multiselect.min.css">
+    <script src="./static/rowColor.js"></script>
+    <script src="./static/qs.min.js"></script>
     <style>
         .tabs { /* tab选项卡外围 */
             width: 95%;
@@ -91,7 +91,8 @@
     </div>
 </div>
 <script>
-    var vueApp = new Vue({
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
         el: '#divApp',
         components: {
             Multiselect: window.VueMultiselect.default
@@ -121,7 +122,7 @@
             },
             loadDatabases: function () {
                 let _vue = this;
-                let url = '/v1/code/databases';
+                let url = BASE_URL + 'v1/code/databases';
                 axios.get(url).then(function (response) {
                     if (!response.data || response.data.length <= 0) {
                         alert('未找到数据库');
@@ -138,7 +139,7 @@
             },
             loadTables: function () {
                 let _vue = this;
-                let url = '/v1/code/tables';
+                let url = BASE_URL + 'v1/code/tables';
                 let para = {};
                 para.database = this.condition.database;
                 axios.get(url, {params: para}).then(function (response) {
@@ -157,7 +158,7 @@
             loadColumns: function () {
                 let _vue = this;
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = '/v1/code/columns?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                let url = BASE_URL + 'v1/code/columns?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
                 axios.get(url).then(function (response) {
                     if (!response.data || response.data.length <= 0) {
                         alert(para.database + '数据库，没有找到字段.');
@@ -171,7 +172,7 @@
             generateCode: function () {
                 let _vue = this;
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = '/v1/code/tables?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                let url = BASE_URL + 'v1/code/tables?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
                 axios.post(url).then(function (response) {
                     _vue.codeLink = response.data;
                 }).catch(function (error) {

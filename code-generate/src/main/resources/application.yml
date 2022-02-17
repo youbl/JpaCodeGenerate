@@ -1,5 +1,7 @@
 server:
   port: 8080
+  servlet:
+    context-path: /sql
 
 spring:
   application:
@@ -24,3 +26,7 @@ spring:
     username: cn=ldapauth,${spring.ldap.base}
     password: beinet.cn
     base: OU=OrgUnit,DC=beinet,DC=cn
+
+logging:
+  level:
+    cn.beinet.codegenerate.configs.LdapLoginFilter: debug

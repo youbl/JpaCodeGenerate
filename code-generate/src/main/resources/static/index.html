@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>通用工具</title>
-    <script src="/static/unpkg/vue.min.js"></script>
-    <script src="/static/unpkg/axios.min.js"></script>
-    <script src="/static/unpkg/elemeIndex.js"></script>
-    <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
+    <script src="./static/unpkg/vue.min.js"></script>
+    <script src="./static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="./static/unpkg/elemeIndex.css">
 </head>
 <body>
 
@@ -28,27 +27,27 @@
 
             pages: [
                 {
-                    useUrl: '/sqlTool/mysql.html?name=processor',
+                    useUrl: './sqlTool/mysql.html?name=rpa-schd-processor',
                     title: 'mysql查询',
                 },
                 {
-                    useUrl: '/redisTool/redis.html',
+                    useUrl: './redisTool/redis.html',
                     title: 'redis键查询',
                 },
                 {
-                    useUrl: '/diff/mysql.html?name=processor',
+                    useUrl: './diff/mysql.html?name=rpa-schd-processor',
                     title: 'mysql字段对比',
                 },
                 {
-                    useUrl: '/diff/mysqlIndex.html?name=processor',
+                    useUrl: './diff/mysqlIndex.html?name=rpa-schd-processor',
                     title: 'mysql索引对比',
                 },
                 {
-                    useUrl: '/diff/nacos.html',
+                    useUrl: './diff/nacos.html',
                     title: 'nacos配置对比',
                 },
                 {
-                    useUrl: '/code.html',
+                    useUrl: './code.html',
                     title: '代码生成',
                 },
             ],

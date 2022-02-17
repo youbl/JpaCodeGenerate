@@ -4,12 +4,12 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
     <title>通用工具</title>
-    <script src="/static/unpkg/vue.min.js"></script>
-    <script src="/static/unpkg/axios.min.js"></script>
-    <script src="/static/unpkg/elemeIndex.js"></script>
-    <script type="text/javascript" src="/static/qs.min.js"></script>
+    <script src="./static/unpkg/vue.min.js"></script>
+    <script src="./static/unpkg/axios.min.js"></script>
+    <script src="./static/unpkg/elemeIndex.js"></script>
+    <script type="text/javascript" src="./static/qs.min.js"></script>
 
-    <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
+    <link rel="stylesheet" href="./static/unpkg/elemeIndex.css">
 </head>
 <body>
 <div id="divApp" style="text-align: center;">
@@ -35,6 +35,7 @@
     </el-form>
 </div>
 <script type="text/javascript">
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: function () {
@@ -95,7 +96,7 @@
                 this.$refs[form].validate(valid => {
                     if (!valid)
                         return false;
-                    let url = '/login';
+                    let url = BASE_URL + 'login';
                     // 默认登录使用的是form形式，因此要用Qs转换一下
                     return axios.post(url, Qs.stringify(this.login)).then(response => {
                         if (response.data.ret && response.data.ret !== 200) {

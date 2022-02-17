@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Redis执行工具</title>
-    <script src="/static/unpkg/vue.min.js"></script>
-    <script src="/static/unpkg/axios.min.js"></script>
-    <script src="/static/unpkg/elemeIndex.js"></script>
-    <link rel="stylesheet" href="/static/unpkg/elemeIndex.css">
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
             max-height: 500px;
@@ -79,6 +79,7 @@
               style="width:100%"/>
 </div>
 <script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -169,7 +170,7 @@
                 }
                 this.attData = [];
 
-                let url = '/v1/redis/executeCmd?';
+                let url = BASE_URL + 'v1/redis/executeCmd?';
                 let urlTest = url + this.combineDbPara();
                 if (this.loading) {
                     return alert('执行中，请稍候');

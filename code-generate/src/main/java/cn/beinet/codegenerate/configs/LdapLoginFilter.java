@@ -3,6 +3,8 @@ package cn.beinet.codegenerate.configs;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.StringHelper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.stereotype.Component;
@@ -28,7 +30,10 @@ import java.util.regex.Pattern;
  * @create: 2022/2/16 16:34
  */
 @Component
+@Slf4j
 public class LdapLoginFilter extends OncePerRequestFilter {
+    @Value("${server.servlet.context-path}")
+    private String prefix;
 
     // token校验md5的盐值
     private static final String TOKEN_SALT = "beinet.cn";
@@ -53,6 +58,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String url = request.getRequestURI(); //request.getRequestURL() 带有域名，所以不用
+        log.debug("收到请求: {}", url);
 
         // 验证用户名密码
         if (url.endsWith(loginActionPage)) {
@@ -68,7 +74,9 @@ public class LdapLoginFilter extends OncePerRequestFilter {
 
         // 判断cookie是否有效
         String token = RequestHelper.getCookie(TOKEN_COOKIE_NAME, request);
+        log.debug("取得token: {}", token);
         if (!validateToken(token)) {
+            log.debug("token无效: {}", token);
             addToken("", response);
             if (StringUtils.isEmpty(token)) {
                 endResponse(request, response, "未登录");
@@ -78,6 +86,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
             return;
         }
 
+        log.debug("token校验成功: {}", token);
         filterChain.doFilter(request, response);
     }
 
@@ -105,13 +114,16 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     private void processLoginRequest(HttpServletRequest request, HttpServletResponse response) {
         String username = request.getParameter(USER_PARA);
         String pwd = request.getParameter(PWD_PARA);
+        log.debug("用户名: {}, 准备登录", username);
         if (!validateUser(username, pwd)) {
+            log.debug("用户名: {}, 账号或密码错误", username);
             //throw new RuntimeException("账号或密码错误");
             addToken("", response);
             endResponse(request, response, "账号或密码错误");
             return;
         }
 
+        log.debug("用户名: {}, ldap认证成功", username);
         addToken(username, response);
         redirect(response, "index.html");
     }
@@ -123,8 +135,13 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      * @param url      跳转地址
      */
     private void redirect(HttpServletResponse response, String url) {
+        if (StringUtils.isEmpty(url)) {
+            url = "/index.html";
+        } else if (!url.startsWith("/")) {
+            url = "/" + url;
+        }
         response.setStatus(302);
-        response.setHeader("Location", url);//设置新请求的URL
+        response.setHeader("Location", prefix + url);//设置新请求的URL
     }
 
     /**
@@ -192,6 +209,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
             return false;
         }
 
+        log.debug("用户名: {}, 去ldap认证", username);
         String filter = new EqualsFilter("samAccountName", username).toString();
         LdapTemplate ldapTemplate = SpringUtil.getBean(LdapTemplate.class);
 //        Object obj = ldapTemplate.search("", filter, new AttributesMapper() {
