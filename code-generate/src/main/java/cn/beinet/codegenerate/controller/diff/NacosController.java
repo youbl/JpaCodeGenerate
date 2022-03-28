@@ -63,14 +63,19 @@ public class NacosController {
     @DeleteMapping("v1/nacos/ignore")
     public void ignoreCompareDel(@RequestParam String app, @RequestParam String key) {
         String sql = "delete from configIgnoreKeys where app_key='" +
-                formatSqlVal(app) + "' and `key`='" + formatSqlVal(key) + "'";
+                formatSqlVal(app) + "'";
+
+        key = formatSqlVal(key);
+        if (!key.equals("all")) {
+            sql += " and `key`='" + key + "'";
+        }
         jdbcTemplate.execute(sql);
     }
 
     // 替换单引号
     private String formatSqlVal(String val) {
         if (StringUtils.isEmpty(val)) {
-            return val;
+            return "";
         }
         return val.trim().replaceAll("'", "");
     }

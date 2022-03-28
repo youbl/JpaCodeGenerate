@@ -100,6 +100,7 @@
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="compareConfig('searchForm')">对 比</el-button>
             <el-checkbox v-model="searchCond.onlyDiff">只显示差异项</el-checkbox>
+            <el-button type="primary" icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
         </el-form-item>
         <div>
@@ -398,11 +399,24 @@
                     this.ajaxError(error);
                 });
             },
-            // 移除已忽略的key，就是不忽略了
+            // 移除已忽略的key，就是不忽略
             delIgnoreKey: function (key) {
                 let appNam = this.getCompareKey();
                 Vue.delete(this.ignoreKeyByProject[appNam], key);
                 let url = BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                return axios.delete(url).then((response) => {
+                }).catch((error) => {
+                    this.ajaxError(error);
+                });
+            },
+            restoreAllIgnore: function () {
+                let msg = '当前源和目标，所有忽略差异项，都将重新提示，是否确认？';
+                if (!confirm(msg)) {
+                    return;
+                }
+                let appNam = this.getCompareKey();
+                Vue.set(this.ignoreKeyByProject, appNam, {});
+                let url = BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=all';
                 return axios.delete(url).then((response) => {
                 }).catch((error) => {
                     this.ajaxError(error);
