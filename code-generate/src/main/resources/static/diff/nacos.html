@@ -99,7 +99,12 @@
 
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="compareConfig('searchForm')">对 比</el-button>
-            <el-checkbox v-model="searchCond.onlyDiff">只显示差异项</el-checkbox>
+            显示：
+            <el-radio-group v-model="searchCond.onlyDiff">
+                <el-radio :label="0">全部</el-radio>
+                <el-radio :label="1">仅差异项</el-radio>
+                <el-radio :label="2">仅忽略项</el-radio>
+            </el-radio-group>&nbsp;&nbsp;&nbsp;&nbsp;
             <el-button type="primary" icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
         </el-form-item>
@@ -168,7 +173,7 @@
                 nacosProdNs: '',
                 nacosProdFile: '',
 
-                onlyDiff: true,
+                onlyDiff: 1,
             },
             namespaceTestArr: [],   // 左边的命名空间列表
             namespaceProdArr: [],   // 右边的命名空间列表
@@ -211,7 +216,7 @@
         },
         computed: {
             filteredTableData: function () {
-                if (this.searchCond.onlyDiff) {
+                if (this.searchCond.onlyDiff === 1) {
                     // 过滤掉不相等的项，也过滤掉只有环境差异的url
                     return this.attData.filter(item => {
                         if (this.isIgnoreKeyByProj(item.key))
@@ -224,6 +229,16 @@
                             && testVal !== this.removeEnvStr(item.prod));
                     });
                 }
+
+                if (this.searchCond.onlyDiff === 2) {
+                    // 只展示过滤项
+                    return this.attData.filter(item => {
+                        if (this.isIgnoreKeyByProj(item.key))
+                            return true;
+                        return false;
+                    });
+                }
+
                 return this.attData;
             }
         },
