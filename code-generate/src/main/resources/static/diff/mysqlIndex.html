@@ -94,6 +94,13 @@
             <el-button type="primary" icon="el-icon-search" @click="compareDB">对 比</el-button>
             <el-checkbox v-model="searchCond.onlyDiff">只显示差异项</el-checkbox>
             <el-button type="primary" icon="el-icon-edit" @click="generateSQL">脚本生成</el-button>
+            <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
+            &nbsp;&nbsp;&nbsp;
+            <a href="javascript:void(0)" @click="switchConfig()">源 <-> 目标</a>
+            |
+            <a href="javascript:void(0)" @click="copyToTarget()">源 -> 目标</a>
+            |
+            <a href="javascript:void(0)" @click="copyToSource()">目标 -> 源</a>
         </el-form-item>
         <div>
             <span style="padding-left:20px;">共{{attData.length}}个索引，{{filteredTableData.length}}个差异</span>
@@ -219,6 +226,47 @@
             }
         },
         methods: {
+            switchConfig: function () {
+                let ip = this.searchCond.dbTestIp;
+                let user = this.searchCond.dbTestUser;
+                let pwd = this.searchCond.dbTestPwd;
+
+                let db1 = this.searchCond.dbTestName;
+                let db2 = this.searchCond.dbProdName;
+
+                this.searchCond.dbTestIp = this.searchCond.dbProdIp;
+                this.searchCond.dbTestUser = this.searchCond.dbProdUser;
+                this.searchCond.dbTestPwd = this.searchCond.dbProdPwd;
+                this.loadTestDb();
+                this.searchCond.dbProdIp = ip;
+                this.searchCond.dbProdUser = user;
+                this.searchCond.dbProdPwd = pwd;
+                this.loadProdDb();
+                setTimeout(() => {
+                    this.searchCond.dbTestName = db2;
+                    this.searchCond.dbProdName = db1;
+                }, 2000);
+            },
+            copyToTarget: function () {
+                this.searchCond.dbProdIp = this.searchCond.dbTestIp;
+                this.searchCond.dbProdUser = this.searchCond.dbTestUser;
+                this.searchCond.dbProdPwd = this.searchCond.dbTestPwd;
+
+                this.loadProdDb();
+                setTimeout(() => {
+                    this.searchCond.dbProdName = this.searchCond.dbTestName;
+                }, 2000);
+            },
+            copyToSource: function () {
+                this.searchCond.dbTestIp = this.searchCond.dbProdIp;
+                this.searchCond.dbTestUser = this.searchCond.dbProdUser;
+                this.searchCond.dbTestPwd = this.searchCond.dbProdPwd;
+
+                this.loadTestDb();
+                setTimeout(() => {
+                    this.searchCond.dbProdName = this.searchCond.dbProdName;
+                }, 2000);
+            },
             dbSelected: function (flg) {
                 let selectDbName = flg ? this.selectProdDbName : this.selectTestDbName;
                 if (!selectDbName)

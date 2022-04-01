@@ -107,6 +107,12 @@
             </el-radio-group>&nbsp;&nbsp;&nbsp;&nbsp;
             <el-button type="primary" icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
+            &nbsp;&nbsp;&nbsp;
+            <a href="javascript:void(0)" @click="switchConfig()">源 <-> 目标</a>
+            |
+            <a href="javascript:void(0)" @click="copyToTarget()">源 -> 目标</a>
+            |
+            <a href="javascript:void(0)" @click="copyToSource()">目标 -> 源</a>
         </el-form-item>
         <div>
             <span style="padding-left:20px;">共{{attData.length}}个配置项，{{filteredTableData.length}}个差异项</span>
@@ -243,6 +249,52 @@
             }
         },
         methods: {
+            switchConfig: function () {
+                let ip = this.searchCond.nacosTestIp;
+                let user = this.searchCond.nacosTestUser;
+                let pwd = this.searchCond.nacosTestPwd;
+
+                let ns = this.searchCond.nacosTestNs;
+                let file = this.searchCond.nacosTestFile;
+                let ns2 = this.searchCond.nacosProdNs;
+                let file2 = this.searchCond.nacosProdFile;
+
+                this.searchCond.nacosTestIp = this.searchCond.nacosProdIp;
+                this.searchCond.nacosTestUser = this.searchCond.nacosProdUser;
+                this.searchCond.nacosTestPwd = this.searchCond.nacosProdPwd;
+                this.loadTestNacosNs();
+                this.searchCond.nacosProdIp = ip;
+                this.searchCond.nacosProdUser = user;
+                this.searchCond.nacosProdPwd = pwd;
+                this.loadProdNacosNs();
+                setTimeout(() => {
+                    this.searchCond.nacosTestNs = ns2;
+                    this.searchCond.nacosTestFile = file2;
+                    this.searchCond.nacosProdNs = ns;
+                    this.searchCond.nacosProdFile = file;
+                }, 2000);
+            },
+            copyToTarget: function () {
+                this.searchCond.nacosProdIp = this.searchCond.nacosTestIp;
+                this.searchCond.nacosProdUser = this.searchCond.nacosTestUser;
+                this.searchCond.nacosProdPwd = this.searchCond.nacosTestPwd;
+                this.loadProdNacosNs();
+                setTimeout(() => {
+                    this.searchCond.nacosProdNs = this.searchCond.nacosTestNs;
+                    this.searchCond.nacosProdFile = this.searchCond.nacosTestFile;
+                }, 2000);
+            },
+            copyToSource: function () {
+                this.searchCond.nacosTestIp = this.searchCond.nacosProdIp;
+                this.searchCond.nacosTestUser = this.searchCond.nacosProdUser;
+                this.searchCond.nacosTestPwd = this.searchCond.nacosProdPwd;
+                this.loadTestNacosNs();
+                setTimeout(() => {
+                    this.searchCond.nacosTestNs = this.searchCond.nacosProdNs;
+                    this.searchCond.nacosTestFile = this.searchCond.nacosProdFile;
+                }, 2000);
+            },
+
             init: function () {
                 this.configTest = {};
                 this.configProd = {};
