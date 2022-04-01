@@ -105,14 +105,16 @@
                 <el-radio :label="1">仅差异项</el-radio>
                 <el-radio :label="2">仅忽略项</el-radio>
             </el-radio-group>&nbsp;&nbsp;&nbsp;&nbsp;
-            <el-button type="primary" icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
+            <el-button icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
+
+            <el-button type="primary" icon="el-icon-edit" @click="generateYML">差异项yml生成</el-button>
+
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
-            &nbsp;&nbsp;&nbsp;
-            <a href="javascript:void(0)" @click="switchConfig()">源 <-> 目标</a>
+            <a href="javascript:void(0)" @click="switchConfig()">源<=>目标</a>
             |
-            <a href="javascript:void(0)" @click="copyToTarget()">源 -> 目标</a>
+            <a href="javascript:void(0)" @click="copyToTarget()">源=>目标</a>
             |
-            <a href="javascript:void(0)" @click="copyToSource()">目标 -> 源</a>
+            <a href="javascript:void(0)" @click="copyToSource()">目标=>源</a>
         </el-form-item>
         <div>
             <span style="padding-left:20px;">共{{attData.length}}个配置项，{{filteredTableData.length}}个差异项</span>
@@ -160,6 +162,24 @@
             </template>
         </el-table-column>
     </el-table>
+
+    <el-dialog title="差异项YML" :visible.sync="generateYmlShow">
+        <template>
+            <el-radio-group v-model="generateYmlTarget" @change="doGenerateYml">
+                <el-radio :label="'prod'">以源为准</el-radio>
+                <el-radio :label="'test'">以目标为准</el-radio>
+            </el-radio-group>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <el-checkbox v-model="generateSplitYml" @change="doGenerateYml">YML多行格式</el-checkbox>
+        </template>
+        <div>
+            <el-input
+                    type="textarea"
+                    :rows="20"
+                    v-model="generateYml">
+            </el-input>
+        </div>
+    </el-dialog>
 </div>
 <script>
     const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
@@ -207,6 +227,11 @@
                 'spring.rabbitmq.port': 1,
             },
             ignoreKeyByProject: {},// 每个项目要忽略的key列表
+
+            generateYmlShow: false,
+            generateYmlTarget: 'prod',
+            generateYml: '',
+            generateSplitYml: true,
 
             defaultName: '',
         },
@@ -369,6 +394,57 @@
                     this.ajaxError(error);
                 });
             },
+
+            generateYML: function () {
+                if (!this.attData || this.attData.length <= 0) {
+                    return alert('请先对比');
+                }
+                this.searchCond.onlyDiff = 1;
+                let diffData = this.filteredTableData;
+                if (!diffData || diffData.length <= 0) {
+                    return alert('未找到配置差异');
+                }
+                this.doGenerateYml();
+            },
+            doGenerateYml: function () {
+                this.generateYmlShow = true;
+                // 允许横向滚动条
+                setTimeout(function () {
+                    document.getElementsByTagName('textarea')[0].wrap = 'off';
+                }, 100);
+
+                let ret = '';
+                let diffData = this.filteredTableData;
+                for (let i = 0, j = diffData.length; i < j; i++) {
+                    let item = diffData[i];
+                    let useKeyStr = this.generateSplitYml ? this.splitYmlKey(item.key) : item.key;
+                    ret += useKeyStr + ': "';
+                    if (this.generateYmlTarget === 'test') {
+                        ret += item.test;
+                    } else {
+                        ret += item.prod;
+                    }
+                    ret += '"\n';
+                }
+                this.generateYml = ret;
+            },
+            splitYmlKey: function (key) {
+                let splitCh = '.';
+                let ret = '';
+                let tab = '';
+                let idx = key.indexOf(splitCh);
+                while (idx > 0) {
+                    let leftKey = key.substring(0, idx);
+                    key = key.substring(idx + 1);
+                    ret += tab + leftKey + ': \n';
+                    tab += '  ';
+
+                    idx = key.indexOf(splitCh);
+                }
+                ret += tab + key;
+                return ret;
+            },
+
             setByDefault: function (prop, arr) {
                 if (arr.length <= 0) {
                     this.searchCond[prop] = '';
