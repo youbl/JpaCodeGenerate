@@ -107,7 +107,7 @@
             </el-radio-group>&nbsp;&nbsp;&nbsp;&nbsp;
             <el-button icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
 
-            <el-button type="primary" icon="el-icon-edit" @click="generateYML">差异项yml生成</el-button>
+            <el-button type="primary" icon="el-icon-edit" @click="doGenerateYml">差异项yml生成</el-button>
 
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
             <a href="javascript:void(0)" @click="switchConfig()">源<=>目标</a>
@@ -163,13 +163,23 @@
         </el-table-column>
     </el-table>
 
-    <el-dialog title="差异项YML" :visible.sync="generateYmlShow">
+    <el-dialog title="YML配置生成" :visible.sync="generateYmlShow">
         <template>
-            <el-radio-group v-model="generateYmlTarget" @change="doGenerateYml">
-                <el-radio :label="'prod'">以源为准</el-radio>
-                <el-radio :label="'test'">以目标为准</el-radio>
-            </el-radio-group>
-            &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="border: #66b1ff solid 1px;">
+                <label><input type="radio" value="test" name="radGenYml" v-model="generateYmlTarget"
+                              @change="doGenerateYml">以源为准</label>
+                <label><input type="radio" value="prod" name="radGenYml" v-model="generateYmlTarget"
+                              @change="doGenerateYml">以目标为准</label>
+            </span>
+            &nbsp;&nbsp;
+            <span style="border: #66b1ff solid 1px;">
+                <label><input type="radio" value="diff" name="radYmlType" v-model="generateYmlType"
+                              @change="doGenerateYml">仅生成差异项</label>
+                <label><input type="radio" value="all" name="radYmlType" v-model="generateYmlType"
+                              @change="doGenerateYml">生成全部配置</label>
+            </span>
+            &nbsp;&nbsp;
+            <el-checkbox v-model="generateExceptIgnore" @change="doGenerateYml">生成时不含忽略项</el-checkbox>
             <el-checkbox v-model="generateSplitYml" @change="doGenerateYml">YML多行格式</el-checkbox>
         </template>
         <div>
@@ -229,9 +239,11 @@
             ignoreKeyByProject: {},// 每个项目要忽略的key列表
 
             generateYmlShow: false,
-            generateYmlTarget: 'prod',
+            generateYmlTarget: 'test',
             generateYml: '',
             generateSplitYml: true,
+            generateExceptIgnore: true,
+            generateYmlType: 'diff',
 
             defaultName: '',
         },
@@ -246,6 +258,7 @@
                 this.loadProdNacosNs();
         },
         computed: {
+            // 用于展示的内容
             filteredTableData: function () {
                 if (this.searchCond.onlyDiff === 1) {
                     // 过滤掉不相等的项，也过滤掉只有环境差异的url
@@ -271,7 +284,7 @@
                 }
 
                 return this.attData;
-            }
+            },
         },
         methods: {
             switchConfig: function () {
@@ -395,30 +408,65 @@
                 });
             },
 
-            generateYML: function () {
+            filterGenerateData: function () {
+                return this.attData.filter(item => {
+                    // 生成时不含忽略项
+                    if (this.generateExceptIgnore && this.isIgnoreKeyByProj(item.key))
+                        return false;
+
+                    if (this.generateYmlType === 'all')
+                        return true;
+
+                    // 仅差异项时判断
+                    if (item.test === item.prod)
+                        return false;
+
+                    let testVal = this.removeEnvStr(item.test);
+                    return (item.test !== item.prod
+                        && testVal !== item.prod
+                        && testVal !== this.removeEnvStr(item.prod));
+                });
+            },
+            doGenerateYml: function () {
                 if (!this.attData || this.attData.length <= 0) {
                     return alert('请先对比');
                 }
-                this.searchCond.onlyDiff = 1;
-                let diffData = this.filteredTableData;
-                if (!diffData || diffData.length <= 0) {
+                let diffData = this.filterGenerateData();
+                if (!diffData) {
                     return alert('未找到配置差异');
                 }
-                this.doGenerateYml();
-            },
-            doGenerateYml: function () {
+
                 this.generateYmlShow = true;
                 // 允许横向滚动条
                 setTimeout(function () {
                     document.getElementsByTagName('textarea')[0].wrap = 'off';
                 }, 100);
 
+                if (!this.generateSplitYml) {
+                    this.generateYml = this.generateLine(diffData);
+                } else {
+                    let jobj = {};
+                    for (let i = 0, j = diffData.length; i < j; i++) {
+                        let item = diffData[i];
+                        let val = '';
+                        if (this.generateYmlTarget === 'test') {
+                            val = item.test;
+                        } else {
+                            val = item.prod;
+                        }
+                        this.generateJsonObj(jobj, item.key, val);
+                    }
+                    this.generateYml = this.generateYmlByJsonObj(jobj, '');
+                }
+                if (this.generateYml.indexOf('******') > 0) {
+                    alert('包含被隐藏的密码，请勿直接使用');
+                }
+            },
+            generateLine: function (diffData) {
                 let ret = '';
-                let diffData = this.filteredTableData;
                 for (let i = 0, j = diffData.length; i < j; i++) {
                     let item = diffData[i];
-                    let useKeyStr = this.generateSplitYml ? this.splitYmlKey(item.key) : item.key;
-                    ret += useKeyStr + ': "';
+                    ret += item.key + ': "';
                     if (this.generateYmlTarget === 'test') {
                         ret += item.test;
                     } else {
@@ -426,22 +474,35 @@
                     }
                     ret += '"\n';
                 }
-                this.generateYml = ret;
+                return ret;
             },
-            splitYmlKey: function (key) {
+            // 拆分key，并插入jobj对象属性
+            generateJsonObj: function (jobj, key, val) {
                 let splitCh = '.';
-                let ret = '';
-                let tab = '';
                 let idx = key.indexOf(splitCh);
-                while (idx > 0) {
+                if (idx > 0) {
                     let leftKey = key.substring(0, idx);
                     key = key.substring(idx + 1);
-                    ret += tab + leftKey + ': \n';
-                    tab += '  ';
-
-                    idx = key.indexOf(splitCh);
+                    if (!jobj.hasOwnProperty(leftKey)) {
+                        jobj[leftKey] = {};
+                    }
+                    this.generateJsonObj(jobj[leftKey], key, val);
+                } else {
+                    jobj[key] = val;
                 }
-                ret += tab + key;
+            },
+            generateYmlByJsonObj: function (jobj, tab) {
+                if (jobj === null || typeof (jobj) === 'string')
+                    return '"' + jobj + '"';
+
+                let ret = '';
+                // if (tab.length > 0)
+                //     ret += '\n';
+                for (let att in jobj) {
+                    if (jobj.hasOwnProperty(att)) {
+                        ret += '\n' + tab + att + ': ' + this.generateYmlByJsonObj(jobj[att], tab + '  ');
+                    }
+                }
                 return ret;
             },
 

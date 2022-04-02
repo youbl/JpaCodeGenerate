@@ -9,7 +9,7 @@ spring:
 
   # mysql连接信息配置
   datasource:
-    url: jdbc:mysql://10.2.5.2:3306/assets?characterEncoding=utf8&serverTimezone=UTC&useSSL=false
+    url: jdbc:mysql://10.2.5.2:3306/assets?allowMultiQueries=true&useUnicode=true&characterEncoding=utf8&socketTimeout=2000&connectTimeout=2000&rewriteBatchedStatements=true&useSSL=false&serverTimezone=Asia/Shanghai&useSSL=false
     username: beinet
     password: beinet.cn
     driver-class-name: com.mysql.cj.jdbc.Driver
