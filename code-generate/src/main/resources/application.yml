@@ -30,3 +30,13 @@ spring:
 logging:
   level:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
+
+backup:
+  localDir: /work/source/backups/nacos
+  nacos:
+    - url: http://test.beinet.cn/nacos/
+      username: readonly
+      password: 123456
+    - url: http://prod.beinet.cn/nacos/
+      username: readonly
+      password: 123456
