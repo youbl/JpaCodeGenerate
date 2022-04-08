@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.errors.EmptyCommitException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -70,7 +71,7 @@ public final class GitHelper {
             git.add().addFilepattern(".").setUpdate(true).call(); // 新增的文件
             git.add().setUpdate(true).addFilepattern(".").call(); // 更新的文件
 
-            git.commit().setMessage(msg).call();
+            git.commit().setMessage(msg).setAllowEmpty(false).setAll(true).call();
             Iterable<PushResult> results = git.push()
                     .setCredentialsProvider(provider)
                     .call();
@@ -80,8 +81,11 @@ public final class GitHelper {
             }
             log.info("提交结果: " + str);
             return true;
+        } catch (EmptyCommitException e) {
+            log.warn("无变更");
+            return false;
         } catch (Exception e) {
-            log.error("pull失败:", e);
+            log.error("提交失败:", e);
             return false;
         }
 
