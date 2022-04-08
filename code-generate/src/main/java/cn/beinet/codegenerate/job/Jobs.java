@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.job;
 
 import cn.beinet.codegenerate.job.service.Backup;
+import cn.beinet.codegenerate.util.GitHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class Jobs {
     private final List<Backup> backupList;
+    private final GitHelper gitHelper;
 //    private static boolean isOk;
 
     /**
@@ -38,6 +40,9 @@ public class Jobs {
                 log.error("backupOperations error:{0} {1}", item.getClass().getName(), exp.getMessage());
             }
         }
+        log.info("文件写入完成，开始操作git...");
+        gitHelper.pull();
+        gitHelper.commit("备份");
         log.info("backupOperations 结束.");
     }
 }

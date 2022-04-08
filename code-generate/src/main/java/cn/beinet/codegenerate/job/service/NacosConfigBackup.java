@@ -24,7 +24,7 @@ public class NacosConfigBackup implements Backup {
 
     @Override
     public void operate() {
-        for (NacosConfigs.Nacos item : configs.getNacos()) {
+        for (NacosConfigs.NacosSite item : configs.getNacos().getSites()) {
             log.info("准备备份url {}", item.getUrl());
 
             try {
@@ -38,7 +38,7 @@ public class NacosConfigBackup implements Backup {
         }
     }
 
-    private void backupNameSpace(String nameSpace, NacosConfigs.Nacos item) {
+    private void backupNameSpace(String nameSpace, NacosConfigs.NacosSite item) {
         log.info("准备备份ns {} {}", item.getUrl(), nameSpace);
         int idx = 0;
         try {
@@ -57,7 +57,7 @@ public class NacosConfigBackup implements Backup {
         }
     }
 
-    private void backupFile(String nameSpace, String file, NacosConfigs.Nacos item) {
+    private void backupFile(String nameSpace, String file, NacosConfigs.NacosSite item) {
         try {
             String content = nacosService.getFile(
                     item.getUrl(),
@@ -73,8 +73,8 @@ public class NacosConfigBackup implements Backup {
         }
     }
 
-    private String getFileName(String nameSpace, String file, NacosConfigs.Nacos item) {
-        String dir = configs.getLocalDir();
+    private String getFileName(String nameSpace, String file, NacosConfigs.NacosSite item) {
+        String dir = configs.getNacos().getBackDir();
         if (!dir.endsWith("/"))
             dir += "/";
 

@@ -32,11 +32,17 @@ logging:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
 
 backup:
-  localDir: /work/source/backups/nacos
+  gitlab:
+    url: https://git.beinet.cn/backups.git
+    username: beiliang_you
+    password: 123456
+    rootDir: /work/source/backups
   nacos:
-    - url: http://test.beinet.cn/nacos/
-      username: readonly
-      password: 123456
-    - url: http://prod.beinet.cn/nacos/
-      username: readonly
-      password: 123456
+    backDir: /work/source/backups/nacos
+    sites:
+      - url: http://test.beinet.cn/nacos/
+        username: readonly
+        password: 123456
+      - url: http://prod.beinet.cn/nacos/
+        username: readonly
+        password: 123456
