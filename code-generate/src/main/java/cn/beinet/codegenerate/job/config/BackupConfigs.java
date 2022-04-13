@@ -13,10 +13,12 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 @ConfigurationProperties(prefix = "backup")
-public class NacosConfigs {
+public class BackupConfigs {
     private Gitlab gitlab;
 
     private Nacos nacos;
+
+    private Mysql mysql;
 
     @Data
     public static class Nacos {
@@ -37,5 +39,18 @@ public class NacosConfigs {
         private String username;
         private String password;
         private String rootDir;
+    }
+
+    @Data
+    public static class Mysql {
+        private String backDir;
+        private MysqlInstance[] instances;
+    }
+
+    @Data
+    public static class MysqlInstance {
+        private String url;
+        private String username;
+        private String password;
     }
 }

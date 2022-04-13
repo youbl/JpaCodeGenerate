@@ -389,6 +389,7 @@
                 this.doGenerateSql();
             },
             doGenerateSql: function () {
+                let diffData = this.filteredTableData;
                 this.generateSqlShow = true;
                 // 允许横向滚动条
                 setTimeout(function () {
@@ -400,8 +401,8 @@
                 let targetCol;   // 要修改的列 旧定义
 
                 let sql = '';
-                for (let i = 0, j = this.filteredTableData.length; i < j; i++) {
-                    let item = this.filteredTableData[i];
+                for (let i = 0, j = diffData.length; i < j; i++) {
+                    let item = diffData[i];
                     if (this.generateSqlTarget === 'test') {
                         db = this.searchCond.dbTestName;
                         sourceCol = item.prodDefine;

@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.util;
 
-import cn.beinet.codegenerate.job.config.NacosConfigs;
+import cn.beinet.codegenerate.job.config.BackupConfigs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
@@ -24,7 +24,7 @@ import java.io.File;
 @RequiredArgsConstructor
 @Slf4j
 public final class GitHelper {
-    private final NacosConfigs configs;
+    private final BackupConfigs configs;
 
     @PostConstruct
     public void init() {
