@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.repository;
 
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.model.IndexDto;
+import cn.beinet.codegenerate.model.TableDto;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -142,6 +143,32 @@ public class ColumnRepository {
             ret.setUnique(unique == 0);
             ret.setIndexType(resultSet.getString("INDEX_TYPE"));
             ret.setComment(resultSet.getString("INDEX_COMMENT"));
+            return ret;
+        });
+    }
+
+    /**
+     * 获取表行数、空间占用数据
+     *
+     * @return
+     */
+    public List<TableDto> getTableInfos() {
+        String sql = "SELECT t.table_schema, t.table_name, t.table_rows, t.avg_row_length, t.data_length, t.index_length, " +
+                "t.auto_increment, t.create_time, t.table_comment " +
+                "FROM information_schema.tables t " +
+                "ORDER BY t.table_schema, t.table_name";
+        return getJdbcTemplate().query(sql, (resultSet, i) -> {
+            TableDto ret = new TableDto();
+            ret.setTable_schema(resultSet.getString("table_schema"));
+            ret.setTable_name(resultSet.getString("table_name"));
+            ret.setTable_rows(resultSet.getLong("table_rows"));
+            ret.setAvg_row_length(resultSet.getLong("avg_row_length"));
+            ret.setData_length(resultSet.getLong("data_length"));
+            ret.setIndex_length(resultSet.getLong("index_length"));
+            ret.setAuto_increment(resultSet.getLong("auto_increment"));
+            ret.setCreate_time(resultSet.getString("create_time"));
+            ret.setTable_comment(resultSet.getString("table_comment"));
+
             return ret;
         });
     }
