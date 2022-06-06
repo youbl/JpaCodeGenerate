@@ -68,7 +68,7 @@ public final class GitHelper {
         UsernamePasswordCredentialsProvider provider = getCredentialsProvider();
         try {
             Git git = Git.open(dir);
-            git.add().addFilepattern(".").setUpdate(true).call(); // 新增的文件
+            git.add().addFilepattern(".").call(); // 新增的文件
             git.add().setUpdate(true).addFilepattern(".").call(); // 更新的文件
 
             git.commit().setMessage(msg).setAllowEmpty(false).setAll(true).call();
