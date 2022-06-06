@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.rpc.FeignNacos;
 import cn.beinet.codegenerate.rpc.dto.NacosFiles;
 import cn.beinet.codegenerate.rpc.dto.NacosNameSpaces;
 import cn.beinet.codegenerate.rpc.dto.NacosToken;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.InputStreamResource;
@@ -18,6 +19,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class NacosService {
     private final FeignNacos feignNacos;
 
@@ -102,6 +104,7 @@ public class NacosService {
             }
             return ret;
         } catch (Exception exp) {
+            log.error("错误:{} {}", exp.getMessage(), yml);
             throw new RuntimeException(exp);
         }
     }

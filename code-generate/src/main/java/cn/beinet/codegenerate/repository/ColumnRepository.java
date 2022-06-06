@@ -21,6 +21,19 @@ public class ColumnRepository {
     private final String userName;
     private final String pwd;
 
+    public static ColumnRepository getRepository(String ip,
+                                                 int port,
+                                                 String user,
+                                                 String pwd) {
+        int idx = ip.indexOf(':');
+        if (idx > 0) {
+            String tmp = ip.substring(idx + 1);
+            port = Integer.parseInt(tmp);
+            ip = ip.substring(0, idx);
+        }
+        return new ColumnRepository(ip, port, user, pwd);
+    }
+
     public ColumnRepository(Environment env, DbEnv dbEnv) {
         String configPrefix = dbEnv.getConfig();
         this.url = env.getProperty(configPrefix + ".url");
@@ -32,6 +45,7 @@ public class ColumnRepository {
     public ColumnRepository(String ip, int port, String userName, String pwd) {
         this.url = "jdbc:mysql://" + ip + ":" + port +
                 "/mysql?characterEncoding=utf8&allowMultiQueries=true&serverTimezone=Asia/Shanghai&useSSL=false";
+        // ?allowMultiQueries=true&useUnicode=true&characterEncoding=utf8&socketTimeout=2000&connectTimeout=2000&rewriteBatchedStatements=true&useSSL=false&serverTimezone=Asia/Shanghai&useSSL=false
         this.userName = userName;
         this.pwd = pwd;
     }
@@ -193,5 +207,26 @@ public class ColumnRepository {
         public String getConfig() {
             return config;
         }
+    }
+
+    public String getIpPort() {
+        String ret = url;
+
+        String findStr1 = "://";
+        int idx = ret.indexOf(findStr1);
+        if (idx >= 0) {
+            ret = ret.substring(idx + findStr1.length());
+        }
+        idx = ret.indexOf("/");
+        if (idx > 0) {
+            ret = ret.substring(0, idx);
+        } else {
+            idx = ret.indexOf("?");
+            if (idx > 0) {
+                ret = ret.substring(0, idx);
+            }
+        }
+
+        return ret;
     }
 }

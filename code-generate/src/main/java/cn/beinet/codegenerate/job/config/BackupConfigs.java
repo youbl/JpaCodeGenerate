@@ -49,7 +49,8 @@ public class BackupConfigs {
 
     @Data
     public static class MysqlInstance {
-        private String url;
+        private String ip;
+        private Integer port;
         private String username;
         private String password;
     }

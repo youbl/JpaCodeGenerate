@@ -134,13 +134,6 @@ public class MySqlController {
     ColumnRepository getRepository(String ip,
                                    String user,
                                    String pwd) {
-        int port = 3306;
-        int idx = ip.indexOf(':');
-        if (idx > 0) {
-            String tmp = ip.substring(idx + 1);
-            port = Integer.parseInt(tmp);
-            ip = ip.substring(0, idx);
-        }
-        return new ColumnRepository(ip, port, user, pwd);
+        return ColumnRepository.getRepository(ip, 3306, user, pwd);
     }
 }

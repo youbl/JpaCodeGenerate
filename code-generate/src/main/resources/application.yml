@@ -46,3 +46,14 @@ backup:
       - url: http://prod.beinet.cn/nacos/
         username: readonly
         password: 123456
+  mysql:
+    backDir: /data/app/backups/mysql
+    instances:
+      - ip: 10.2.5.2
+        port: 3306
+        username: readonly
+        password: 123456
+      - ip: 10.2.5.3
+        port: 3306
+        username: readonly
+        password: 123456
