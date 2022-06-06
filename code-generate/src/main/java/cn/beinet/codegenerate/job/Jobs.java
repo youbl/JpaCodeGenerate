@@ -21,7 +21,7 @@ import java.util.List;
 public class Jobs {
     private final List<Backup> backupList;
     private final GitHelper gitHelper;
-//    private static boolean isOk;
+    private static boolean isOk;
 
     /**
      * 每小时跑一次，启动Backup接口实现类里的备份功能

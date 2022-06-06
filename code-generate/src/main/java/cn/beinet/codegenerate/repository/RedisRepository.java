@@ -1,14 +1,9 @@
 package cn.beinet.codegenerate.repository;
 
 import cn.beinet.codegenerate.model.RedisResultDto;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import cn.beinet.codegenerate.util.SpringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.DataType;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -18,7 +13,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
@@ -35,7 +29,7 @@ public class RedisRepository {
     private final String pwd;
 
     private StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper = createObjectMapper();
+    private final ObjectMapper objectMapper = SpringUtil.getBean(ObjectMapper.class);
 
     public RedisRepository(String ip, int port, int dbIndex, String pwd) {
         this.ip = ip;
@@ -215,28 +209,5 @@ public class RedisRepository {
         factory.afterPropertiesSet();
         log.info("initedRedisConnect: " + host + ':' + port + " db:" + db);
         return factory;
-    }
-
-    private ObjectMapper createObjectMapper() {
-        JavaTimeModule module = new JavaTimeModule();
-        // module.addDeserializer(LocalDateTime.class, new LocalDateTimeSerializerExt());
-
-        ObjectMapper mapper = Jackson2ObjectMapperBuilder.json()
-                .modules(module, new SimpleModule())
-                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)  // 禁用写时间戳，Could not read JSON: Cannot construct instance of `java.time.LocalDateTime`
-                .featuresToEnable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES) // 反序列化时，忽略大小写
-                .featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)// 忽略未知属性
-                .featuresToDisable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                .featuresToDisable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)   // 忽略未知的类型，比如本项目里不存在的class
-                .serializationInclusion(JsonInclude.Include.NON_NULL)
-                // .featuresToDisable(MapperFeature.USE_ANNOTATIONS)
-                .featuresToEnable()
-                .build();
-
-        //if (enableTypeing) { // 序列化结果里的类型不需要，占用空间
-        // 没有这一句，会抛异常：java.lang.ClassCastException: java.util.LinkedHashMap cannot be cast to xxx
-        // mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-        //}
-        return mapper;
     }
 }

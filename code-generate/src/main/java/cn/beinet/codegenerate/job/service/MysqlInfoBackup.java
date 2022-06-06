@@ -4,10 +4,10 @@ import cn.beinet.codegenerate.job.config.BackupConfigs;
 import cn.beinet.codegenerate.model.TableDto;
 import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.util.FileHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -21,9 +21,11 @@ import java.util.List;
 @Slf4j
 public class MysqlInfoBackup implements Backup {
     private final BackupConfigs.Mysql configs;
+    private final ObjectMapper objectMapper;
 
-    public MysqlInfoBackup(BackupConfigs configs) {
+    public MysqlInfoBackup(BackupConfigs configs, ObjectMapper objectMapper) {
         this.configs = configs.getMysql();
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -46,13 +48,11 @@ public class MysqlInfoBackup implements Backup {
                 ColumnRepository repository = ColumnRepository.getRepository(
                         item.getIp(), 3306, item.getUsername(), item.getPassword());
                 List<TableDto> tables = repository.getTableInfos();
-                StringBuilder sb = new StringBuilder();
-                for (TableDto tb : tables) {
-                    sb.append(tb).append("\r\n");
-                }
+                // 格式化输出json
+                String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tables);
 
                 String filePath = getFileName(repository);
-                FileHelper.saveFile(filePath, sb.toString());
+                FileHelper.saveFile(filePath, json);
             } catch (Exception namespaceEx) {
                 log.error("备份出错:{}:{} {}", item.getIp(), item.getPort(), namespaceEx.getMessage());
             }
