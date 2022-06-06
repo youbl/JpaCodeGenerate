@@ -81,7 +81,7 @@ public class MysqlStructBackup implements Backup {
 
     // 替换掉无用的sql内容，如自增数据
     private String replaceNouseSql(String ddl) {
-        return ddl.replaceAll("(?i)\\s+AUTO_INCREMENT\\s*=\\s*\\d+\\s+", "");
+        return ddl.replaceAll("(?i)\\s+AUTO_INCREMENT\\s*=\\s*\\d+\\s+", " ");
     }
 
     private String getFileName(String db, String table, ColumnRepository repository) {
