@@ -35,7 +35,9 @@ public class Jobs {
         log.info("backupOperations 启动...");
         for (Backup item : backupList) {
             try {
-                item.operate();
+                if (item.enabled()) {
+                    item.operate();
+                }
             } catch (Exception exp) {
                 log.error("backupOperations error:{0} {1}", item.getClass().getName(), exp.getMessage());
             }

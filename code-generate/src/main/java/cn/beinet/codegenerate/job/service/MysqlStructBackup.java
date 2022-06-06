@@ -6,6 +6,7 @@ import cn.beinet.codegenerate.util.FileHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -22,6 +23,13 @@ public class MysqlStructBackup implements Backup {
 
     public MysqlStructBackup(BackupConfigs configs) {
         this.configs = configs.getMysql();
+    }
+
+    @Override
+    public boolean enabled() {
+        // 只有上午10点和下午10点允许备份
+        int hour = LocalDateTime.now().getHour();
+        return hour == 10 || hour == 22;
     }
 
     @Override
