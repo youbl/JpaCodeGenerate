@@ -1,15 +1,16 @@
 package cn.beinet.codegenerate.configs;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
+import java.io.IOException;
+import java.sql.Timestamp;
 
 /**
  * Description:
@@ -22,6 +23,7 @@ public class DefaultConfigurations {
     @Bean
     public ObjectMapper createMapper() {
         JavaTimeModule module = new JavaTimeModule();
+        module.addSerializer(Timestamp.class, new TimestampJsonSerializer());
         // module.addDeserializer(LocalDateTime.class, new LocalDateTimeSerializerExt());
 
         ObjectMapper mapper = Jackson2ObjectMapperBuilder.json()
@@ -41,5 +43,13 @@ public class DefaultConfigurations {
         // mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
         //}
         return mapper;
+    }
+
+    public static class TimestampJsonSerializer extends JsonSerializer<Timestamp> {
+
+        @Override
+        public void serialize(Timestamp timestamp, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+            jsonGenerator.writeString(timestamp.toString());
+        }
     }
 }
