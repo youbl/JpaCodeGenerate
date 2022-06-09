@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.controller.execute;
 
 import cn.beinet.codegenerate.GlobalExceptionFilter;
+import cn.beinet.codegenerate.configs.AuthDetails;
 import cn.beinet.codegenerate.controller.execute.dto.SqlDto;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import cn.beinet.codegenerate.service.MySqlService;
@@ -76,7 +77,11 @@ public class MySqlExeController {
      * @return 影响行数（如果次数大于1，则是异步执行，返回-1）
      */
     @PostMapping("mysql/executeDml")
-    public GlobalExceptionFilter.ResponseData executeDML(@RequestBody SqlDto sql) {
+    public GlobalExceptionFilter.ResponseData executeDML(@RequestBody SqlDto sql, AuthDetails loginInfo) {
+        if (loginInfo == null || !"beiliang_you".equals(loginInfo.getAccount())) {
+            throw new RuntimeException("不允许访问");
+        }
+
         if (sql.getTime() == 1) {
             int affectedRows = mySqlService.executeDml(sql);
             return GlobalExceptionFilter.ResponseData.ok("OK", affectedRows);

@@ -77,7 +77,8 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         // 判断cookie是否有效
         String token = RequestHelper.getCookie(TOKEN_COOKIE_NAME, request);
         log.info("url:{} token: {}", url, token);
-        if (!validateToken(token)) {
+        String loginUser = getLoginUserFromToken(token);
+        if (!StringUtils.hasLength(loginUser)) {
             log.debug("token无效: {}", token);
             addToken("", response);
             if (StringUtils.isEmpty(token)) {
@@ -87,6 +88,9 @@ public class LdapLoginFilter extends OncePerRequestFilter {
             }
             return;
         }
+
+        // 添加登录后的信息
+        request.setAttribute("loginUser", loginUser);
 
         log.debug("token校验成功: {}", token);
         filterChain.doFilter(request, response);
@@ -173,25 +177,28 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      * @param token token
      * @return 是否正确token
      */
-    private boolean validateToken(String token) {
+    private String getLoginUserFromToken(String token) {
         if (StringUtils.isEmpty(token)) {
-            return false;
+            return null;
         }
         // 0为用户名，1为时间，2为md5
         String[] arr = token.split(TOKEN_SPLIT);
         if (arr.length != 3 || arr[0].isEmpty() || arr[1].isEmpty() || arr[2].isEmpty()) {
-            return false;
+            return null;
         }
         long loginTime = Long.parseLong(arr[1]);
         long now = Long.parseLong(LocalDateTime.now().format(FORMATTER));
         long diff = now - loginTime;
         // 1000000为1天，要求每天登录
         if (diff < 0 || diff > 1000000) {
-            return false;
+            return null;
         }
 
         String countToken = buildToken(arr[0], arr[1]);
-        return (countToken.equalsIgnoreCase(token));
+        if (countToken.equalsIgnoreCase(token)) {
+            return arr[0];
+        }
+        return null;
     }
 
     /**
