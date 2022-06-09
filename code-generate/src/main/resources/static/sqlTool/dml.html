@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MySQL执行工具</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/sql-formatter.min.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <el-form-item label="数据库连接信息" style="font-weight: bold;">
+            <el-select v-model="selectDbName" filterable placeholder="请选择环境" @change="dbSelected">
+                <el-option
+                        v-for="item in sqlConns"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                </el-option>
+            </el-select>
+            <el-form-item label="IP">
+                <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <input type="text" v-model="searchCond.dbTestUser" style="width:60px"/>
+            </el-form-item>
+            <el-form-item label="密码">
+                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"/>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
+            <el-form-item label="刷新数据库列表">
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库">
+                    <el-option
+                            v-for="item in dbsTest"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form-item>
+        <br>
+
+        <span>
+            执行次数(0为执行到影响行数0为止):<input type="text" v-model.trim="searchCond.time" style="width:50px;">
+        </span>
+        <el-button size="small" type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
+        <span style="padding-left:20px;">耗时: {{costTime}}ms</span>
+        <p></p>
+        <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
+                  style="width:1000px"/>
+    </el-form>
+    <br>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loading: false,
+
+            selectDbName: '生产-1',
+            sqlConns: [
+                {
+                    name: '生产-1',
+                    dbTestIp: '10.0.0.1',
+                    dbTestUser: 'readonly',
+                    dbTestPwd: '123456',
+                    dbTestName: '',
+                },
+            ],
+            searchCond: {
+                dbTestIp: '',
+                dbTestUser: '',
+                dbTestPwd: '',
+                dbTestName: '',
+            },
+
+            dbsTest: {},
+            defaultName: '',
+            tableList: [],
+
+            costTime: 0,
+        },
+        created: function () {
+            this.defaultName = getQueryString('name');
+            this.dbSelected();
+        },
+        computed: {},
+        methods: {
+            handleTabClick: function (tab, event) {
+            },
+            dbSelected: function () {
+                for (let i = 0, j = this.sqlConns.length; i < j; i++) {
+                    if (this.sqlConns[i].name === this.selectDbName) {
+                        this.searchCond = this.sqlConns[i];
+                        this.searchCond['time'] = '1';
+                        this.loadDbs();
+                        break;
+                    }
+                }
+            },
+            combineDbPara: function () {
+                if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
+                    alert('请输入数据库IP/用户/密码');
+                    return;
+                }
+                return 'ip=' + this.searchCond.dbTestIp +
+                    '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
+            },
+            loadDbs: function () {
+                let currentIp = this.searchCond.dbTestIp;
+                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara();
+                return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert(currentIp + '出错:\n' + response.data.errMsg);
+                    }
+                    this.dbsTest = response.data;
+                    this.setByDefault('dbTestName', this.dbsTest);
+
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+
+            setByDefault: function (prop, arr) {
+                if (arr.length <= 0) {
+                    this.searchCond[prop] = '';
+                    return;
+                }
+                if (this.defaultName) {
+                    for (let i = 0, j = arr.length; i < j; i++) {
+                        if (arr[i].indexOf(this.defaultName) >= 0) {
+                            this.searchCond[prop] = arr[i];
+                            return;
+                        }
+                    }
+                }
+                this.searchCond[prop] = arr[0];
+            },
+            executeSql: function () {
+                if (!this.searchCond.dbTestName) {
+                    return alert('数据库必选');
+                }
+                this.attData = [];
+
+                let url = BASE_URL + 'mysql/executeDml';
+
+                let beginTime = new Date();
+                let body = {
+                    'sql': this.searchCond.sql,
+                    'time': this.searchCond.time,
+                    'ip': this.searchCond.dbTestIp,
+                    'user': this.searchCond.dbTestUser,
+                    'pwd': this.searchCond.dbTestPwd,
+                    'db': this.searchCond.dbTestName,
+                };
+                if (!confirm('危险操作，确认要开始吗？')) {
+                    return;
+                }
+                if (this.loading) {
+                    return alert('执行中，请稍候');
+                }
+                this.loading = true;
+                return axios.post(url, body).then(response => {
+                    this.costTime = Math.floor((new Date()) - beginTime);
+                    this.loading = false;
+                    if (response.data.code !== 200) {
+                        return alert(response.data.code + ':' + response.data.errMsg);
+                    }
+                    alert(response.data.errMsg + ' 影响行数:' + response.data.result);
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+
+    /**
+     * 判断对象有属性
+     * @param obj 对象
+     * @returns {boolean} 有或没有
+     */
+    function hasAnyProperty(obj) {
+        if (!obj)
+            return false;
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
+    }
+</script>
+</body>
+</html>

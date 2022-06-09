@@ -22,8 +22,12 @@ public class MySqlExecuteRepository {
         this.pwd = pwd;
     }
 
-    public List<Map<String, Object>> executeSql(String sql) {
+    public List<Map<String, Object>> queryData(String sql) {
         return getJdbcTemplate().queryForList(sql);//.query(sql, new MyRowMapper());
+    }
+
+    public int executeDml(String sql) {
+        return getJdbcTemplate().update(sql);
     }
 
 //    static class MyRowMapper implements RowMapper<Map<String, String>> {

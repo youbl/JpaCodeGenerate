@@ -567,17 +567,21 @@
                 this.attData = [];
 
                 let url = BASE_URL + 'mysql/executeSql?';
-                let urlTest = url + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
+                let beginTime = new Date();
+                this.resultData = [];
+                let body = {
+                    'sql': this.searchCond.sql,
+                    'time': this.searchCond.time,
+                    'ip': this.searchCond.dbTestIp,
+                    'user': this.searchCond.dbTestUser,
+                    'pwd': this.searchCond.dbTestPwd,
+                    'db': this.searchCond.dbTestName,
+                };
                 if (this.loading) {
                     return alert('执行中，请稍候');
                 }
                 this.loading = true;
-                let beginTime = new Date();
-                let body = {
-                    sql: this.searchCond.sql,
-                };
-                this.resultData = [];
-                return axios.post(urlTest, body).then(response => {
+                return axios.post(url, body).then(response => {
                     this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
                     if (response.data.code !== 200) {

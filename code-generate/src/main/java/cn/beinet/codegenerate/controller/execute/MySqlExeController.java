@@ -3,9 +3,10 @@ package cn.beinet.codegenerate.controller.execute;
 import cn.beinet.codegenerate.GlobalExceptionFilter;
 import cn.beinet.codegenerate.controller.execute.dto.SqlDto;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
+import cn.beinet.codegenerate.service.MySqlService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -13,17 +14,26 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 @RestController
+@RequiredArgsConstructor
 public class MySqlExeController {
 
+    private final MySqlService mySqlService;
+
+    /**
+     * 执行查询sql
+     *
+     * @param sql 要执行的sql和数据库信息，只能是查询
+     * @return 结果集
+     */
     @PostMapping("mysql/executeSql")
-    public GlobalExceptionFilter.ResponseData GetMySqlDbs(@RequestParam String ip,
-                                                          @RequestParam String user,
-                                                          @RequestParam String pwd,
-                                                          @RequestParam String db,
-                                                          @RequestBody SqlDto sql) {
+    public GlobalExceptionFilter.ResponseData executeSelectSql(@RequestBody SqlDto sql) {
+        String ip = sql.getIp();
+        String user = sql.getUser();
+        String pwd = sql.getPwd();
+        String db = sql.getDb();
         String sqlStr = formatSql(sql.getSql());
         MySqlExecuteRepository repository = new MySqlExecuteRepository(ip, 3306, user, pwd, db);
-        List<Map<String, Object>> result = repository.executeSql(sqlStr);
+        List<Map<String, Object>> result = repository.queryData(sqlStr);
         return GlobalExceptionFilter.ResponseData.ok(sqlStr, result);
     }
 
@@ -56,5 +66,22 @@ public class MySqlExeController {
             originSql += " limit 100";
         }
         return originSql;
+    }
+
+    /**
+     * 执行DML，即增删改的SQL，注意安全
+     *
+     * @param sql 要执行的sql和数据库信息，只能是无返回结果的sql（只能返回行数）
+     *            里面的time参数为 执行次数，为0表示无限次，执行到影响行数为0为止
+     * @return 影响行数（如果次数大于1，则是异步执行，返回-1）
+     */
+    @PostMapping("mysql/executeDml")
+    public GlobalExceptionFilter.ResponseData executeDML(@RequestBody SqlDto sql) {
+        if (sql.getTime() == 1) {
+            int affectedRows = mySqlService.executeDml(sql);
+            return GlobalExceptionFilter.ResponseData.ok("OK", affectedRows);
+        }
+        mySqlService.executeDmlAsync(sql);
+        return GlobalExceptionFilter.ResponseData.ok("已开始执行,请关注后台日志", -1);
     }
 }

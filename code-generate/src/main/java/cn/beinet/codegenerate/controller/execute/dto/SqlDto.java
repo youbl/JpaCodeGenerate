@@ -10,5 +10,11 @@ import lombok.Data;
  */
 @Data
 public class SqlDto {
+    private String ip;
+    private String user;
+    private String pwd;
+    private String db;
     private String sql;
+
+    private int time;
 }
