@@ -21,7 +21,20 @@ public class MySqlService {
         String pwd = sql.getPwd();
         String db = sql.getDb();
         MySqlExecuteRepository repository = new MySqlExecuteRepository(ip, 3306, user, pwd, db);
-        int affectedRows = repository.executeDml(sql.getSql());
+
+        int affectedRows = 0;
+        String[] arrSql = splitSql(sql.getSql());
+        for (String itemSql : arrSql) {
+            String item = itemSql.trim();
+            if (item.length() <= 0)
+                continue;
+            long startTime = System.currentTimeMillis();
+            int rows = repository.executeDml(item);
+            long costTime = System.currentTimeMillis() - startTime;
+            affectedRows += rows;
+            log.info("{}\r\n影响行数:{} 耗时:{}ms \r\n {}", sql.getDb(), rows, costTime, item);
+        }
+
         return affectedRows;
     }
 
@@ -35,14 +48,23 @@ public class MySqlService {
             sql.setTime(100000);
         }
         for (int i = 0; i < sql.getTime(); i++) {
-            long startTime = System.currentTimeMillis();
             int result = executeDml(sql);
-            long costTime = System.currentTimeMillis() - startTime;
-            log.info("影响行数:{} 耗时:{}ms {}\r\n {}", result, costTime, sql.getDb(), sql.getSql());
             if (result <= 0) {
                 log.info("结束运行");
                 break;
             }
+            sleep(10);
+        }
+    }
+
+    private String[] splitSql(String sql) {
+        return sql.split(";");
+    }
+
+    private void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (Exception exp) {
         }
     }
 }
