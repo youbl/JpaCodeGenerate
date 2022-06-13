@@ -47,12 +47,15 @@ public class MySqlService {
         if (sql.getTime() <= 0) {
             sql.setTime(100000);
         }
+        int totalRows = 0;
         for (int i = 0; i < sql.getTime(); i++) {
             int result = executeDml(sql);
             if (result <= 0) {
                 log.info("结束运行");
                 break;
             }
+            totalRows += result;
+            log.info("总影响行数：{}", totalRows);
             sleep(10);
         }
     }
