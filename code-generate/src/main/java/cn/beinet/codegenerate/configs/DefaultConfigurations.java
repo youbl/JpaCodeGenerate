@@ -33,7 +33,7 @@ public class DefaultConfigurations {
                 .featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)// 忽略未知属性
                 .featuresToDisable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                 .featuresToDisable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)   // 忽略未知的类型，比如本项目里不存在的class
-                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                //.serializationInclusion(JsonInclude.Include.NON_NULL) // 为null不序列化
                 // .featuresToDisable(MapperFeature.USE_ANNOTATIONS)
                 .featuresToEnable()
                 .build();
