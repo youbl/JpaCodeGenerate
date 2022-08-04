@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.job.service.Backup;
 import cn.beinet.codegenerate.util.GitHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @Component
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "spring.profiles.active", havingValue = "prod", matchIfMissing = false)
 public class Jobs {
     private final List<Backup> backupList;
     private final GitHelper gitHelper;
