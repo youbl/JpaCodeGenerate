@@ -1,9 +1,9 @@
 package cn.beinet.codegenerate.configs;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +24,10 @@ public class DefaultConfigurations {
     public ObjectMapper createMapper() {
         JavaTimeModule module = new JavaTimeModule();
         module.addSerializer(Timestamp.class, new TimestampJsonSerializer());
+        // long类型转String返回，避免精度问题
+        module.addSerializer(Long.class, ToStringSerializer.instance);
+        module.addSerializer(Long.TYPE, ToStringSerializer.instance);
+        module.addSerializer(long.class, ToStringSerializer.instance);
         // module.addDeserializer(LocalDateTime.class, new LocalDateTimeSerializerExt());
 
         ObjectMapper mapper = Jackson2ObjectMapperBuilder.json()
