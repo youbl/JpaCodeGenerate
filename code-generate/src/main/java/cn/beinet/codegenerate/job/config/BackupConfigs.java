@@ -20,6 +20,21 @@ public class BackupConfigs {
 
     private Mysql mysql;
 
+    private Jenkins jenkins;
+
+    @Data
+    public static class Jenkins {
+        private String backDir;
+        private JenkinsSite[] sites;
+    }
+
+    @Data
+    public static class JenkinsSite {
+        private String url;
+        private String username;
+        private String password;
+    }
+
     @Data
     public static class Nacos {
         private String backDir;

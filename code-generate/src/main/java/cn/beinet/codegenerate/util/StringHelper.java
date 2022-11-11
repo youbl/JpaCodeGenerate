@@ -95,4 +95,34 @@ public final class StringHelper {
         }
         return DigestUtils.md5DigestAsHex(useStr.getBytes());
     }
+
+    /**
+     * 忽略大小写，从源串中查找位置
+     *
+     * @param str       源串
+     * @param searchStr 查找串
+     * @return 找到的位置，未找到返回-1
+     */
+    public static int indexOfIgnoreCase(String str, String searchStr) {
+        return indexOfIgnoreCase(str, searchStr, 0);
+    }
+
+    /**
+     * 忽略大小写，从源串中查找位置
+     *
+     * @param str       源串
+     * @param searchStr 查找串
+     * @param startPos  查找起始位置
+     * @return 找到的位置，未找到返回-1
+     */
+    public static int indexOfIgnoreCase(String str, String searchStr, int startPos) {
+        if (str == null || searchStr == null) {
+            return -1;
+        }
+        if (str.length() - startPos < searchStr.length()) {
+            return -1;
+        }
+        return str.toLowerCase().indexOf(searchStr.toLowerCase(), startPos);
+    }
+
 }

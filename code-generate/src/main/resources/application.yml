@@ -57,3 +57,9 @@ backup:
         port: 3306
         username: readonly
         password: 123456
+  jenkins:
+    backDir: /data/app/backups/jenkins
+    sites:
+      - url: http://10.100.72.165:8080/
+        username: beinet
+        password: 123456
