@@ -30,6 +30,8 @@ public class MysqlInfoBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs.getEnable() != null && !configs.getEnable())
+            return false;
         return true;
 //        // 只有上午10点和下午10点允许备份
 //        int hour = LocalDateTime.now().getHour();
@@ -39,6 +41,9 @@ public class MysqlInfoBackup implements Backup {
     @Override
     public void operate() {
         for (BackupConfigs.MysqlInstance item : configs.getInstances()) {
+            if (item.getEnable() != null && !item.getEnable())
+                continue;
+
             if (item.getPort() == null) {
                 item.setPort(3306);
             }

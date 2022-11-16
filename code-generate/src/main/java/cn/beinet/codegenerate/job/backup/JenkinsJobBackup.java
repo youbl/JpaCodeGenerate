@@ -27,12 +27,17 @@ public class JenkinsJobBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs.getEnable() != null && !configs.getEnable())
+            return false;
         return true;
     }
 
     @Override
     public void operate() {
         for (BackupConfigs.JenkinsSite item : configs.getSites()) {
+            if (item.getEnable() != null && !item.getEnable())
+                continue;
+
             if (!StringUtils.hasLength(item.getUsername()) || !StringUtils.hasLength(item.getPassword())) {
                 log.error("{} 用户名密码为空，无法备份", item.getUrl());
                 continue;

@@ -27,6 +27,9 @@ public class MysqlStructBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs.getEnable() != null && !configs.getEnable())
+            return false;
+
         // 只有上午10点和下午10点允许备份
         int hour = LocalDateTime.now().getHour();
         return hour == 10 || hour == 22;
@@ -35,6 +38,9 @@ public class MysqlStructBackup implements Backup {
     @Override
     public void operate() {
         for (BackupConfigs.MysqlInstance item : configs.getInstances()) {
+            if (item.getEnable() != null && !item.getEnable())
+                continue;
+
             if (item.getPort() == null) {
                 item.setPort(3306);
             }

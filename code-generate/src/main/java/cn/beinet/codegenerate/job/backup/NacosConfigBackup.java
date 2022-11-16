@@ -28,12 +28,17 @@ public class NacosConfigBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs.getEnable() != null && !configs.getEnable())
+            return false;
         return true;
     }
 
     @Override
     public void operate() {
         for (BackupConfigs.NacosSite item : configs.getSites()) {
+            if (item.getEnable() != null && !item.getEnable())
+                continue;
+
             log.info("准备备份url {}", item.getUrl());
 
             try {

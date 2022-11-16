@@ -22,32 +22,7 @@ public class BackupConfigs {
 
     private Jenkins jenkins;
 
-    @Data
-    public static class Jenkins {
-        private String backDir;
-        private JenkinsSite[] sites;
-    }
-
-    @Data
-    public static class JenkinsSite {
-        private String url;
-        private String username;
-        private String password;
-    }
-
-    @Data
-    public static class Nacos {
-        private String backDir;
-        private NacosSite[] sites;
-    }
-
-    @Data
-    public static class NacosSite {
-        private String url;
-        private String username;
-        private String password;
-    }
-
+    // Gitlab配置，结果是备份到Gitlab上的
     @Data
     public static class Gitlab {
         private String url;
@@ -56,14 +31,53 @@ public class BackupConfigs {
         private String rootDir;
     }
 
+    // Jenkins的备份配置
+    @Data
+    public static class Jenkins {
+        private Boolean enable;
+        private String backDir;
+        private JenkinsSite[] sites;
+    }
+
+    // Jenkins的备份细项，每个Jenkins服务
+    @Data
+    public static class JenkinsSite {
+        private Boolean enable;
+        private String url;
+        private String username;
+        private String password;
+    }
+
+    // Nacos的备份配置
+    @Data
+    public static class Nacos {
+        private Boolean enable;
+        private String backDir;
+        private NacosSite[] sites;
+    }
+
+    // Nacos的备份细项，每个Nacos服务
+    @Data
+    public static class NacosSite {
+        // 是否启用，默认true
+        private Boolean enable;
+        private String url;
+        private String username;
+        private String password;
+    }
+
+    // Mysql的备份配置
     @Data
     public static class Mysql {
+        private Boolean enable;
         private String backDir;
         private MysqlInstance[] instances;
     }
 
+    // Mysql的备份细项，每个Mysql服务
     @Data
     public static class MysqlInstance {
+        private Boolean enable;
         private String ip;
         private Integer port;
         private String username;
