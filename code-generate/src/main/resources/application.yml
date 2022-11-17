@@ -6,6 +6,8 @@ server:
 spring:
   application:
     name: "code-generate"         # 程序name，建议配置，方便统一的服务管理
+  profiles:
+    active: dev
 
   # mysql连接信息配置
   datasource:
@@ -32,12 +34,15 @@ logging:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
 
 backup:
+  # gitlab表示备份文件 存储到哪里
   gitlab:
     url: https://git.beinet.cn/backups.git
     username: beiliang_you
     password: 123456
     rootDir: /work/source/backups
+  # 要备份的nacos服务列表，备份每个nacos所有命名空间的配置
   nacos:
+    enable: true
     backDir: /work/source/backups/nacos
     sites:
       - url: http://test.beinet.cn/nacos/
@@ -46,7 +51,9 @@ backup:
       - url: http://prod.beinet.cn/nacos/
         username: readonly
         password: 123456
+  # 要备份的mysql服务列表，备份每个mysql的表结构和数据增长情况
   mysql:
+    enable: true
     backDir: /data/app/backups/mysql
     instances:
       - ip: 10.2.5.2
@@ -57,9 +64,19 @@ backup:
         port: 3306
         username: readonly
         password: 123456
+  # 要备份的jenkins服务列表，备份每个job的xml配置
   jenkins:
+    enable: true
     backDir: /data/app/backups/jenkins
     sites:
       - url: http://10.100.72.165:8080/
         username: beinet
         password: 123456
+  # 要备份的目录或文件列表
+  files:
+    enable: true
+    backDir: /data/app/backups/backFiles # 备份到哪里
+    paths:
+      - path: /etc/nginx                 # 要备份的目录或文件
+      - path: /etc/supervisord.conf
+      - path: /etc/supervisord.d

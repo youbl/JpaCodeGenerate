@@ -22,6 +22,8 @@ public class BackupConfigs {
 
     private Jenkins jenkins;
 
+    private BackFiles files;
+
     // Gitlab配置，结果是备份到Gitlab上的
     @Data
     public static class Gitlab {
@@ -29,6 +31,14 @@ public class BackupConfigs {
         private String username;
         private String password;
         private String rootDir;
+    }
+
+    // 要备份的文件或目录配置
+    @Data
+    public static class BackFiles {
+        private Boolean enable;
+        private String backDir;
+        private String[] paths;
     }
 
     // Jenkins的备份配置
