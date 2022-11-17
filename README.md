@@ -17,3 +17,6 @@ http://localhost:8080/index.html
 # MySql数据库查询工具
 在线的MySql连接查询工具。  
 用于一些无法开放端口的MySQL查询，只读，不支持更新。
+
+演示界面：
+![image](https://github.com/youbl/JpaCodeGenerate/blob/master/demo.jpg?raw=true)
