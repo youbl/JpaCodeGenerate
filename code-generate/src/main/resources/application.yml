@@ -77,6 +77,6 @@ backup:
     enable: true
     backDir: /data/app/backups/backFiles # 备份到哪里
     paths:
-      - path: /etc/nginx                 # 要备份的目录或文件
-      - path: /etc/supervisord.conf
-      - path: /etc/supervisord.d
+      - /etc/nginx                 # 要备份的目录或文件
+      - /etc/supervisord.conf
+      - /etc/supervisord.d
