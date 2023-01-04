@@ -1,8 +1,10 @@
 package cn.beinet.codegenerate.configs;
 
+import cn.beinet.codegenerate.configs.logins.Validator;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.StringHelper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ldap.core.LdapTemplate;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +34,7 @@ import java.util.regex.Pattern;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class LdapLoginFilter extends OncePerRequestFilter {
     @Value("${server.servlet.context-path}")
     private String prefix;
@@ -49,13 +53,13 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     private static final String PWD_PARA = "beinetPwd";
 
     // 登录输入页地址
-    private static final String loginPage = "/login.html";
+    public static final String loginPage = "/login.html";
     // 登录认证地址
     private static final String loginActionPage = "/login";
-    // 无须登录认证的url正则
-    private static final Pattern patternRequest = Pattern.compile("(?i)^/actuator/?|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map)$");// |html?
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+    private final List<Validator> validatorList;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -68,10 +72,11 @@ public class LdapLoginFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 不需要登录的页面
-        if (!needValidation(url)) {//!logger.isDebugEnabled() ||
-            filterChain.doFilter(request, response);
-            return;
+        for (Validator item : validatorList) {
+            if (item.validated(request, response)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
 
         // 判断cookie是否有效
@@ -96,20 +101,6 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * 判断指定url是否需要登录
-     *
-     * @param url url
-     * @return 是否要登录
-     */
-    private boolean needValidation(String url) {
-        // 登录页跳过
-        if (url.endsWith(loginPage))
-            return false;
-
-        Matcher matcher = patternRequest.matcher(url);
-        return !matcher.find();
-    }
 
     /**
      * 提取用户名密码，并进行登录

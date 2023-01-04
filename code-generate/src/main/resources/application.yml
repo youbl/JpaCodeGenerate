@@ -33,6 +33,10 @@ logging:
   level:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
 
+sdk:
+  app-key: sdk
+  secure-key: 123456
+
 backup:
   # gitlab表示备份文件 存储到哪里
   gitlab:

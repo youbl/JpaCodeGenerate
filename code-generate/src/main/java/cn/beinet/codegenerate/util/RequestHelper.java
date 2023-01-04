@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class RequestHelper {
     public static String getCookie(String name, HttpServletRequest request) {
-        if (request == null || StringUtils.isEmpty(name))
+        if (request == null || !StringUtils.hasLength(name))
             return "";
         Cookie[] cookies = request.getCookies();
         if (cookies == null || cookies.length == 0)
