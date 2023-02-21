@@ -472,7 +472,8 @@
                 }
                 let comment = '';
                 if (sourceCol.comment) {
-                    comment = ' COMMENT \'' + sourceCol.comment.replace(/\s+/g, ' ') + '\' ';
+                    let tmpComment = sourceCol.comment.replace(/\s+/g, ' ').replace(/'/g, '\\\'');
+                    comment = ' COMMENT \'' + tmpComment + '\' ';
                 }
                 return '\n  `' + sourceCol.originColumn + '` ' + sourceCol.type +
                     defaultVal + nullable + autoInc + primaryKey + comment;
