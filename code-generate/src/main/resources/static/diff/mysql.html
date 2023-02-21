@@ -301,27 +301,42 @@
             loadProdDb: function () {
                 this.loadDbs(true);
             },
-            combineDbPara: function (isProd) {
+            combineDbPara: function (isProd, addDb) {
                 if (isProd) {
                     if (!this.searchCond.dbProdIp || !this.searchCond.dbProdUser || !this.searchCond.dbProdPwd) {
                         alert('请输入右库IP/用户/密码');
                         return;
                     }
-                    return 'ip=' + this.searchCond.dbProdIp +
+                    let ret = 'ip=' + this.searchCond.dbProdIp +
                         '&user=' + encodeURIComponent(this.searchCond.dbProdUser) +
                         '&pwd=' + encodeURIComponent(this.searchCond.dbProdPwd);
+                    if (addDb === true) {
+                        ret += '&db=' + encodeURIComponent(this.searchCond.dbProdName);
+                    }
+                    return ret;
                 }
                 if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
                     alert('请输入左库IP/用户/密码');
                     return;
                 }
-                return 'ip=' + this.searchCond.dbTestIp +
+                let ret = 'ip=' + this.searchCond.dbTestIp +
                     '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
                     '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
+                if (addDb === true) {
+                    ret += '&db=' + encodeURIComponent(this.searchCond.dbTestName);
+                }
+                return ret;
             },
             loadDbs: function (isProd) {
-                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara(isProd);
+                let para = this.combineDbPara(isProd);
+                let url = BASE_URL + 'mysql/databases?' + para;
                 return axios.get(url).then(response => {
+                    if (!Array.isArray(response.data)) {
+                        if (response.data.errMsg) {
+                            alert(para + '\r\n' + response.data.errMsg);
+                        }
+                        return;
+                    }
                     if (isProd) {
                         this.dbsProd = response.data;
                         this.setByDefault('dbProdName', this.dbsProd);
@@ -388,7 +403,7 @@
                 }
                 this.doGenerateSql();
             },
-            doGenerateSql: function () {
+            doGenerateSql: async function () {
                 let diffData = this.filteredTableData;
                 this.generateSqlShow = true;
                 // 允许横向滚动条
@@ -400,10 +415,11 @@
                 let sourceCol;   // 要使用的列定义
                 let targetCol;   // 要修改的列 旧定义
 
+                let isProd = this.generateSqlTarget === 'test';
                 let sql = '';
                 for (let i = 0, j = diffData.length; i < j; i++) {
                     let item = diffData[i];
-                    if (this.generateSqlTarget === 'test') {
+                    if (isProd) {
                         db = this.searchCond.dbTestName;
                         sourceCol = item.prodDefine;
                         targetCol = item.testDefine;
@@ -414,7 +430,7 @@
                     }
                     if (!item.column && sourceCol) {
                         // 表不存在时，sourceCol是所有的列，此时要生成建表语句
-                        sql += this.generateTableSql(db, item.table, sourceCol) + ';\n\n';
+                        sql += await this.generateTableSql(isProd, db, item.table) + ';\n\n';
                         continue;
                     }
                     if (!sourceCol) {
@@ -431,23 +447,43 @@
                     // ALTER TABLE xx CHANGE `id` `id` INT(11) NOT NULL  AUTO_INCREMENT  PRIMARY KEY会报错：key重复
                     // 可以后续处理索引差异对比时再说
                     sql += 'ALTER TABLE `' + db + '`.`' + item.table + '` ' +
-                        addOrEdit + this.generateRowSql(sourceCol, false) + ';\n\n';
+                        addOrEdit + this.generateRowSql(sourceCol) + ';\n\n';
                 }
                 this.generateSql = sql;
             },
-            generateTableSql: function (db, table, colList) {
+            // 调用接口，直接获取ddl【SHOW CREATE TABLE 表名】
+            generateTableSql: function (isProd, newDb, table) {
+                let url = BASE_URL + 'mysql/tables/ddl?' + this.combineDbPara(isProd, true) + '&tableName=' + table;
+                return axios.get(url).then(response => {
+                    return this.processDDL(response.data, newDb);
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            processDDL: function (sqlDDL, db) {
+                // 替换掉不必要的自增值
+                return sqlDDL.replace(/\sAUTO_INCREMENT=\d+\s/g, ' ')
+                    .replace(/CREATE TABLE\s+/g, 'CREATE TABLE `' + db + '`.');
+            },
+            // 遍历所有列，自行拼接建表语句
+            generateTableSqlCustom: function (db, table, colList) {
                 let sql = 'CREATE TABLE `' + db + '`.`' + table + '`(';
                 for (let i = 0, j = colList.length; i < j; i++) {
                     let item = colList[i];
-                    sql += this.generateRowSql(item, true);
+                    sql += this.generateRowSql(item);
                     if (i < j - 1) {
                         sql += ',';
                     }
                 }
+                sql += this.generateKeySql(); // 拼接主键和索引
                 sql += ')\n ENGINE=INNODB DEFAULT CHARSET=utf8mb4';
                 return sql;
             },
-            generateRowSql: function (sourceCol, needPrimary) {
+            // 获取指定表的主键和索引sql等信息
+            generateKeySql: function () {
+                // 未完成
+            },
+            generateRowSql: function (sourceCol) {
                 let defaultVal = '';
                 if (sourceCol.defaultVal !== null) {//&& sourceCol.defaultVal.length > 0
                     if (sourceCol.defaultVal !== 'CURRENT_TIMESTAMP' &&
@@ -467,9 +503,6 @@
                     autoInc = ' AUTO_INCREMENT ';
                 }
                 let primaryKey = '';
-                if (needPrimary && sourceCol.primaryKey) {
-                    primaryKey = ' PRIMARY KEY ';
-                }
                 let comment = '';
                 if (sourceCol.comment) {
                     let tmpComment = sourceCol.comment.replace(/\s+/g, ' ').replace(/'/g, '\\\'');
