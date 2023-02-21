@@ -210,6 +210,7 @@
             generateSqlShow: false,
             generateSqlTarget: 'prod',
             generateSql: '',
+            fullLoading: null, // 在获取sql时，全屏显示加载中
 
             defaultName: '',
         },
@@ -231,6 +232,17 @@
             }
         },
         methods: {
+            openFullScreenLoading() {
+                this.fullLoading = this.$loading({
+                    lock: true,
+                    text: '数据库脚本生成中，请等待……',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
+                //setTimeout(() => {
+                //    this.fullLoading.close();
+                //}, 2000);
+            },
             switchConfig: function () {
                 let ip = this.searchCond.dbTestIp;
                 let user = this.searchCond.dbTestUser;
@@ -403,20 +415,27 @@
                 }
                 this.doGenerateSql();
             },
+            adjustTextarea: function () {
+                if (this.fullLoading !== null) {
+                    let txt = document.getElementsByTagName('textarea')[0];
+                    txt.wrap = 'off';  // 允许横向滚动条
+                    txt.scrollTop = txt.scrollHeight; // 自动滚动到底部
+                }
+                setTimeout(this.adjustTextarea, 1000);
+            },
             doGenerateSql: async function () {
                 let diffData = this.filteredTableData;
                 this.generateSqlShow = true;
-                // 允许横向滚动条
-                setTimeout(function () {
-                    document.getElementsByTagName('textarea')[0].wrap = 'off';
-                }, 100);
+
+                setTimeout(this.openFullScreenLoading, 1000); // this.openFullScreenLoading(); // 开始加载，用于展示加载中指示
+                this.adjustTextarea();
 
                 let db;
                 let sourceCol;   // 要使用的列定义
                 let targetCol;   // 要修改的列 旧定义
 
                 let isProd = this.generateSqlTarget === 'test';
-                let sql = '';
+                this.generateSql = '';
                 for (let i = 0, j = diffData.length; i < j; i++) {
                     let item = diffData[i];
                     if (isProd) {
@@ -430,7 +449,7 @@
                     }
                     if (!item.column && sourceCol) {
                         // 表不存在时，sourceCol是所有的列，此时要生成建表语句
-                        sql += await this.generateTableSql(isProd, db, item.table) + ';\n\n';
+                        this.generateSql += await this.generateTableSql(isProd, db, item.table) + ';\n\n';
                         continue;
                     }
                     if (!sourceCol) {
@@ -446,10 +465,12 @@
 
                     // ALTER TABLE xx CHANGE `id` `id` INT(11) NOT NULL  AUTO_INCREMENT  PRIMARY KEY会报错：key重复
                     // 可以后续处理索引差异对比时再说
-                    sql += 'ALTER TABLE `' + db + '`.`' + item.table + '` ' +
+                    this.generateSql += 'ALTER TABLE `' + db + '`.`' + item.table + '` ' +
                         addOrEdit + this.generateRowSql(sourceCol) + ';\n\n';
                 }
-                this.generateSql = sql;
+                // 关闭loading
+                this.fullLoading.close();
+                this.fullLoading = null;
             },
             // 调用接口，直接获取ddl【SHOW CREATE TABLE 表名】
             generateTableSql: function (isProd, newDb, table) {
