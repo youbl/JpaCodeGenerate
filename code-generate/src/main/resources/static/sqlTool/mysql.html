@@ -133,7 +133,7 @@
             <el-button type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
             <el-button icon="el-icon-save" @click="saveMySql">保存SQL</el-button>
             <el-button @click="formatSql">格式化SQL</el-button>
-            <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出结果为CSV</el-button>
+            <el-button :disabled="!resultData.length" icon="el-icon-download" @click="exportResult">导出CSV</el-button>
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
         </el-form-item>
         <div>
@@ -616,7 +616,8 @@
                             dataHeader += '"' + att + '",';
                         }
                         let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
-                        dataContent += '"\t' + cell + '",';  // \t是避免数字变成科学计数
+                        dataContent += '"' + cell + '",';
+                        //dataContent += '"\t' + cell + '",';  // \t是避免数字变成科学计数
                     }
                 }
                 this.downloadData(dataHeader + '\r\n' + dataContent);
