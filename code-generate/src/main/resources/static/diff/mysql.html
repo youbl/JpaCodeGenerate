@@ -210,6 +210,7 @@
             generateSqlShow: false,
             generateSqlTarget: 'prod',
             generateSql: '',
+            isGenerating: false,
             fullLoading: null, // 在获取sql时，全屏显示加载中
 
             defaultName: '',
@@ -424,10 +425,15 @@
                 setTimeout(this.adjustTextarea, 1000);
             },
             doGenerateSql: async function () {
+                this.isGenerating = true;
+
                 let diffData = this.filteredTableData;
                 this.generateSqlShow = true;
 
-                setTimeout(this.openFullScreenLoading, 1000); // this.openFullScreenLoading(); // 开始加载，用于展示加载中指示
+                setTimeout(() => {
+                    if (this.isGenerating)
+                        this.openFullScreenLoading();
+                }, 1000); // this.openFullScreenLoading(); // 开始加载，用于展示加载中指示
                 this.adjustTextarea();
 
                 let db;
@@ -468,9 +474,10 @@
                     this.generateSql += 'ALTER TABLE `' + db + '`.`' + item.table + '` ' +
                         addOrEdit + this.generateRowSql(sourceCol) + ';\n\n';
                 }
+                this.isGenerating = false;
                 // 关闭loading
-                this.fullLoading.close();
-                this.fullLoading = null;
+                if (this.fullLoading !== null) this.fullLoading.close();
+                this.fullLoading = null;// 要重置一下
             },
             // 调用接口，直接获取ddl【SHOW CREATE TABLE 表名】
             generateTableSql: function (isProd, newDb, table) {
