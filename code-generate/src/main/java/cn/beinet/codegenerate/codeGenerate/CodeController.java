@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.codeGenerate;
 
-import cn.beinet.codegenerate.codeGenerate.service.CodeGenerateService;
+import cn.beinet.codegenerate.codeGenerate.service.JpaCodeGenerateService;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 @AllArgsConstructor
 public class CodeController {
 
-    private final CodeGenerateService codeGenerateService;
+    private final JpaCodeGenerateService codeGenerateService;
 
 
 

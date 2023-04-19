@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Service
 public class CodeDbService {
-    private ColumnRepository columnRepository;
+    private final ColumnRepository columnRepository;
 
     public CodeDbService(Environment env) {
         this.columnRepository = new ColumnRepository(env, ColumnRepository.DbEnv.DEFAULT);
@@ -61,5 +61,16 @@ public class CodeDbService {
             ret.addAll(columnRepository.findColumnByTable(database, table));
         }
         return ret;
+    }
+
+    /**
+     * 返回指定数据库下，表的字段信息
+     *
+     * @param database 数据库
+     * @param table    表名
+     * @return 字段信息
+     */
+    public List<ColumnDto> getFields(String database, String table) {
+        return columnRepository.findColumnByTable(database, table);
     }
 }

@@ -42,7 +42,7 @@ public final class FileHelper {
 
         String pathStr = path.getAbsolutePath();
         // 如果是在eclipse中运行，则和target同级目录,如果是jar部署到服务器，则默认和jar包同级
-        pathStr = pathStr.replace("\\target\\classes", "");
+        pathStr = pathStr.replace("\\target\\classes", "\\target");
 
         return pathStr;
     }

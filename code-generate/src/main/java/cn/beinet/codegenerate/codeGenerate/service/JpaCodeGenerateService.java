@@ -2,9 +2,8 @@ package cn.beinet.codegenerate.codeGenerate.service;
 
 import cn.beinet.codegenerate.codeGenerate.service.jpaGenerate.*;
 import cn.beinet.codegenerate.model.ColumnDto;
-import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.util.FileHelper;
-import org.springframework.core.env.Environment;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -18,34 +17,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @Service
-public class CodeGenerateService {
+@RequiredArgsConstructor
+public class JpaCodeGenerateService {
 
     private final ModelGenerater modelGenerater;
     private final DtoGenerater dtoGenerater;
     private final RepositoryGenerater repositoryGenerater;
     private final ServiceGenerater serviceGenerater;
     private final ControllerGenerater controllerGenerater;
-    private final Environment env;
 
     private final String basePath = FileHelper.getResourceBasePath();
-    private final ColumnRepository columnRepository;
-
-    public CodeGenerateService(Environment env,
-                               ModelGenerater modelGenerater,
-                               DtoGenerater dtoGenerater,
-                               RepositoryGenerater repositoryGenerater,
-                               ServiceGenerater serviceGenerater,
-                               ControllerGenerater controllerGenerater) {
-        this.env = env;
-        this.columnRepository = new ColumnRepository(env, ColumnRepository.DbEnv.DEFAULT);
-
-        this.modelGenerater = modelGenerater;
-        this.dtoGenerater = dtoGenerater;
-        this.repositoryGenerater = repositoryGenerater;
-        this.serviceGenerater = serviceGenerater;
-        this.controllerGenerater = controllerGenerater;
-    }
-
+    private final CodeDbService dbService;
 
     public String generateCode(String database, String[] tables, String packageName) throws IOException {
         if (StringUtils.isEmpty(database) || tables == null || tables.length <= 0)
@@ -53,7 +35,7 @@ public class CodeGenerateService {
 
         List<String> files = new ArrayList<>();
         for (String item : tables) {
-            List<ColumnDto> columns = columnRepository.findColumnByTable(database, item);
+            List<ColumnDto> columns = dbService.getFields(database, item);
             if (columns == null || columns.isEmpty())
                 continue;
 
