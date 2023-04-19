@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>代码生成器</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/vue-multiselect.min.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/vue-multiselect.min.css">
+    <script src="../static/rowColor.js"></script>
+    <script src="../static/qs.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+    <style>
+        .tabs { /* tab选项卡外围 */
+            width: 95%;
+            height: 20px;
+            padding: 0;
+        }
+
+        .li-tab { /* tab的每个选项卡 */
+            width: 120px;
+            height: 20px;
+            display: inline-block;
+            text-align: center;
+            float: left;
+            border: 1px solid white;
+            background-color: gray;
+            cursor: pointer;
+        }
+
+        .active { /* tab活动选项卡 */
+            background-color: #99ffff !important;
+        }
+
+        .divTab { /* tab内容 */
+            width: 95%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <div class="tab-content">
+        <div>
+            <div style="float: left;">
+                <div>
+                    <span style="display: inline-block;width:80px;">选数据库：</span>
+                    <div style="width: 450px; display: inline-block;">
+                        <multiselect placeholder="请选择数据库" @input="databaseChange" v-model="condition.database"
+                                     :options="databaseArr"
+                                     :multiple="false" :taggable="false" :searchable="true"
+                                     :allow-empty="false"></multiselect>
+                    </div>
+                </div>
+                <div>
+                    <span style="display: inline-block;width:80px;">表(多选)：</span>
+                    <div style="width: 450px; display: inline-block;">
+                        <multiselect placeholder="请选择表" @input="tableChange" v-model="condition.tables"
+                                     :options="tableArr"
+                                     :multiple="true" :taggable="false" :searchable="true"
+                                     :allow-empty="false"></multiselect>
+                    </div>
+                </div>
+            </div>
+
+            <div style="float: left;">
+                <div>
+                    <span style="display: inline-block;width:80px;">包名：</span>
+                    <input type="text" v-model="condition.package">
+                </div>
+                <div style="text-align: center; vertical-align: bottom;">
+                    <button @click="generateCode">生成JPA文件</button>
+                    　　<a v-show="codeLink" :href="'/v1/code/down?zipfile=' + codeLink">下载</a>
+                </div>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <hr>
+        所选的表字段预览：<br>
+        <el-table
+                :data="columnArr"
+                border
+                stripe
+                style="width: 100%">
+            <el-table-column :label="key" :width="flexColumnWidth(key, columnArr)"
+                             v-for="(value, key, index) in columnArr[0]"
+                             sortable>
+                <template slot-scope="scope">
+                    {{scope.row[key]}}
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        components: {
+            Multiselect: window.VueMultiselect.default
+        },
+        data: {
+            condition: {
+                database: '',
+                tables: [],
+                package: 'cn.beinet.codeGenerate',
+            },
+            databaseArr: [], // 用于下拉列表
+            tableArr: [],
+            columnArr: [],
+            codeLink: '',
+        },
+        created: function () {
+            this.loadDatabases();
+        },
+        methods: {
+            loadDatabases: function () {
+                let url = BASE_URL + 'codeDb/databases';
+                axios.get(url).then((response) => {
+                    if (!response.data || response.data.length <= 0) {
+                        alert('未找到数据库');
+                        return;
+                    }
+                    this.databaseArr = response.data;
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+            },
+            databaseChange: function () {
+                this.tableArr = [];
+                this.loadTables();
+            },
+            loadTables: function () {
+                let url = BASE_URL + 'codeDb/tables';
+                let para = {};
+                para.database = this.condition.database;
+                axios.get(url, {params: para}).then((response) => {
+                    if (!response.data || response.data.length <= 0) {
+                        alert(para.database + '数据库，没有找到表.');
+                        return;
+                    }
+                    this.tableArr = response.data;
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+            },
+            tableChange: function () {
+                this.loadColumns();
+            },
+            loadColumns: function () {
+                // 用Qs库，避免 tables[0]这种传输语法
+                let url = BASE_URL + 'codeDb/columns?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                axios.get(url).then((response) => {
+                    if (!response.data || response.data.length <= 0) {
+                        alert(para.database + '数据库，没有找到字段.');
+                        return;
+                    }
+                    this.columnArr = response.data;
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+            },
+            generateCode: function () {
+                // 用Qs库，避免 tables[0]这种传输语法
+                let url = BASE_URL + 'v1/code/tables?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                axios.post(url).then((response) => {
+                    this.codeLink = response.data;
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+
+            },
+            // 自适应表格列宽
+            flexColumnWidth: function (str, tableData, flag = 'max', charWidth = 12, miniWidth = 50) {
+                // str为该列的字段名(传字符串);tableData为该表格的数据源(传变量);
+                // flag为可选值，可不传该参数,传参时可选'max'或'equal',默认为'max'
+                // flag为'max'则设置列宽适配该列中最长的内容,flag为'equal'则设置列宽适配该列中第一行内容的长度。
+
+                //if (!tableData || !tableData.length || tableData.length === 0) {
+                //    return
+                //}
+                str = str + '';
+                if (str.length === 0)
+                    return '0';
+                // 例外项，自定义代码
+                if (str === 'extInfo')
+                    return '450px';
+
+                let columnContent = '';
+                if (flag === 'equal') {
+                    // 获取该列中第一个不为空的数据(内容)
+                    for (let i = 0, j = tableData.length; i < j; i++) {
+                        columnContent = tableData[i][str] + '';
+                        if (columnContent.length > 0) {
+                            break;
+                        }
+                    }
+                } else {
+                    // 获取该列中最长的数据(内容)
+                    for (let i = 0, j = tableData.length; i < j; i++) {
+                        let tmp = tableData[i][str] + '';
+                        if (tmp.length > columnContent.length) {
+                            columnContent = tmp;
+                        }
+                    }
+                }
+                // 跟标题比对
+                let isHead = columnContent.length < str.length;
+                if (isHead)
+                    columnContent = str;
+                //console.log('该列数据:' + str + ':' + columnContent)
+
+                // 以下分配的单位长度可根据实际需求进行调整
+                let flexWidth = isHead ? charWidth : 0;
+                for (const char of columnContent) {
+                    let useChWidth = charWidth;
+                    if (char >= '\u4e00' && char <= '\u9fa5') {
+                        // 中文字符分配宽度
+                        useChWidth = useChWidth * 2;
+                    }
+                    flexWidth += useChWidth;
+                }
+                if (flexWidth < miniWidth) {
+                    // 设置最小宽度
+                    flexWidth = miniWidth;
+                }
+                //console.log('该列宽度:' + str + ':' + flexWidth)
+                return flexWidth + 'px';
+            },
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+</script>
+</body>
+</html>
