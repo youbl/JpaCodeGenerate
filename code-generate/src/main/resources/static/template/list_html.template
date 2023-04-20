@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <title>{{entity_name}}列表</title>
+    <script src="../res/vue.min.js" type="text/javascript"></script>
+    <script src="../res/axios.min.js" type="text/javascript"></script>
+    <script src="../res/elemeIndex.js" type="text/javascript"></script>
+    <link href="../res/elemeIndex.css" rel="stylesheet">
+</head>
+<body>
+<div id="divApp" style="text-align: center;width: 98%;">
+    <el-form class="demo-form-inline" style="text-align: left">
+        <el-form-item>
+            <el-button @click="openEditDialog(null, true)" type="primary" size="mini">复制选中的第一行</el-button>
+            <el-button :disabled="!dataList.length" icon="el-icon-download" @click="exportToCsv" size="mini">导出CSV
+            </el-button>
+            <el-button @click="location.reload()" type="primary" size="mini">刷新</el-button>
+            <span style="color:blue">{{statusTxt}}</span>
+        </el-form-item>
+    </el-form>
+
+    <el-table
+            v-loading="loading"
+            element-loading-text="拼命加载中"
+            element-loading-spinner="el-icon-loading"
+            element-loading-background="rgba(0, 0, 0, 0.8)"
+            :data="dataList"
+            height="950"
+            border
+            stripe
+            @selection-change="handleSelectionChange"
+            style="width: 100%">
+        <el-table-column type="selection" width="55"></el-table-column>
+        <el-table-column :label="key" :width="flexColumnWidth(key, dataList)"
+                         v-for="(value, key, index) in dataList[0]">
+            <template slot-scope="scope"> {{scope.row[key]}}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="200">
+            <template slot-scope="scope">
+                <a href="javascript:void(0)" @click="openEditDialog(scope.row, false)">修改</a>
+                |
+                <a href="javascript:void(0)" @click="openEditDialog(scope.row, true)">复制</a>
+                |
+                <a href="javascript:void(0)" @click="confirmDel(scope.row)">删除</a>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <!-- 编辑窗口 -->
+    <el-dialog :visible.sync="statusEditDialog" :title="(editRow.id?'编辑界面':'新增界面')">
+        <el-form size="mini" :model="editRow" ref="editRowForm" style="width:700px">
+            <el-form-item v-for="(val,key,idx) in editRow" :label="key" label-width="150px">
+                <el-input placeholder="请输入" v-model.trim="editRow[key]"></el-input>
+            </el-form-item>
+        </el-form>
+        <div class="dialog-footer" slot="footer">
+            <el-button @click="saveData('editRowForm')" icon="el-icon-success" type="primary">保 存
+            </el-button>
+            <el-button @click="hideEditDialog">取 消</el-button>
+        </div>
+    </el-dialog>
+
+    <hr>
+    <div>build by @author youbl.blog.csdn.net @date {{date_time}}</div>
+</div>
+<script type="text/javascript">
+    const BASE_URL = '/';// + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: function () {
+            return {
+                statusTxt: '',
+                loading: false,
+                dataList: [],
+
+                statusEditDialog: false,
+                editRow: {},
+
+                multipleSelection: [],
+            }
+        },
+        mounted: function () {
+            this.loadDatas();
+        },
+        computed: {},
+        methods: {
+            handleSelectionChange: function (val) {
+                this.multipleSelection = val;
+            },
+            getAllSelectedId: function () {
+                if (this.multipleSelection.length <= 0) {
+                    alert('请选择要处理的数据');
+                    return [];
+                }
+                if (!confirm('确认要继续吗？')) {
+                    return [];
+                }
+                let ret = [];
+                for (let i = 0, j = this.multipleSelection.length; i < j; i++) {
+                    ret.push(this.multipleSelection[i].id);
+                }
+                return ret;
+            },
+            loadDatas: function () {
+                if (this.loading)
+                    return alert('加载中...');
+                this.loading = true;
+                let startTime = new Date();
+
+                let url = BASE_URL + '{{low_entity_name}}';
+                return axios.get(url).then(response => {
+                    this.loading = false;
+                    this.dataList = response.data;
+                    this.statusTxt = this.dataList.length + '行，耗时:' + ((new Date()) - startTime) + 'ms';
+                }).catch(error => this.ajaxError(error));
+            },
+            confirmDel: function (row) {
+                if (!confirm('确认要删除吗?')) {
+                    return;
+                }
+                let url = BASE_URL + '{{low_entity_name}}/' + row.id;
+                // post和put的第二个参数直接为data，第三个参数为config，而delete的第二个参数是config，所以要把data放在config里
+                return axios.delete(url, {data: row}).then(response => {
+                    alert('删除成功');
+                    location.reload();
+                }).catch(error => this.ajaxError(error));
+            },
+            openEditDialog: function (row, isClone) {
+                if (row) {
+                    if (isClone) {
+                        this.editRow = {...row};
+                        this.editRow.id = null;
+                    } else
+                        this.editRow = row;
+                } else {
+                    if (this.multipleSelection.length <= 0) {
+                        return alert('请选择要处理的数据');
+                    }
+                    this.editRow = {...this.multipleSelection[0]};
+                    this.editRow.id = null;
+                }
+                this.statusEditDialog = true;
+            },
+            hideEditDialog: function () {
+                this.statusEditDialog = false;
+            },
+            saveData: function (form) {
+                this.$refs[form].validate(valid => {
+                    if (!valid)
+                        return false;
+                    if (this.editRow['id'] === null) {
+                        return alert('id不能为空');
+                    }
+
+                    let url = BASE_URL + '{{low_entity_name}}';
+                    return axios.post(url, this.editRow).then(response => {
+                        console.log("response:" + JSON.stringify(response));
+                        // response.data是主键
+                        if (!response || !response.data || parseInt(response.data, 10) <= 0) {
+                            alert('保存失败:' + response.data.msg);
+                            return;
+                        }
+                        alert('保存成功');
+                        location.reload();
+                    }).catch(error => this.ajaxError(error));
+                });
+            },
+
+            // 自适应表格列宽
+            flexColumnWidth: function (str, tableData, flag = 'max', charWidth = 12, miniWidth = 50) {
+                // str为该列的字段名(传字符串);tableData为该表格的数据源(传变量);
+                // flag为可选值，可不传该参数,传参时可选'max'或'equal',默认为'max'
+                // flag为'max'则设置列宽适配该列中最长的内容,flag为'equal'则设置列宽适配该列中第一行内容的长度。
+                str = str + '';
+                if (str.length === 0)
+                    return '0';
+
+                let columnContent = '';
+                if (flag === 'equal') {
+                    // 获取该列中第一个不为空的数据(内容)
+                    for (let i = 0, j = tableData.length; i < j; i++) {
+                        columnContent = tableData[i][str] + '';
+                        if (columnContent.length > 0) {
+                            break;
+                        }
+                    }
+                } else {
+                    // 获取该列中最长的数据(内容)
+                    for (let i = 0, j = tableData.length; i < j; i++) {
+                        let tmp = tableData[i][str] + '';
+                        if (tmp.length > columnContent.length) {
+                            columnContent = tmp;
+                        }
+                    }
+                }
+                // 跟标题比对
+                if (columnContent.length < str.length)
+                    columnContent = str;
+                //console.log('该列数据:' + str + ':' + columnContent)
+
+                // 以下分配的单位长度可根据实际需求进行调整
+                let flexWidth = 0;
+                for (const char of columnContent) {
+                    let useChWidth = charWidth;
+                    if (char >= '\u4e00' && char <= '\u9fa5') {
+                        // 中文字符分配宽度
+                        useChWidth = useChWidth * 2 - 1;
+                    }
+                    flexWidth += useChWidth;
+                }
+                if (flexWidth < miniWidth) {
+                    // 设置最小宽度
+                    flexWidth = miniWidth;
+                }
+                //console.log('该列宽度:' + str + ':' + flexWidth)
+                return flexWidth + 'px';
+            },
+            exportToCsv: function () {
+                if (!this.dataList || !this.dataList.length) {
+                    return alert('没有结果可导出');
+                }
+                let dataHeader = '';
+                let dataContent = '';
+                for (let i = 0, j = this.dataList.length; i < j; i++) {
+                    let row = this.dataList[i];
+                    if (i > 0) {
+                        dataContent += '\r\n';
+                    }
+                    for (let att in row) {
+                        if (i === 0) {
+                            dataHeader += '"' + att + '",';
+                        }
+                        let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
+                        dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
+                    }
+                }
+                this.downloadCsv(dataHeader + '\r\n' + dataContent);
+            },
+            downloadCsv: function (data) {
+                // “\ufeff” BOM头
+                let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(data);
+                let downloadLink = document.createElement("a");
+                downloadLink.href = uri;
+                downloadLink.download = "errcodes.csv";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            },
+
+            goLogin: function () {
+                top.location.href = BASE_URL + 'login.html?url=' + encodeURIComponent(location.href);
+            },
+            ajaxError: function (error) {
+                this.loading = false;
+                if (error.response && error.response.data) {
+                    console.log(JSON.stringify(error.response.data));
+                    let msg = error.response.data['error'];
+                    if (msg && msg === 'Unauthorized') {
+                        this.goLogin();
+                    } else {
+                        alert(msg ? msg : '出错了');
+                    }
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+</script>
+</body>
+</html>
