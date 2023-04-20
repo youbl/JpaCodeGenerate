@@ -47,6 +47,6 @@ public class ControllerGenerater implements Generater {
         replaceSymbol(sb, Vars.TABLE_NAME, table);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, StringHelper.lowFirstChar(entityName));
 
-        return new GenerateResult(entityName, sb.toString());
+        return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 }

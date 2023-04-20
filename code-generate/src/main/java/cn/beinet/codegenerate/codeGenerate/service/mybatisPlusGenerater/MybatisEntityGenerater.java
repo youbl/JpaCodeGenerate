@@ -59,7 +59,7 @@ public class MybatisEntityGenerater implements Generater {
                 .append(getInsertSQL(columns))
                 .append(getUpdateSQL(columns))
                 .append("*/");
-        return new GenerateResult(entityName, sb.toString());
+        return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 
     private String getClassBody(List<ColumnDto> columns) {

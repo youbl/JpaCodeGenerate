@@ -28,13 +28,13 @@ public class MybatisPlusCodeGenerateService {
     private final String basePath = FileHelper.getResourceBasePath();
     private final CodeDbService dbService;
 
-    public String generateCode(GenerateDto dto) throws IOException {
+    public List<GenerateResult> generateCode(GenerateDto dto) {
         if (!StringUtils.hasLength(dto.getDatabase()) ||
                 dto.getTables() == null ||
                 dto.getTables().length <= 0)
-            return "";
+            return new ArrayList<>();
 
-        List<String> files = new ArrayList<>();
+        List<GenerateResult> ret = new ArrayList<>();
         for (String item : dto.getTables()) {
             List<ColumnDto> columns = dbService.getFields(dto.getDatabase(), item);
             if (columns == null || columns.isEmpty())
@@ -46,9 +46,19 @@ public class MybatisPlusCodeGenerateService {
                     continue;
 
                 GenerateResult result = generater.generate(columns, dto);
-                String file = saveFile(generater.getFullFileName(result.getEntityName()), result.getContent());
-                files.add(file);
+                ret.add(result);
             }
+        }
+        return ret;
+    }
+
+    public String generateAndZip(GenerateDto dto) {
+        List<GenerateResult> results = generateCode(dto);
+
+        List<String> files = new ArrayList<>();
+        for (GenerateResult item : results) {
+            String file = saveFile(item.getFileName(), item.getContent());
+            files.add(file);
         }
         String zipFile = doZip(files);
         return hidePath(zipFile);
@@ -65,33 +75,41 @@ public class MybatisPlusCodeGenerateService {
     }
 
 
-    private String saveFile(String fileName, String content) throws IOException {
+    private String saveFile(String fileName, String content) {
         String writeFileName = new File(basePath, fileName).getAbsolutePath();
-        FileHelper.saveFile(writeFileName, content);
+        try {
+            FileHelper.saveFile(writeFileName, content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return writeFileName;
     }
 
-    private String doZip(List<String> files) throws IOException {
-        File zipFile = new File(basePath, "model.zip");
-        if (zipFile.exists()) {
-            zipFile.delete();
-        }
-        zipFile.createNewFile();
-        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
-            for (String file : files) {
-                File itemFile = new File(file);
-                try (FileInputStream fis = new FileInputStream(itemFile)) {
-                    String inFileName = getFileNameWithLastDir(file, basePath);
-                    zos.putNextEntry(new ZipEntry(inFileName)); // 带目录和文件名压缩
-                    int len;
-                    byte[] b = new byte[1024];
-                    while ((len = fis.read(b)) > 0) {
-                        zos.write(b, 0, len);
+    private String doZip(List<String> files) {
+        try {
+            File zipFile = new File(basePath, "model.zip");
+            if (zipFile.exists()) {
+                zipFile.delete();
+            }
+            zipFile.createNewFile();
+            try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
+                for (String file : files) {
+                    File itemFile = new File(file);
+                    try (FileInputStream fis = new FileInputStream(itemFile)) {
+                        String inFileName = getFileNameWithLastDir(file, basePath);
+                        zos.putNextEntry(new ZipEntry(inFileName)); // 带目录和文件名压缩
+                        int len;
+                        byte[] b = new byte[1024];
+                        while ((len = fis.read(b)) > 0) {
+                            zos.write(b, 0, len);
+                        }
                     }
                 }
             }
+            return zipFile.getAbsolutePath();
+        } catch (Exception exp) {
+            throw new RuntimeException(exp);
         }
-        return zipFile.getAbsolutePath();
     }
 
     /**

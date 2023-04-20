@@ -74,9 +74,10 @@
                     <input type="text" v-model="condition.removePrefix" style="width:100px;">
                 </div>
                 <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
-                    <button @click="generateCode">生成JPA文件</button>
-                    <button @click="generateMybatisCode">生成MybatisPlus文件</button>
-                    <a v-show="codeLink" :href="BASE_URL+'v1/code/down?zipfile=' + codeLink">下载</a>
+                    <button v-show="false" @click="generateCodeJpa">生成JPA文件</button>
+                    <button @click="generateMybatisCodePreview">预览MybatisPlus文件</button>
+                    <button @click="generateMybatisCode">下载MybatisPlus文件</button>
+                    <a v-show="codeLink" :href="codeLink">如未自动下载，点这里</a>
                     <span v-show="codeGenerateTime">生成时间:{{codeGenerateTime}}</span>
                 </div>
                 <div v-show="codeDesc" style="color:red;text-align: center; vertical-align: bottom; margin-top: 10px;">
@@ -86,20 +87,30 @@
             <div style="clear: both;"></div>
         </div>
         <hr>
-        所选的表字段预览：<br>
-        <el-table
-                :data="columnArr"
-                border
-                stripe
-                style="width: 100%">
-            <el-table-column :label="key" :width="flexColumnWidth(key, columnArr)"
-                             v-for="(value, key, index) in columnArr[0]"
-                             sortable>
-                <template slot-scope="scope">
-                    {{scope.row[key]}}
-                </template>
-            </el-table-column>
-        </el-table>
+        <el-tabs v-model="activeTabName" type="card" @tab-click="handleClick">
+            <el-tab-pane label="表字段预览" name="fieldsView">
+                <div v-if="condition.tables.length && columnArr.length">
+                    共{{condition.tables.length}}张表，{{columnArr.length}}个字段
+                </div>
+                <el-table
+                        :data="columnArr"
+                        border
+                        stripe
+                        style="width: 100%">
+                    <el-table-column :label="key" :width="flexColumnWidth(key, columnArr)"
+                                     v-for="(value, key, index) in columnArr[0]"
+                                     sortable>
+                        <template slot-scope="scope">
+                            {{scope.row[key]}}
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-tab-pane>
+
+            <el-tab-pane v-for="(item, idx) in codeFiles" :label="item.fileName" :name="item.fileName">
+                <el-input type="textarea" :autosize="{ minRows: 6}" v-model="item.content"/>
+            </el-tab-pane>
+        </el-tabs>
     </div>
 </div>
 <script>
@@ -110,6 +121,8 @@
             Multiselect: window.VueMultiselect.default
         },
         data: {
+            activeTabName: 'fieldsView',
+
             condition: {
                 database: '',
                 tables: [],
@@ -119,6 +132,9 @@
             databaseArr: [], // 用于下拉列表
             tableArr: [],
             columnArr: [],
+
+            codeFiles: [],
+
             codeLink: '',
             codeGenerateTime: '',
             codeDesc: '',
@@ -127,6 +143,9 @@
             this.loadDatabases();
         },
         methods: {
+            handleClick: function (tab, event) {
+                console.log(tab, event);
+            },
             loadDatabases: function () {
                 let url = BASE_URL + 'codeDb/databases';
                 axios.get(url).then((response) => {
@@ -173,28 +192,42 @@
                     this.ajaxError(error);
                 });
             },
-            generateCode: function () {
+            initCode: function () {
                 this.codeLink = '';
                 this.codeGenerateTime = '';
                 this.codeDesc = '';
+            },
+            generateCodeJpa: function () {
+                this.initCode();
                 // 用Qs库，避免 tables[0]这种传输语法
                 let url = BASE_URL + 'v1/code/tables?';// + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
                 axios.post(url, this.condition).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
-                    this.codeLink = response.data;
+                    this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
+                    window.open(this.codeLink);
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
+            },
+            generateMybatisCodePreview: function () {
+                this.initCode();
+                let url = BASE_URL + 'codeMybatis/generatePreview';
+                axios.post(url, this.condition).then((response) => {
+                    this.codeFiles = response.data;
+                    window.open(this.codeLink);
+                    this.codeGenerateTime = (new Date()).toString();
+                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });
             },
             generateMybatisCode: function () {
-                this.codeLink = '';
-                this.codeGenerateTime = '';
-                this.codeDesc = '';
+                this.initCode();
                 // 用Qs库，避免 tables[0]这种传输语法
                 let url = BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
                 axios.post(url, this.condition).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
-                    this.codeLink = response.data;
+                    this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);

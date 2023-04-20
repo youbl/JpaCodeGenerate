@@ -13,9 +13,9 @@ import lombok.Data;
 @AllArgsConstructor
 public class GenerateResult {
     /**
-     * 表的对应实体名
+     * 生成的文件名
      */
-    private String entityName;
+    private String fileName;
     /**
      * 生成的文件内容
      */

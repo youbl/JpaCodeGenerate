@@ -45,7 +45,7 @@ public class JpaCodeGenerateService {
                     continue;
 
                 GenerateResult result = generater.generate(columns, dto);
-                String file = saveFile(generater.getFullFileName(result.getEntityName()), result.getContent());
+                String file = saveFile(result.getFileName(), result.getContent());
                 files.add(file);
             }
         }

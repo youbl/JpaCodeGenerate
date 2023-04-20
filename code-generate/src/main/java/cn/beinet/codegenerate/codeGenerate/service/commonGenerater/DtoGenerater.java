@@ -50,7 +50,7 @@ public class DtoGenerater implements Generater {
         String fieldsBody = getClassBody(columns);
         replaceSymbol(sb, Vars.DTO_FIELDS, "\n" + fieldsBody);
 
-        return new GenerateResult(entityName, sb.toString());
+        return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 
     private String getClassBody(List<ColumnDto> columns) {

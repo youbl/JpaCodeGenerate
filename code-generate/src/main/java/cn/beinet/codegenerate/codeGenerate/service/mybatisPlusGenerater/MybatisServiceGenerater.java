@@ -45,6 +45,6 @@ public class MybatisServiceGenerater implements Generater {
         String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
-        return new GenerateResult(entityName, sb.toString());
+        return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 }
