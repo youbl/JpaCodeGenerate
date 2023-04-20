@@ -1,0 +1,29 @@
+package {{package_name}}.mapstruct;
+
+import {{package_name}}.dal.entity.{{entity_name}};
+import {{package_name}}.dto.{{entity_name}}Dto;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+import java.util.List;
+
+/**
+ * 需要添加如下2个引用，并进行maven构建：
+ * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
+ * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct-processor</artifactId></dependency>
+ *
+ * @author youbl.blog.csdn.net
+ * @date {{date_time}}
+ */
+@Mapper
+public interface {{entity_name}}EntityMapper {
+    {{entity_name}}EntityMapper INSTANCE = Mappers.getMapper({{entity_name}}EntityMapper.class);
+
+    {{entity_name}} dto2entity({{entity_name}}Dto dto);
+
+    {{entity_name}}Dto entity2dto({{entity_name}} entity);
+
+    List<{{entity_name}}> dto2entity(List<{{entity_name}}Dto> dto);
+
+    List<{{entity_name}}Dto> entity2dto(List<{{entity_name}}> entity);
+}

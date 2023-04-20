@@ -21,9 +21,10 @@ import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
-public class JpaCodeGenerateService {
+public class MybatisPlusCodeGenerateService {
 
     private final List<Generater> generaterList;
+
     private final String basePath = FileHelper.getResourceBasePath();
     private final CodeDbService dbService;
 
@@ -40,7 +41,7 @@ public class JpaCodeGenerateService {
                 continue;
 
             for (Generater generater : generaterList) {
-                if (!generater.getType().equals(GenerateType.JPA) &&
+                if (!generater.getType().equals(GenerateType.MYBATIS) &&
                         !generater.getType().equals(GenerateType.COMMON))
                     continue;
 
@@ -59,16 +60,15 @@ public class JpaCodeGenerateService {
                 return column.getEntityType();
             }
         }
-        // todo: 无主键？
+        // todo:无主键？
         return "Long";
     }
 
 
     private String saveFile(String fileName, String content) throws IOException {
-        String writeFileName = new File(basePath, fileName + ".java").getAbsolutePath();
+        String writeFileName = new File(basePath, fileName).getAbsolutePath();
         FileHelper.saveFile(writeFileName, content);
         return writeFileName;
-
     }
 
     private String doZip(List<String> files) throws IOException {
@@ -81,7 +81,7 @@ public class JpaCodeGenerateService {
             for (String file : files) {
                 File itemFile = new File(file);
                 try (FileInputStream fis = new FileInputStream(itemFile)) {
-                    String inFileName = getFileNameWithLastDir(file);
+                    String inFileName = getFileNameWithLastDir(file, basePath);
                     zos.putNextEntry(new ZipEntry(inFileName)); // 带目录和文件名压缩
                     int len;
                     byte[] b = new byte[1024];
@@ -95,20 +95,17 @@ public class JpaCodeGenerateService {
     }
 
     /**
-     * 返回最后一级目录+文件名，如:
-     * /aaa/bbb/ccc/ddd.txt 返回 ccc/ddd.txt
+     * 返回压缩目录路径
      *
-     * @param file 原始文件名
-     * @return 带最后一级目录的文件名
+     * @param file     原始文件名
+     * @param basePath 基础目录
+     * @return 用于压缩的带目录的文件名
      */
-    private String getFileNameWithLastDir(String file) {
-        file = file.replaceAll("\\\\", "/");
-        int idx = file.lastIndexOf('/');
-        // Controller不需要目录
-        if (!file.contains("Controller")) {
-            idx = file.lastIndexOf('/', idx - 1);
-        }
-        return file.substring(idx + 1);
+    private static String getFileNameWithLastDir(String file, String basePath) {
+        file = file.replace(basePath, "");
+        if (file.startsWith("\\"))
+            file = file.substring(1);
+        return file;
     }
 
     private String hidePath(String file) {
@@ -118,4 +115,5 @@ public class JpaCodeGenerateService {
         }
         return file;
     }
+
 }

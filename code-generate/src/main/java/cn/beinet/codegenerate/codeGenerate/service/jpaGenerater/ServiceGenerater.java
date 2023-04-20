@@ -1,12 +1,43 @@
-package cn.beinet.codegenerate.codeGenerate.service.jpaGenerate;
+package cn.beinet.codegenerate.codeGenerate.service.jpaGenerater;
 
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateDto;
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateResult;
+import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
+import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
+import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.StringHelper;
 import org.springframework.stereotype.Component;
 
-@Component
-public class ServiceGenerater {
+import java.util.List;
 
-    public  String generate(String table, String keyType, String packageName) {
+@Component
+public class ServiceGenerater implements Generater {
+    @Override
+    public GenerateType getType() {
+        return GenerateType.JPA;
+    }
+
+    @Override
+    public String getTemplateName() {
+        return "static/template/jpa-service.template";
+    }
+
+    @Override
+    public String getTargetDirName() {
+        return "service";
+    }
+
+    @Override
+    public String getFullFileName(String entityName) {
+        return getTargetDirName() + "/" + entityName + "Service.java";
+    }
+
+    @Override
+    public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
+        return null;
+    }
+
+    public String generate(String table, String keyType, String packageName) {
         StringBuilder sb = new StringBuilder();
         // 头部的package和import
         sb.append(getHead(table, packageName));

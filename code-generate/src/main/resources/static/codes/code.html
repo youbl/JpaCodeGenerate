@@ -66,12 +66,21 @@
 
             <div style="float: left;">
                 <div>
-                    <span style="display: inline-block;width:80px;">包名：</span>
-                    <input type="text" v-model="condition.package">
+                    <span style="display: inline-block;width:150px;text-align: right">包名：</span>
+                    <input type="text" v-model="condition.packageName" style="width:400px;">
                 </div>
-                <div style="text-align: center; vertical-align: bottom;">
+                <div>
+                    <span style="display: inline-block;width:150px;text-align: right">表名前缀移除：</span>
+                    <input type="text" v-model="condition.removePrefix" style="width:100px;">
+                </div>
+                <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
                     <button @click="generateCode">生成JPA文件</button>
-                    　　<a v-show="codeLink" :href="BASE_URL+'v1/code/down?zipfile=' + codeLink">下载</a>
+                    <button @click="generateMybatisCode">生成MybatisPlus文件</button>
+                    <a v-show="codeLink" :href="BASE_URL+'v1/code/down?zipfile=' + codeLink">下载</a>
+                    <span v-show="codeGenerateTime">生成时间:{{codeGenerateTime}}</span>
+                </div>
+                <div v-show="codeDesc" style="color:red;text-align: center; vertical-align: bottom; margin-top: 10px;">
+                    {{codeDesc}}
                 </div>
             </div>
             <div style="clear: both;"></div>
@@ -104,12 +113,15 @@
             condition: {
                 database: '',
                 tables: [],
-                package: 'cn.beinet.codeGenerate',
+                packageName: 'cn.beinet.codeGenerate',
+                removePrefix: 't_cb_',
             },
             databaseArr: [], // 用于下拉列表
             tableArr: [],
             columnArr: [],
             codeLink: '',
+            codeGenerateTime: '',
+            codeDesc: '',
         },
         created: function () {
             this.loadDatabases();
@@ -162,14 +174,31 @@
                 });
             },
             generateCode: function () {
+                this.codeLink = '';
+                this.codeGenerateTime = '';
+                this.codeDesc = '';
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = BASE_URL + 'v1/code/tables?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
-                axios.post(url).then((response) => {
+                let url = BASE_URL + 'v1/code/tables?';// + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                axios.post(url, this.condition).then((response) => {
+                    this.codeGenerateTime = (new Date()).toString();
                     this.codeLink = response.data;
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });
-
+            },
+            generateMybatisCode: function () {
+                this.codeLink = '';
+                this.codeGenerateTime = '';
+                this.codeDesc = '';
+                // 用Qs库，避免 tables[0]这种传输语法
+                let url = BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                axios.post(url, this.condition).then((response) => {
+                    this.codeGenerateTime = (new Date()).toString();
+                    this.codeLink = response.data;
+                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
+                }).catch(function (error) {
+                    this.ajaxError(error);
+                });
             },
             // 自适应表格列宽
             flexColumnWidth: function (str, tableData, flag = 'max', charWidth = 12, miniWidth = 50) {

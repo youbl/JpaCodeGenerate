@@ -1,9 +1,12 @@
 package cn.beinet.codegenerate.util;
 
+import org.apache.commons.io.IOUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public final class FileHelper {
 
@@ -47,6 +50,21 @@ public final class FileHelper {
         return pathStr;
     }
 
+    /**
+     * 读取resources目录下的文件内容
+     *
+     * @param fileName 相对路径, 如 "static/template/dto.template"
+     * @return 内容
+     */
+    public static String readFileFromResources(String fileName) {
+        ClassPathResource resource = new ClassPathResource(fileName);
+        try (InputStream stream = resource.getInputStream()) {
+            return IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static void ensureDirectory(String filePath) {
         if (!StringUtils.hasText(filePath)) {
             return;
@@ -76,5 +94,17 @@ public final class FileHelper {
             return "";
         //private static Pattern pattern = Pattern.compile("[?*:\"<>\\/|\\s]");
         return name.replaceAll("[?*:\"<>\\/|\\s]", "_");
+    }
+
+
+    /**
+     * 拼接可以下载的文件路径返回
+     *
+     * @param file 相对路径
+     * @return 绝对路径
+     */
+    public static String getRealPath(String file) {
+        String basePath = getResourceBasePath();
+        return new File(basePath, file).getAbsolutePath();
     }
 }

@@ -1,0 +1,39 @@
+package {{package_name}}.controller;
+
+import {{package_name}}.service.{{entity_name}}Service;
+import {{package_name}}.dto.{{entity_name}}Dto;
+import {{package_name}}.mapstruct.{{entity_name}}EntityMapper;
+import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
+/**
+ *
+ * @author youbl.blog.csdn.net
+ * @date {{date_time}}
+ */
+@RestController
+@RequiredArgsConstructor
+//@RequestMapping("{{entity_name}}")
+public class {{entity_name}}Controller {
+    private final {{entity_name}}Service service;
+
+    @GetMapping("/{{low_entity_name}}")
+    public List<{{entity_name}}Dto> findAll() {
+        return {{entity_name}}EntityMapper.INSTANCE.entity2dto(service.list());
+    }
+
+    @GetMapping("/{{low_entity_name}}/{id}")
+    public {{entity_name}}Dto findById(@PathVariable Long id) {
+        return {{entity_name}}EntityMapper.INSTANCE.entity2dto(service.getById(id));
+    }
+
+    @PostMapping("/{{low_entity_name}}")
+    public boolean save(@RequestBody {{entity_name}}Dto item) {
+        if (item == null) {
+            return false;
+        }
+        return service.saveOrUpdate({{entity_name}}EntityMapper.INSTANCE.dto2entity(item));
+    }
+}

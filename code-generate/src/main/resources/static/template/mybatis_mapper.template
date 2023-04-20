@@ -1,0 +1,13 @@
+package {{package_name}}.dal;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import {{package_name}}.dal.entity.*;
+
+/**
+ *
+ * @author youbl.blog.csdn.net
+ * @date {{date_time}}
+ */
+public interface {{entity_name}}Mapper extends BaseMapper<{{entity_name}}> {
+
+}

@@ -1,0 +1,18 @@
+package {{package_name}}.dto;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+// <groupId>org.hibernate.validator</groupId><artifactId>hibernate-validator</artifactId>
+import javax.validation.constraints.*;
+
+/**
+ *
+ * @author youbl.blog.csdn.net
+ * @date {{date_time}}
+ */
+@Data
+@Accessors(chain = true)
+public class {{entity_name}}Dto {
+    {{dto_fields}}
+}

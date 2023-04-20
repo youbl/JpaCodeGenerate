@@ -1,16 +1,15 @@
 package cn.beinet.codegenerate.codeGenerate;
 
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateDto;
 import cn.beinet.codegenerate.codeGenerate.service.JpaCodeGenerateService;
+import cn.beinet.codegenerate.util.FileHelper;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,15 +23,14 @@ public class CodeController {
     private final JpaCodeGenerateService codeGenerateService;
 
 
-
     /**
      * 生成代码，并返回生成的文件地址
      *
      * @return 表清单
      */
     @PostMapping("/v1/code/tables")
-    public String buildTables(@RequestParam("package") String packageName, @RequestParam String database, @RequestParam String[] tables) throws IOException {
-        return codeGenerateService.generateCode(database, tables, packageName);
+    public String buildTables(@RequestBody GenerateDto dto) throws IOException {
+        return codeGenerateService.generateCode(dto);
     }
 
 
@@ -41,7 +39,7 @@ public class CodeController {
         if (StringUtils.isEmpty(zipfile)) {
             throw new IllegalArgumentException("文件不能为空");
         }
-        zipfile = codeGenerateService.getRealPath(zipfile);
+        zipfile = FileHelper.getRealPath(zipfile);
 
         File file = new File(zipfile);
         String downName = new String(file.getName().getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);

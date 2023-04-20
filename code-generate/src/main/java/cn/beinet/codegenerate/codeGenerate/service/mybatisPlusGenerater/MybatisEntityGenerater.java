@@ -1,55 +1,65 @@
-package cn.beinet.codegenerate.codeGenerate.service.jpaGenerate;
+package cn.beinet.codegenerate.codeGenerate.service.mybatisPlusGenerater;
 
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateDto;
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateResult;
+import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
+import cn.beinet.codegenerate.codeGenerate.enums.Vars;
+import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
 import cn.beinet.codegenerate.model.ColumnDto;
-import cn.beinet.codegenerate.util.StringHelper;
+import cn.beinet.codegenerate.util.TimeHelper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
- * Model类生成工具
+ * MybatisPlus的entity类生成工具
  */
 @Component
-public class ModelGenerater implements Generater {
+public class MybatisEntityGenerater implements Generater {
 
-    public String generate(List<ColumnDto> columns, String packageName) {
-        StringBuilder sb = new StringBuilder();
-        // 头部的package和import
-        sb.append(getHead(packageName));
+    @Override
+    public GenerateType getType() {
+        return GenerateType.MYBATIS;
+    }
 
-        String database = columns.get(0).getCatalog();
+    @Override
+    public String getTemplateName() {
+        return "static/template/mybatis_entity.template";
+    }
+
+    @Override
+    public String getTargetDirName() {
+        return "dal/entity";
+    }
+
+    @Override
+    public String getFullFileName(String entityName) {
+        return getTargetDirName() + "/" + entityName + ".java";
+    }
+
+    @Override
+    public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
+        StringBuilder sb = new StringBuilder(getTemplate());
+        replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageName());
+
+        String now = TimeHelper.getNow();
+        replaceSymbol(sb, Vars.DATE_TIME, now);
+
         String table = columns.get(0).getTable();
+        String entityName = getEntityName(table, generateDto.getRemovePrefix());
+        replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
+        replaceSymbol(sb, Vars.TABLE_NAME, table);
 
-        // class的定义
-        sb.append("@Data\n")
-                .append("@AllArgsConstructor\n")
-                .append("@NoArgsConstructor\n")
-                .append("@Builder\n")
-                .append("@DynamicInsert\n")
-                .append("@DynamicUpdate\n")
-                .append("@Entity\n")
-                .append("@Table(name = \"").append(table).append("\", catalog = \"").append(database).append("\")\n")
-                .append("public class ").append(table).append(" {\n");
+        // class的成员字段
+        String fieldsBody = getClassBody(columns);
+        replaceSymbol(sb, Vars.ENTITY_FIELDS, "\n" + fieldsBody);
 
-        // class的成员
-        sb.append(getClassBody(columns));
-
-        sb.append(mapToDto(columns));
-
+        // 添加辅助内容，插入和更新语句
         sb.append("\n/*")
                 .append(getInsertSQL(columns))
                 .append(getUpdateSQL(columns))
                 .append("*/");
-        sb.append("\n}");
-        return sb.toString();
-    }
-
-    @Override
-    public String getHead(String packageName) {
-        return Generater.super.getHead(packageName) +
-                "import javax.persistence.*;\n" +
-                "// <groupId>org.hibernate.validator</groupId><artifactId>hibernate-validator</artifactId>\n" +
-                "import javax.validation.constraints.*;\n\n";
+        return new GenerateResult(entityName, sb.toString());
     }
 
     private String getClassBody(List<ColumnDto> columns) {
@@ -58,11 +68,12 @@ public class ModelGenerater implements Generater {
             sb.append(getSizeAnnotate(column));
 
             if (column.isPrimaryKey()) {
-                sb.append("    @Id\n");
+                // if(column.isAuto())
+                sb.append("    @TableId(type = IdType.AUTO)\n");
+            } else {
+                // mybatisplus里， 有TableId注解，就会忽略TableField注解
+                sb.append(getColumnAnnotate(column));
             }
-
-            sb.append(getColumnAnnotate(column));
-            sb.append(getGeneratedValueAnnotate(column));
             sb.append(getColumnDefine(column));
         }
         return sb.toString();
@@ -70,39 +81,23 @@ public class ModelGenerater implements Generater {
 
 
     /**
-     * 生成 注解 @Column
+     * 生成 注解 @TableField
      *
      * @param column 对应的列
      * @return 注解字符串
      */
     private String getColumnAnnotate(ColumnDto column) {
         StringBuilder sb = new StringBuilder();
-        sb.append("    @Column(columnDefinition = \"")
-                .append(column.getType())
-                .append(" COMMENT '")
-                .append(column.getComment().replaceAll("[\\r\\n]", ";"))
-                .append("'\"");
+        sb.append("    @TableField(value = \"")
+                .append(column.getColumn())
+                .append("\"");
 
         if (column.isVirtual() || column.isDbManager()) {
             // 虚拟字段，不能插入和更新
-            sb.append(", insertable = false, updatable = false");
+            sb.append(", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER");
         }
         sb.append(")\n");
         return sb.toString();
-    }
-
-
-    /**
-     * 生成 注解 @GeneratedValue
-     *
-     * @param column 对应的列
-     * @return 注解字符串
-     */
-    private String getGeneratedValueAnnotate(ColumnDto column) {
-        if (!column.isAuto()) {
-            return "";
-        }
-        return "    @GeneratedValue(strategy = GenerationType.IDENTITY)\n";
     }
 
 
@@ -118,32 +113,6 @@ public class ModelGenerater implements Generater {
             return "";
         }
         return "    @Size(max = " + size + ")\n";
-    }
-
-    private String mapToDto(List<ColumnDto> columns) {
-        String table = columns.get(0).getTable();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("    public ")
-                .append(table)
-                .append("Dto mapTo() {\n")
-                .append("        ")
-                .append(table)
-                .append("Dto result = new ")
-                .append(table)
-                .append("Dto();\n");
-        for (ColumnDto column : columns) {
-            String colName = StringHelper.upFirstChar(column.getColumn());
-            sb.append("        ")
-                    .append("result.set")
-                    .append(colName)
-                    .append("(")
-                    .append("this.get")
-                    .append(colName)
-                    .append("());\n");
-        }
-        sb.append("        return result;\n    }");
-        return sb.toString();
     }
 
     /**

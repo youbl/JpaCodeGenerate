@@ -125,4 +125,34 @@ public final class StringHelper {
         return str.toLowerCase().indexOf(searchStr.toLowerCase(), startPos);
     }
 
+    /**
+     * 全部替换StringBuilder里的字符串
+     *
+     * @param builder StringBuilder
+     * @param from    要被替换的旧串
+     * @param to      要替换为哪个新串
+     */
+    public static int replaceAll(StringBuilder builder, String from, String to) {
+        return replaceAll(builder, from, to, Integer.MAX_VALUE);
+    }
+
+    /**
+     * 替换StringBuilder里的字符串
+     *
+     * @param builder     StringBuilder
+     * @param from        要被替换的旧串
+     * @param to          要替换为哪个新串
+     * @param replaceTime 最多替换次数
+     */
+    public static int replaceAll(StringBuilder builder, String from, String to, int replaceTime) {
+        int ret = 0;
+        int index = builder.indexOf(from);
+        while (ret < replaceTime && index != -1) {
+            builder.replace(index, index + from.length(), to);
+            index += to.length(); // Move to the end of the replacement
+            index = builder.indexOf(from, index);
+            ret++;
+        }
+        return ret;
+    }
 }

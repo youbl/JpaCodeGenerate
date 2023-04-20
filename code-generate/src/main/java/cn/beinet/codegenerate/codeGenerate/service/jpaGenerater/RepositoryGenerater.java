@@ -1,12 +1,40 @@
-package cn.beinet.codegenerate.codeGenerate.service.jpaGenerate;
+package cn.beinet.codegenerate.codeGenerate.service.jpaGenerater;
 
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateDto;
+import cn.beinet.codegenerate.codeGenerate.dto.GenerateResult;
+import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
+import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
 import cn.beinet.codegenerate.model.ColumnDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class RepositoryGenerater {
+public class RepositoryGenerater implements Generater {
+    @Override
+    public GenerateType getType() {
+        return GenerateType.JPA;
+    }
+
+    @Override
+    public String getTemplateName() {
+        return "static/template/jpa-repository.template";
+    }
+
+    @Override
+    public String getTargetDirName() {
+        return "repository";
+    }
+
+    @Override
+    public String getFullFileName(String entityName) {
+        return getTargetDirName() + "/" + entityName + "Repository.java";
+    }
+
+    @Override
+    public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
+        return null;
+    }
 
     public String generate(String table, String keyType, String packageName) {
         StringBuilder sb = new StringBuilder();

@@ -1,6 +1,5 @@
 package cn.beinet.codegenerate.model;
 
-import cn.beinet.codegenerate.util.StringHelper;
 import lombok.Data;
 import org.springframework.util.StringUtils;
 
@@ -14,7 +13,7 @@ public class ColumnDto {
      */
     private String catalog;
     /**
-     * 设置首字段大写的表名
+     * 表名
      */
     private String table;
 
@@ -24,30 +23,9 @@ public class ColumnDto {
     private String originTable;
 
     /**
-     * 首字母大写后设置表名（类名要首字母大写）
-     */
-    public void setTable(String table) {
-        this.originTable = table;
-        this.table = StringHelper.upFirstChar(table);
-    }
-
-    /**
-     * 设置首字母小宝的字段名
+     * 字段名
      */
     private String column;
-
-    /**
-     * 原始的字段名
-     */
-    private String originColumn;
-
-    /**
-     * 首字母小写后设置字段名（类的field名要首字母小写）
-     */
-    public void setColumn(String column) {
-        this.originColumn = column;
-        this.column = StringHelper.lowFirstChar(column);
-    }
 
     /**
      * 这一列在表定义里的序号
@@ -81,10 +59,10 @@ public class ColumnDto {
     /**
      * MySQL8.0不返回整型长度，所以这里要替换，兼容8.0跟5.7对比
      *
-     * @return
+     * @return 类型
      */
     public String getType() {
-        if (StringUtils.isEmpty(type))
+        if (!StringUtils.hasLength(type))
             return "";
 
         int idx = type.indexOf('(');
@@ -111,13 +89,14 @@ public class ColumnDto {
     private String comment;
 
     /**
-     * 获取当前字段定义的长度
+     * 获取当前字段定义的长度，
+     * 注：只有 char和varchar才返回
      *
      * @return 长度
      */
     public int getSize() {
         String strType = getType();
-        if (StringUtils.isEmpty(strType))
+        if (!StringUtils.hasLength(strType))
             return 0;
 
         // 只有 char和varchar，才返回长度
@@ -136,13 +115,24 @@ public class ColumnDto {
     }
 
     /**
+     * 获取用于实体类的类型，主键要用引用类型，不能用基本类型
+     *
+     * @return 类型
+     */
+    public String getEntityType() {
+        String strType = getFieldType();
+        if (isPrimaryKey())
+            strType = getManagerType(strType);
+        return strType;
+    }
+
+    /**
      * 获取当前字段映射到的Java类型，如果是基本类型，要转换为引用类型，
      * 如 int 要转换为 Integer
      *
      * @return Java类型
      */
-    public String getManagerType() {
-        String strType = getFieldType();
+    public String getManagerType(String strType) {
         switch (strType) {
             case "long":
                 return "Long";
@@ -166,14 +156,14 @@ public class ColumnDto {
      */
     public String getFieldType() {
         String type = getType();
-        if (StringUtils.isEmpty(type))
+        if (!StringUtils.hasLength(type))
             return "String";
 
         int idx = type.indexOf('(');
         if (idx > 0) {
             type = type.substring(0, idx);
         }
-        idx = type.indexOf(' '); // float unsigned
+        idx = type.indexOf(' '); // 比如类型为：float unsigned
         if (idx > 0) {
             type = type.substring(0, idx);
         }
