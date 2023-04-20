@@ -214,7 +214,6 @@
                 let url = BASE_URL + 'codeMybatis/generatePreview';
                 axios.post(url, this.condition).then((response) => {
                     this.codeFiles = response.data;
-                    window.open(this.codeLink);
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
                 }).catch(function (error) {
@@ -228,6 +227,7 @@
                 axios.post(url, this.condition).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
+                    window.open(this.codeLink);
                     this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);
