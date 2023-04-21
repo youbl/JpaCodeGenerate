@@ -18,11 +18,6 @@ public class ColumnDto {
     private String table;
 
     /**
-     * 原始的表名
-     */
-    private String originTable;
-
-    /**
      * 字段名
      */
     private String column;
