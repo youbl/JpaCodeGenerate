@@ -1,6 +1,3 @@
-启动项目后，访问：
-http://localhost:8080/index.html
-
 # 快速开始
 - 用IDEA打开pom.xml，然后构建项目
 - 把target\code-generate-0.0.1-SNAPSHOT.jar 和 target\lib目录，复制到服务器上，假设是`/data/app/`
