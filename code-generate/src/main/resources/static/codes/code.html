@@ -45,21 +45,37 @@
         <div>
             <div style="float: left;">
                 <div>
-                    <span style="display: inline-block;width:80px;">选数据库：</span>
-                    <div style="width: 450px; display: inline-block;">
-                        <multiselect placeholder="请选择数据库" @input="databaseChange" v-model="condition.database"
-                                     :options="databaseArr"
-                                     :multiple="false" :taggable="false" :searchable="true"
-                                     :allow-empty="false"></multiselect>
+                    <span style="display: inline-block;width:100px; text-align: right">数据库IP：</span>
+                    <div style="width: 150px; display: inline-block;">
+                        <el-input v-model="dbCond.dbIp"/>
+                    </div>
+                    <span style="display: inline-block;width:60px; text-align: right">账号：</span>
+                    <div style="width: 120px; display: inline-block;">
+                        <el-input v-model="dbCond.dbUser"/>
+                    </div>
+                    <span style="display: inline-block;width:60px; text-align: right">密码：</span>
+                    <div style="width: 120px; display: inline-block;">
+                        <el-input v-model="dbCond.dbPwd" show-password/>
+                    </div>
+                    <div style="display: inline-block;">
+                        <el-button type="primary" @click="loadDatabases" size="medium">加载数据库
+                        </el-button>
                     </div>
                 </div>
                 <div>
-                    <span style="display: inline-block;width:80px;">表(多选)：</span>
-                    <div style="width: 450px; display: inline-block;">
-                        <multiselect placeholder="请选择表" @input="tableChange" v-model="condition.tables"
+                    <span style="display: inline-block;width:100px; text-align: right">选数据库：</span>
+                    <div style="width: 280px; display: inline-block;">
+                        <multiselect placeholder="请选择数据库" @input="databaseChange" v-model="dbCond.database"
+                                     :options="databaseArr"
+                                     :multiple="false" :taggable="false" :searchable="true"
+                                     :allow-empty="true"></multiselect>
+                    </div>
+                    <span style="display: inline-block;width:100px; text-align: right">表(多选)：</span>
+                    <div style="width: 280px; display: inline-block;">
+                        <multiselect placeholder="请选择表" @input="tableChange" v-model="dbCond.tables"
                                      :options="tableArr"
                                      :multiple="true" :taggable="false" :searchable="true"
-                                     :allow-empty="false"></multiselect>
+                                     :allow-empty="true"></multiselect>
                     </div>
                 </div>
             </div>
@@ -67,11 +83,11 @@
             <div style="float: left;">
                 <div>
                     <span style="display: inline-block;width:150px;text-align: right">包名：</span>
-                    <input type="text" v-model="condition.packageName" style="width:400px;">
+                    <input type="text" v-model.trim="codeCond.packageName" style="width:400px;">
                 </div>
                 <div>
                     <span style="display: inline-block;width:150px;text-align: right">表名前缀移除：</span>
-                    <input type="text" v-model="condition.removePrefix" style="width:100px;">
+                    <input type="text" v-model.trim="codeCond.removePrefix" style="width:100px;">
                 </div>
                 <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
                     <button v-show="false" @click="generateCodeJpa">生成JPA文件</button>
@@ -87,18 +103,18 @@
             <div style="clear: both;"></div>
         </div>
         <hr>
-        <el-tabs v-model="activeTabName" type="card" @tab-click="handleClick">
+        <el-tabs v-model="activeTabName" type="border-card" @tab-click="handleClick">
             <el-tab-pane label="表字段预览" name="fieldsView">
-                <div v-if="condition.tables.length && columnArr.length">
-                    共{{condition.tables.length}}张表，{{columnArr.length}}个字段
+                <div v-if="dbCond.tables.length && codeCond.columnArr.length">
+                    共{{dbCond.tables.length}}张表，{{codeCond.columnArr.length}}个字段
                 </div>
                 <el-table
-                        :data="columnArr"
+                        :data="codeCond.columnArr"
                         border
                         stripe
                         style="width: 100%">
-                    <el-table-column :label="key" :width="flexColumnWidth(key, columnArr)"
-                                     v-for="(value, key, index) in columnArr[0]"
+                    <el-table-column :label="key" :width="flexColumnWidth(key, codeCond.columnArr)"
+                                     v-for="(value, key, index) in codeCond.columnArr[0]"
                                      sortable>
                         <template slot-scope="scope">
                             {{scope.row[key]}}
@@ -123,15 +139,21 @@
         data: {
             activeTabName: 'fieldsView',
 
-            condition: {
+            dbCond: {
+                dbIp: '',
+                dbPort: '3306',
+                dbUser: '',
+                dbPwd: '',
                 database: '',
                 tables: [],
+            },
+            codeCond: {
                 packageName: 'cn.beinet.codeGenerate',
                 removePrefix: 't_cb_',
+                columnArr: [],
             },
             databaseArr: [], // 用于下拉列表
             tableArr: [],
-            columnArr: [],
 
             codeFiles: [],
 
@@ -146,8 +168,17 @@
             handleClick: function (tab, event) {
                 console.log(tab, event);
             },
+            combineDbPara: function () {
+                return 'ip=' + this.dbCond.dbIp +
+                    '&port=' + this.dbCond.dbPort +
+                    '&user=' + encodeURIComponent(this.dbCond.dbUser) +
+                    '&pwd=' + encodeURIComponent(this.dbCond.dbPwd) +
+                    '&database=' + this.dbCond.database;
+            },
             loadDatabases: function () {
-                let url = BASE_URL + 'codeDb/databases';
+                this.dbCond.database = '';
+                this.tableArr = [];
+                let url = BASE_URL + 'codeDb/databases?' + this.combineDbPara();
                 axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
                         alert('未找到数据库');
@@ -163,10 +194,11 @@
                 this.loadTables();
             },
             loadTables: function () {
-                let url = BASE_URL + 'codeDb/tables';
-                let para = {};
-                para.database = this.condition.database;
-                axios.get(url, {params: para}).then((response) => {
+                this.tableArr = [];
+                this.codeCond.columnArr = [];
+
+                let url = BASE_URL + 'codeDb/tables?' + this.combineDbPara();
+                axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
                         alert(para.database + '数据库，没有找到表.');
                         return;
@@ -180,28 +212,39 @@
                 this.loadColumns();
             },
             loadColumns: function () {
-                // 用Qs库，避免 tables[0]这种传输语法
-                let url = BASE_URL + 'codeDb/columns?' + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
+                this.codeCond.columnArr = [];
+                let url = BASE_URL + 'codeDb/columns?' + this.combineDbPara();
+                url += '&tables=' + this.dbCond.tables.join(',');
                 axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
                         alert(para.database + '数据库，没有找到字段.');
                         return;
                     }
-                    this.columnArr = response.data;
+                    this.codeCond.columnArr = response.data;
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });
             },
-            initCode: function () {
+            initAndCheck: function () {
                 this.codeLink = '';
                 this.codeGenerateTime = '';
                 this.codeDesc = '';
+                if (!this.codeCond.packageName) {
+                    alert('请输入包名');
+                    return false;
+                }
+                if (!this.codeCond || this.codeCond.columnArr.length === 0) {
+                    alert('请选择表');
+                    return false;
+                }
+                return true;
             },
             generateCodeJpa: function () {
-                this.initCode();
+                if (!this.initAndCheck())
+                    return;
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = BASE_URL + 'v1/code/tables?';// + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
-                axios.post(url, this.condition).then((response) => {
+                let url = BASE_URL + 'v1/code/tables?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
+                axios.post(url, this.codeCond).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     window.open(this.codeLink);
@@ -210,25 +253,27 @@
                 });
             },
             generateMybatisCodePreview: function () {
-                this.initCode();
+                if (!this.initAndCheck())
+                    return;
                 let url = BASE_URL + 'codeMybatis/generatePreview';
-                axios.post(url, this.condition).then((response) => {
+                axios.post(url, this.codeCond).then((response) => {
                     this.codeFiles = response.data;
                     this.codeGenerateTime = (new Date()).toString();
-                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
+                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dal.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });
             },
             generateMybatisCode: function () {
-                this.initCode();
+                if (!this.initAndCheck())
+                    return;
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.condition, {arrayFormat: 'repeat'});
-                axios.post(url, this.condition).then((response) => {
+                let url = BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
+                axios.post(url, this.codeCond).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     window.open(this.codeLink);
-                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.condition.packageName + '.dal.**"})';
+                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dal.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });

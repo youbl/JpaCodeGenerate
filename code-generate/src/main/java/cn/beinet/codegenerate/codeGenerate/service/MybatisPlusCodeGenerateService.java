@@ -8,7 +8,6 @@ import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.FileHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -26,19 +26,15 @@ public class MybatisPlusCodeGenerateService {
     private final List<Generater> generaterList;
 
     private final String basePath = FileHelper.getResourceBasePath();
-    private final CodeDbService dbService;
 
     public List<GenerateResult> generateCode(GenerateDto dto) {
-        if (!StringUtils.hasLength(dto.getDatabase()) ||
-                dto.getTables() == null ||
-                dto.getTables().length <= 0)
+        Map<String, List<ColumnDto>> tableMap = dto.getTableMap();
+        if (tableMap.isEmpty())
             return new ArrayList<>();
 
         List<GenerateResult> ret = new ArrayList<>();
-        for (String item : dto.getTables()) {
-            List<ColumnDto> columns = dbService.getFields(dto.getDatabase(), item);
-            if (columns == null || columns.isEmpty())
-                continue;
+        for (Map.Entry<String, List<ColumnDto>> item : tableMap.entrySet()) {
+            List<ColumnDto> columns = item.getValue();
 
             for (Generater generater : generaterList) {
                 if (!generater.getType().equals(GenerateType.MYBATIS) &&

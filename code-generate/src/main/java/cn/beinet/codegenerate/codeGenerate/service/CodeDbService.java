@@ -29,8 +29,8 @@ public class CodeDbService {
      *
      * @return 数据库名
      */
-    public List<String> getDatabases() {
-        return columnRepository.findDatabases();
+    public List<String> getDatabases(String ip, int port, String user, String pwd) {
+        return getRepository(ip, port, user, pwd).findDatabases();
     }
 
     /**
@@ -39,10 +39,10 @@ public class CodeDbService {
      * @param database 数据库
      * @return 表名
      */
-    public List<String> getTables(String database) {
+    public List<String> getTables(String ip, int port, String user, String pwd, String database) {
         if (!StringUtils.hasLength(database))
             return new ArrayList<>();
-        return columnRepository.findTables(database);
+        return getRepository(ip, port, user, pwd).findTables(database);
     }
 
     /**
@@ -52,13 +52,15 @@ public class CodeDbService {
      * @param tables   表名
      * @return 字段信息
      */
-    public List<ColumnDto> getFields(String database, String[] tables) {
+    public List<ColumnDto> getFields(String ip, int port, String user, String pwd,
+                                     String database, String[] tables) {
         if (!StringUtils.hasLength(database) || tables == null || tables.length <= 0)
             return new ArrayList<>();
 
+        ColumnRepository repository = getRepository(ip, port, user, pwd);
         List<ColumnDto> ret = new ArrayList<>();
         for (String table : tables) {
-            ret.addAll(columnRepository.findColumnByTable(database, table));
+            ret.addAll(repository.findColumnByTable(database, table));
         }
         return ret;
     }
@@ -70,7 +72,14 @@ public class CodeDbService {
      * @param table    表名
      * @return 字段信息
      */
-    public List<ColumnDto> getFields(String database, String table) {
+    public List<ColumnDto> getFields(String constr, String database, String table) {
         return columnRepository.findColumnByTable(database, table);
+    }
+
+    private ColumnRepository getRepository(String ip, int port, String user, String pwd) {
+        if (StringUtils.hasLength(ip)) {
+            return ColumnRepository.getRepository(ip, port, user, pwd);
+        }
+        return this.columnRepository;
     }
 }
