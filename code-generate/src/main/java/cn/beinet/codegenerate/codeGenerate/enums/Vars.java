@@ -35,7 +35,16 @@ public enum Vars {
      * 实体类文件的body内容
      */
     ENTITY_FIELDS("entity_fields"),
-    ;
+
+    /**
+     * Mybatis-plus的service文件条件字段内容
+     */
+    SERVICE_COND_FIELDS("service_cond_fields"),
+
+    /**
+     * HTML文件的字段内容，用于页面遍历生成检索框和编辑框
+     */
+    HTML_FIELDS("html_fields");
 
     private String val;
 

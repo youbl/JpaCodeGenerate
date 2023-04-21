@@ -49,6 +49,19 @@ public class HtmlGenerater implements Generater {
         String lowEntityName = StringHelper.lowFirstChar(entityName);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, lowEntityName);
 
+        replaceSymbol(sb, Vars.HTML_FIELDS, getBody(columns));
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
+    }
+
+    private String getBody(List<ColumnDto> columns) {
+        StringBuilder sb = new StringBuilder();
+        for (ColumnDto dto : columns) {
+            if (sb.length() > 0)
+                sb.append(',');
+            String colName = StringHelper.lowFirstChar(dto.getColumn());
+            sb.append("'").append(colName).append("'");
+        }
+        return sb.toString();
     }
 }

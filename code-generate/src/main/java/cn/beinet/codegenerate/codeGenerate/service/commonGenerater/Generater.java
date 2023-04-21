@@ -100,7 +100,7 @@ public interface Generater {
     default String getColumnDefine(ColumnDto column) {
         String colName = StringHelper.lowFirstChar(column.getColumn());
         return "    private " +
-                column.getEntityType() +
+                column.getManagerType() +
                 ' ' +
                 colName +
                 ";\n\n";

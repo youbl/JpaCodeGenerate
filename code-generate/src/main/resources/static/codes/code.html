@@ -229,6 +229,8 @@
                 this.codeLink = '';
                 this.codeGenerateTime = '';
                 this.codeDesc = '';
+
+                this.codeCond.packageName = this.codeCond.packageName.replaceAll(/;/g, '');
                 if (!this.codeCond.packageName) {
                     alert('请输入包名');
                     return false;

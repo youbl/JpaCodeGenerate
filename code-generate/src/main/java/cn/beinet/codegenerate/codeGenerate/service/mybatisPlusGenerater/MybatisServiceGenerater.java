@@ -6,6 +6,7 @@ import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
 import cn.beinet.codegenerate.codeGenerate.enums.Vars;
 import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
 import cn.beinet.codegenerate.model.ColumnDto;
+import cn.beinet.codegenerate.util.StringHelper;
 import cn.beinet.codegenerate.util.TimeHelper;
 import org.springframework.stereotype.Component;
 
@@ -45,6 +46,23 @@ public class MybatisServiceGenerater implements Generater {
         String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
+        replaceSymbol(sb, Vars.SERVICE_COND_FIELDS, getBody(columns, entityName));
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
+    }
+
+    private String getBody(List<ColumnDto> columns, String entityName) {
+
+        StringBuilder sb = new StringBuilder("\n");
+        for (ColumnDto item : columns) {
+            String colName = StringHelper.upFirstChar(item.getColumn());
+            // wrapper.eq(dto.getCreateMember() != null, {{entity_name}}::getCreateMember, dto.getCreateMember());
+            String cond = "wrapper.eq(dto.get" + colName +
+                    "() != null, " + entityName + "::get" + colName +
+                    ", dto.get" + colName +
+                    "());";
+            sb.append("            ").append(cond).append("\n");
+        }
+        return sb.toString();
     }
 }

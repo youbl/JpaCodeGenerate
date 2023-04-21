@@ -115,24 +115,13 @@ public class ColumnDto {
     }
 
     /**
-     * 获取用于实体类的类型，主键要用引用类型，不能用基本类型
-     *
-     * @return 类型
-     */
-    public String getEntityType() {
-        String strType = getFieldType();
-        if (isPrimaryKey())
-            strType = getManagerType(strType);
-        return strType;
-    }
-
-    /**
      * 获取当前字段映射到的Java类型，如果是基本类型，要转换为引用类型，
      * 如 int 要转换为 Integer
      *
      * @return Java类型
      */
-    public String getManagerType(String strType) {
+    public String getManagerType() {
+        String strType = getFieldType();
         switch (strType) {
             case "long":
                 return "Long";
@@ -154,7 +143,7 @@ public class ColumnDto {
      *
      * @return Java类型
      */
-    public String getFieldType() {
+    private String getFieldType() {
         String type = getType();
         if (!StringUtils.hasLength(type))
             return "String";

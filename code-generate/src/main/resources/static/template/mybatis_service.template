@@ -1,9 +1,13 @@
 package {{package_name}}.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import {{package_name}}.dal.{{entity_name}}Mapper;
 import {{package_name}}.dal.entity.{{entity_name}};
+import {{package_name}}.dto.{{entity_name}}Dto;
+import {{package_name}}.mapstruct.{{entity_name}}EntityMapper;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 /**
  *
@@ -12,5 +16,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {{entity_name}}> {
-
+    public List<{{entity_name}}Dto> search({{entity_name}}Dto dto) {
+        LambdaQueryWrapper<{{entity_name}}> wrapper = new QueryWrapper().lambda();
+        if (dto != null) {
+            {{service_cond_fields}}
+        }
+        return {{entity_name}}EntityMapper.INSTANCE.entity2dto(list(wrapper));
+    }
 }

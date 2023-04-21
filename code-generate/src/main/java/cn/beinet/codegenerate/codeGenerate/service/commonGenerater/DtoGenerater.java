@@ -57,9 +57,23 @@ public class DtoGenerater implements Generater {
         StringBuilder sb = new StringBuilder();
         for (ColumnDto column : columns) {
             sb.append(getSizeAnnotate(column));
+            sb.append(getDateFormatAnnotate(column));
             sb.append(getColumnDefine(column));
         }
         return sb.toString();
+    }
+
+    /**
+     * 如果是日期类型，要生成 注解 @DateTimeFormat
+     *
+     * @param column 对应的列
+     * @return 注解字符串
+     */
+    private String getDateFormatAnnotate(ColumnDto column) {
+        if (column.getManagerType().contains("LocalDateTime")) {
+            return "    @DateTimeFormat(pattern = \"yyyy-MM-dd HH:mm:ss\")\n";
+        }
+        return "";
     }
 
     /**

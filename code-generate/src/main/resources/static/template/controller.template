@@ -20,8 +20,8 @@ public class {{entity_name}}Controller {
     private final {{entity_name}}Service service;
 
     @GetMapping("/{{low_entity_name}}")
-    public List<{{entity_name}}Dto> findAll() {
-        return {{entity_name}}EntityMapper.INSTANCE.entity2dto(service.list());
+    public List<{{entity_name}}Dto> findAll(MemberDto dto) {
+        return service.search(dto);
     }
 
     @GetMapping("/{{low_entity_name}}/{id}")

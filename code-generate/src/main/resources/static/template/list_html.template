@@ -11,11 +11,15 @@
 </head>
 <body>
 <div id="divApp" style="text-align: center;width: 98%;">
-    <el-form class="demo-form-inline" style="text-align: left">
+    <el-form :inline="true" class="demo-form-inline" style="text-align: left">
+        <el-form-item v-for="key in tableFields" :label="key" label-width="150px">
+            <el-input placeholder="请输入" v-model.trim="searchCondition[key]"></el-input>
+        </el-form-item>
         <el-form-item>
-            <el-button @click="openEditDialog(null, true)" type="primary" size="mini">复制选中的第一行</el-button>
+            <el-button @click="loadDatas()" type="primary" size="mini">查询</el-button>
             <el-button :disabled="!dataList.length" icon="el-icon-download" @click="exportToCsv" size="mini">导出CSV
             </el-button>
+            <el-button @click="openEditDialog()" type="primary" size="mini">新建</el-button>
             <el-button @click="location.reload()" type="primary" size="mini">刷新</el-button>
             <span style="color:blue">{{statusTxt}}</span>
         </el-form-item>
@@ -71,8 +75,11 @@
         el: '#divApp',
         data: function () {
             return {
+                tableFields: [{{html_fields}}],
                 statusTxt: '',
                 loading: false,
+
+                searchCondition: {},
                 dataList: [],
 
                 statusEditDialog: false,
@@ -109,8 +116,15 @@
                 this.loading = true;
                 let startTime = new Date();
 
+                for (let att in this.searchCondition) {
+                    if (this.searchCondition[att] === '') {
+                        delete (this.searchCondition[att]);
+                    }
+                }
+
                 let url = BASE_URL + '{{low_entity_name}}';
-                return axios.get(url).then(response => {
+                let para = {'params': this.searchCondition};
+                return axios.get(url, para).then(response => {
                     this.loading = false;
                     this.dataList = response.data;
                     this.statusTxt = this.dataList.length + '行，耗时:' + ((new Date()) - startTime) + 'ms';
@@ -135,11 +149,10 @@
                     } else
                         this.editRow = row;
                 } else {
-                    if (this.multipleSelection.length <= 0) {
-                        return alert('请选择要处理的数据');
+                    this.editRow = {};
+                    for (let i = 0, j = this.tableFields.length; i < j; i++) {
+                        this.editRow[this.tableFields[i]] = '';
                     }
-                    this.editRow = {...this.multipleSelection[0]};
-                    this.editRow.id = null;
                 }
                 this.statusEditDialog = true;
             },
@@ -150,9 +163,6 @@
                 this.$refs[form].validate(valid => {
                     if (!valid)
                         return false;
-                    if (this.editRow['id'] === null) {
-                        return alert('id不能为空');
-                    }
 
                     let url = BASE_URL + '{{low_entity_name}}';
                     return axios.post(url, this.editRow).then(response => {

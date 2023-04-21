@@ -51,7 +51,7 @@ public class JpaCodeGenerateService {
     private String getKeyType(List<ColumnDto> columns) {
         for (ColumnDto column : columns) {
             if (column.isPrimaryKey()) {
-                return column.getEntityType();
+                return column.getManagerType();
             }
         }
         // todo: 无主键？
