@@ -29,7 +29,7 @@ public class {{entity_name}}Controller {
         return {{entity_name}}EntityMapper.INSTANCE.entity2dto(service.getById(id));
     }
 
-    @DeleteMapping("/user/{id}")
+    @DeleteMapping("/{{low_entity_name}}/{id}")
     public boolean delById(@PathVariable Long id) {
         return service.removeById(id);
     }
