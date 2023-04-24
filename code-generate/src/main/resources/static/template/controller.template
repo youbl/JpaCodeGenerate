@@ -20,7 +20,7 @@ public class {{entity_name}}Controller {
     private final {{entity_name}}Service service;
 
     @GetMapping("/{{low_entity_name}}")
-    public List<{{entity_name}}Dto> findAll(MemberDto dto) {
+    public List<{{entity_name}}Dto> findAll({{entity_name}}Dto dto) {
         return service.search(dto);
     }
 
