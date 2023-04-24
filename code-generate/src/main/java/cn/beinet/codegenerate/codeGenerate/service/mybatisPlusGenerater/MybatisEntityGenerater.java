@@ -88,9 +88,9 @@ public class MybatisEntityGenerater implements Generater {
      */
     private String getColumnAnnotate(ColumnDto column) {
         StringBuilder sb = new StringBuilder();
-        sb.append("    @TableField(value = \"")
+        sb.append("    @TableField(value = \"`")
                 .append(column.getColumn())
-                .append("\"");
+                .append("`\"");
 
         if (column.isVirtual() || column.isDbManager()) {
             // 虚拟字段，不能插入和更新
