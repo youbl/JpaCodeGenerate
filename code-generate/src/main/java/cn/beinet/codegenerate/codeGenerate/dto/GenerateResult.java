@@ -7,7 +7,7 @@ import lombok.Data;
  * 新类
  *
  * @author youbl
- * @date 2023/4/20 10:13
+ * @since 2023/4/20 10:13
  */
 @Data
 @AllArgsConstructor

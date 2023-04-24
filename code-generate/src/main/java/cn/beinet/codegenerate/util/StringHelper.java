@@ -10,7 +10,7 @@ import java.util.Random;
  *
  * @author youbl
  * @version 1.0
- * @date 2020/11/6 17:11
+ * @since 2020/11/6 17:11
  */
 public final class StringHelper {
     private static final Random RANDOM = new Random();

@@ -6,7 +6,7 @@ import {{package_name}}.dal.entity.*;
 /**
  *
  * @author youbl.blog.csdn.net
- * @date {{date_time}}
+ * @since {{date_time}}
  */
 public interface {{entity_name}}Mapper extends BaseMapper<{{entity_name}}> {
 

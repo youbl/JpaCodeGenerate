@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author youbl
  * @version 1.0
- * @date 2020/11/6 16:54
+ * @since 2020/11/6 16:54
  */
 public interface Generater {
     /**

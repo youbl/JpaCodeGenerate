@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
  * 新类
  *
  * @author youbl
- * @date 2023/4/19 16:27
+ * @since 2023/4/19 16:27
  */
 public final class TimeHelper {
     public static final String PATTERN_STR = "yyyy-MM-dd HH:mm:ss";

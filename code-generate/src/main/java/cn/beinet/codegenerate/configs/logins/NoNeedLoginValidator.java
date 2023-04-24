@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * 那些不需要登录的url验证
  *
  * @author youbl
- * @date 2023/1/4 18:18
+ * @since 2023/1/4 18:18
  */
 @Component
 public class NoNeedLoginValidator implements Validator {

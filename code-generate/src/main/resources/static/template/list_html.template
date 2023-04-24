@@ -67,7 +67,7 @@
     </el-dialog>
 
     <hr>
-    <div>build by @author youbl.blog.csdn.net @date {{date_time}}</div>
+    <div>build by @author youbl.blog.csdn.net @since {{date_time}}</div>
 </div>
 <script type="text/javascript">
     const BASE_URL = '/';// + location.pathname.split('/')[1] + '/'; // '/ops/';

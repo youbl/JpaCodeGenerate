@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
  * 新类
  *
  * @author youbl
- * @date 2023/1/4 18:17
+ * @since 2023/1/4 18:17
  */
 public interface Validator extends Ordered {
     boolean validated(HttpServletRequest request, HttpServletResponse response);

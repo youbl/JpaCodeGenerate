@@ -4,7 +4,7 @@ package cn.beinet.codegenerate.codeGenerate.enums;
  * 新类
  *
  * @author youbl
- * @date 2023/4/19 16:22
+ * @since 2023/4/19 16:22
  */
 public enum Vars {
     /**

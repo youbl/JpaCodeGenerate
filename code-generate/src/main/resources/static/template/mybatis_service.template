@@ -12,7 +12,7 @@ import java.util.List;
 /**
  *
  * @author youbl.blog.csdn.net
- * @date {{date_time}}
+ * @since {{date_time}}
  */
 @Service
 public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {{entity_name}}> {
