@@ -59,7 +59,9 @@ public class ControllerLogFilter extends OncePerRequestFilter {
     }
 
     private boolean isNotApiRequest(HttpServletRequest request) {
-        String url = request.getRequestURI(); //request.getRequestURL() 带有域名，所以不用
+        //request.getRequestURL() 带有域名，所以不用
+        //request.getRequestURI() 带有ContextPath，所以不用
+        String url = request.getServletPath();
         Matcher matcher = patternRequest.matcher(url);
         return matcher.find();
     }

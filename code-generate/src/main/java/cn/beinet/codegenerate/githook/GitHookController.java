@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @RequiredArgsConstructor
 public class GitHookController {
-    private GitlogService gitlogService;
+    private final GitlogService gitlogService;
 
     @PostMapping("githook")
     @SneakyThrows

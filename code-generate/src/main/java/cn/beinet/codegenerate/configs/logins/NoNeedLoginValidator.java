@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 @Component
 public class NoNeedLoginValidator implements Validator {
     // 无须登录认证的url正则
-    private static final Pattern patternRequest = Pattern.compile("(?i)^/actuator/?|^/githook/?|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map)$");// |html?
+    private static final Pattern patternRequest = Pattern.compile("(?i)^/(actuator|githook)/?|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map)$");// |html?
 
     @Override
     public int getOrder() {
@@ -26,7 +26,9 @@ public class NoNeedLoginValidator implements Validator {
 
     @Override
     public boolean validated(HttpServletRequest request, HttpServletResponse response) {
-        String url = request.getRequestURI(); //request.getRequestURL() 带有域名，所以不用
+        //request.getRequestURL() 带有域名，所以不用
+        //request.getRequestURI() 带有ContextPath，所以不用
+        String url = request.getServletPath();
         // 登录页跳过
         if (url.endsWith(LdapLoginFilter.loginPage))
             return true;

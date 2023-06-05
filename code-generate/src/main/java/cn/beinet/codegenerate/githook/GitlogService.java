@@ -17,7 +17,7 @@ public class GitlogService {
     }
 
     public int add(String data) {
-        String sql = "INSERT INTO gitlog (postdata) VALUES(?)";
+        String sql = "INSERT INTO gitlog (postdata, status) VALUES(?, 0)";
         return mySqlExecuteRepository.executeDml(sql, data);
     }
 }

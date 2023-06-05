@@ -63,7 +63,9 @@ public class LdapLoginFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String url = request.getRequestURI(); //request.getRequestURL() 带有域名，所以不用
+        //request.getRequestURL() 带有域名，所以不用
+        //request.getRequestURI() 带有ContextPath，所以不用
+        String url = request.getServletPath();
         log.debug("收到请求: {}", url);
 
         // 验证用户名密码
