@@ -15,6 +15,13 @@ public class MySqlExecuteRepository {
     private final String userName;
     private final String pwd;
 
+    public MySqlExecuteRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+        url = "";
+        userName = "";
+        pwd = "";
+    }
+
     public MySqlExecuteRepository(String ip, int port, String userName, String pwd, String dbName) {
         this.url = "jdbc:mysql://" + ip + ":" + port +
                 "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=true&serverTimezone=Asia/Shanghai&useSSL=false";
@@ -26,8 +33,10 @@ public class MySqlExecuteRepository {
         return getJdbcTemplate().queryForList(sql);//.query(sql, new MyRowMapper());
     }
 
-    public int executeDml(String sql) {
-        return getJdbcTemplate().update(sql);
+    public int executeDml(String sql, Object... args) {
+        if (args == null || args.length <= 0)
+            return getJdbcTemplate().update(sql);
+        return getJdbcTemplate().update(sql, args);
     }
 
 //    static class MyRowMapper implements RowMapper<Map<String, String>> {

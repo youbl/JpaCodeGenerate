@@ -22,7 +22,7 @@ import java.util.Map;
  * @since 2023/1/4 10:48
  */
 @Slf4j
-@RestController
+//@RestController
 public class PublishController {
     private final Map<String, String> serviceDir;
 
