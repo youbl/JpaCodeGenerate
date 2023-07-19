@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ldap.core.LdapTemplate;
-import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,8 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Description:
@@ -220,15 +217,21 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         }
 
         log.debug("用户名: {}, 去ldap认证", username);
-        String filter = new EqualsFilter("samAccountName", username).toString();
-        LdapTemplate ldapTemplate = SpringUtil.getBean(LdapTemplate.class);
-//        Object obj = ldapTemplate.search("", filter, new AttributesMapper() {
-//            @Override
-//            public Object mapFromAttributes(Attributes attributes) throws NamingException {
-//                return null;
-//            }
-//        });
-        return ldapTemplate.authenticate("", filter, pwd);
+        return validateFromLDAP(username, pwd);
+    }
+
+    private boolean validateFromLDAP(String username, String pwd) {
+        if (username.indexOf("@") <= 0) {
+            username += "@fzzixun.com";
+        }
+        try {
+            Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);
+            log.info(context.toString());
+            return true;
+        } catch (Exception exp) {
+            log.error(exp.getMessage());
+            return false;
+        }
     }
 
     /**

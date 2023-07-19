@@ -54,16 +54,17 @@ public class GitHookController {
  * 如果项目需要token认证，则要在Secret token里输入本项目所需的认证token
  * 注：gitlab是通过在HTTP Header里添加 X-Gitlab-Token来传递这个输入的token，需要在代码里处理
  * <p>
- * 对应的数据，通过这个接口写入表中：
+ * 对应的数据，通过这个接口写入表中(注：只需要插入postdata字段，其它字段都是自动生成的)：
  * CREATE TABLE `gitlog` (
- * `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
- * `postdata` JSON NOT NULL COMMENT 'git回调时的body数据',
- * `status` TINYINT(4) NOT NULL COMMENT '0未处理，1已处理',
- * `creation` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
- * `username` VARCHAR(20) GENERATED ALWAYS AS (TRIM(BOTH '"' FROM JSON_EXTRACT(`postdata`,'$.user_name'))) VIRTUAL,
- * `branch` VARCHAR(50) GENERATED ALWAYS AS (REPLACE(TRIM(BOTH '"' FROM JSON_EXTRACT(`postdata`,'$.ref')),'refs/heads/','')) VIRTUAL,
- * `project` VARCHAR(20) GENERATED ALWAYS AS (TRIM(BOTH '"' FROM JSON_EXTRACT(`postdata`,'$.repository.name'))) VIRTUAL,
- * PRIMARY KEY (`id`),
- * KEY `idx_status` (`status`)
- * ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='gitlab hook回调记录';
+ *   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+ *   `postdata` json NOT NULL COMMENT 'git回调时的body数据',
+ *   `status` tinyint(4) NOT NULL COMMENT '0未处理，1已处理',
+ *   `creation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+ *   `project` varchar(20) GENERATED ALWAYS AS (trim(both '"' from json_extract(`postdata`,'$.repository.name'))) VIRTUAL,
+ *   `kind` varchar(20) GENERATED ALWAYS AS (trim(both '"' from json_extract(`postdata`,'$.object_kind'))) VIRTUAL,
+ *   `username` varchar(20) GENERATED ALWAYS AS ((case when (`kind` = 'merge_request') then trim(both '"' from json_extract(`postdata`,'$.user.name')) else trim(both '"' from json_extract(`postdata`,'$.user_name')) end)) VIRTUAL,
+ *   `branch` varchar(80) GENERATED ALWAYS AS ((case when (`kind` = 'merge_request') then trim(both '"' from json_extract(`postdata`,'$.object_attributes.target_branch')) else replace(trim(both '"' from json_extract(`postdata`,'$.ref')),'refs/heads/','') end)) VIRTUAL,
+ *   PRIMARY KEY (`id`),
+ *   KEY `idx_status` (`status`)
+ * ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='gitlab hook回调记录';
  */
