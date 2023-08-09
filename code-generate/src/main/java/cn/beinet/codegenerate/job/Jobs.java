@@ -31,6 +31,9 @@ public class Jobs {
     @Scheduled(cron = "0 30 * * * *")
     //@Scheduled(cron = "* * * * * *")
     public void backupOperations() {
+        if (!gitHelper.enabled())
+            return;
+
 //        if (isOk)
 //            return;
 //        isOk = true;

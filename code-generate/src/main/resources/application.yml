@@ -36,6 +36,7 @@ sdk:
   secure-key: 123456
 
 backup:
+  enable: false
   # gitlab表示备份文件 存储到哪里
   gitlab:
     url: https://git.beinet.cn/backups.git

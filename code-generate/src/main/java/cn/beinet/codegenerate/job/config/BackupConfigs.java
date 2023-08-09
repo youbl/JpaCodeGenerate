@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "backup")
 public class BackupConfigs {
+    private Boolean enable;
+
     private Gitlab gitlab;
 
     private Nacos nacos;

@@ -28,6 +28,10 @@ public final class GitHelper {
 
     @PostConstruct
     public void init() {
+        if (!enabled()) {
+            return;
+        }
+
         File dir = new File(configs.getGitlab().getRootDir());
         if (dir.exists()) {
             log.info("Git目录已存在，跳过初始化");
@@ -45,6 +49,10 @@ public final class GitHelper {
         } catch (GitAPIException e) {
             log.error("Git初始化失败", e);
         }
+    }
+
+    public boolean enabled() {
+        return (configs.getEnable() != null && configs.getEnable());
     }
 
     public boolean pull() {
