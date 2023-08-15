@@ -6,6 +6,7 @@ import cn.beinet.codegenerate.controller.execute.dto.SqlDto;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import cn.beinet.codegenerate.service.MySqlService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,9 +79,8 @@ public class MySqlExeController {
      */
     @PostMapping("mysql/executeDml")
     public GlobalExceptionFilter.ResponseData executeDML(@RequestBody SqlDto sql, AuthDetails loginInfo) {
-        if (loginInfo == null || !"beiliang_you".equals(loginInfo.getAccount())) {
-            throw new RuntimeException("不允许访问");
-        }
+        Assert.isTrue(loginInfo != null && "beiliang_you".equals(loginInfo.getAccount()),
+                "不允许访问");
 
         if (sql.getTime() == 1) {
             int affectedRows = mySqlService.executeDml(sql);
