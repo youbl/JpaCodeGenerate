@@ -29,10 +29,8 @@
              style="text-align: left">
         当前登录用户: {{loginuser}}
         <el-button type="primary" icon="el-icon-save" @click="savedSecureShow=true">添加密钥</el-button>
-        <div>
-            <span style="padding-left:20px;"
-                  v-show="resultData.length">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
-        </div>
+        <span style="padding-left:20px;"
+              v-show="resultData.length">请求耗时: {{costTime}}ms, 已存密钥数: {{resultData.length}}</span>
     </el-form>
     <br>
 
