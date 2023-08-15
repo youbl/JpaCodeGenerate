@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OTPCode操作页</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/sql-formatter.min.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <el-form ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        当前登录用户: {{loginuser}}
+        <el-button type="primary" icon="el-icon-save" @click="savedSecureShow=true">添加密钥</el-button>
+        <div>
+            <span style="padding-left:20px;"
+                  v-show="resultData.length">耗时: {{costTime}}ms, 行数: {{resultData.length}}</span>
+        </div>
+    </el-form>
+    <br>
+
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              height="600"
+              :data="resultData"
+              :header-row-class-name="'tableHeader'">
+        <el-table-column :label="key"
+                         sortable
+                         :sort-by="key"
+                         v-for="(value, key, index) in resultData[0]"
+                         v-if="isShow(key)">
+            <template slot-scope="scope">
+                <span>{{scope.row[key]}}</span>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-dialog title="保存OtpCode密钥" :visible.sync="savedSecureShow">
+        <div>
+            <el-form>
+                <el-form-item label="说明">
+                    <el-input v-model="saveData.title" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item label="密钥">
+                    <el-input v-model="saveData.secure" placeholder="请输入"></el-input>
+                </el-form-item>
+            </el-form>
+        </div>
+        <div>
+            <el-button type="primary" @click="saveMySecure">保存OTPCode信息</el-button>
+        </div>
+    </el-dialog>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loginuser: '',
+            loading: false,
+
+            savedSecureShow: false,
+            saveData: {
+                title: '',
+                secure: '',
+            },
+
+            costTime: 0,
+            resultData: [],
+        },
+        created: function () {
+            this.getLoginUser()
+                .then(this.getMySecure);
+        },
+        computed: {},
+        methods: {
+            handleTabClick: function (tab, event) {
+            },
+            getLoginUser: function () {
+                let url = BASE_URL + 'loginuser';
+                return axios.get(url).then(response => {
+                    this.loginuser = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            getMySecure: function () {
+                let url = BASE_URL + 'otpcode/list';
+                return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert('出错:\n' + response.data.errMsg);
+                    }
+                    this.resultData = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            isShow: function (column) {
+                if (column === 'secure')
+                    return false;
+                return true;
+            },
+            saveMySecure: function () {
+                let url = BASE_URL + 'otpcode';
+                return axios.post(url, this.saveData).then(response => {
+                    alert('保存成功条数:' + response.data);
+                    this.getMySecure();
+                    this.savedSecureShow = false;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+
+    /**
+     * 判断对象有属性
+     * @param obj 对象
+     * @returns {boolean} 有或没有
+     */
+    function hasAnyProperty(obj) {
+        if (!obj)
+            return false;
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
+    }
+</script>
+</body>
+</html>
