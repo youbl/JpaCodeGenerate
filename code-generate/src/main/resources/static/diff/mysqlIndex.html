@@ -30,19 +30,19 @@
             <el-select v-model="selectTestDbName" filterable placeholder="请选择环境" @change="dbSelected(false)">
                 <el-option
                         v-for="item in sqlConns"
-                        :key="item.name"
-                        :label="item.name"
-                        :value="item.name">
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
                 </el-option>
             </el-select>
             <el-form-item label="IP">
-                <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
+                <input type="text" v-model="searchCond.dbTestIp" style="width:240px" :readonly="!isTestCustom"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <input type="text" v-model="searchCond.dbTestUser" style="width:60px"/>
+                <input type="text" v-model="searchCond.dbTestUser" style="width:60px" :readonly="!isTestCustom"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"/>
+                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px" :readonly="!isTestCustom"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestDb"></el-button>
 
@@ -62,19 +62,19 @@
             <el-select v-model="selectProdDbName" filterable placeholder="请选择环境" @change="dbSelected(true)">
                 <el-option
                         v-for="item in sqlConns"
-                        :key="item.name"
-                        :label="item.name"
-                        :value="item.name">
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
                 </el-option>
             </el-select>
             <el-form-item label="IP">
-                <input type="text" v-model="searchCond.dbProdIp" style="width:240px"/>
+                <input type="text" v-model="searchCond.dbProdIp" style="width:240px" :readonly="!isProdCustom"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <input type="text" v-model="searchCond.dbProdUser" style="width:60px"/>
+                <input type="text" v-model="searchCond.dbProdUser" style="width:60px" :readonly="!isProdCustom"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model="searchCond.dbProdPwd" style="width:60px"/>
+                <input type="password" v-model="searchCond.dbProdPwd" style="width:60px" :readonly="!isProdCustom"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdDb"></el-button>
 
@@ -161,31 +161,18 @@
         el: '#divApp',
         data: {
             loading: false,
-            selectTestDbName: '测试-1',
-            selectProdDbName: '生产-2',
-            sqlConns: [
-                {
-                    name: '生产-2',
-                    dbTestIp: '10.1.1.1',
-                    dbTestUser: 'readonly',
-                    dbTestPwd: '1231357',
-                    dbTestName: '',
-                },
-                {
-                    name: '测试-1',
-                    dbTestIp: '10.1.1.2',
-                    dbTestUser: 'readonly',
-                    dbTestPwd: '1231357',
-                    dbTestName: '',
-                },
-            ],
+            selectTestDbName: '', // 左边默认选择的数据库实例
+            selectProdDbName: '', // 右边默认选择的数据库实例
+            sqlConns: [],
 
             searchCond: {
+                testConfigName: '',
                 dbTestIp: '',
                 dbTestUser: '',
                 dbTestPwd: '',
                 dbTestName: '',
 
+                prodConfigName: '',
                 dbProdIp: '',
                 dbProdUser: '',
                 dbProdPwd: '',
@@ -210,9 +197,14 @@
         },
         created: function () {
             this.defaultName = getQueryString('name');
+            this.loadConnections().then(() => {
+                this.selectTestDbName = this.sqlConns[0].configName;
+                if (this.sqlConns.length > 1)
+                    this.selectProdDbName = this.sqlConns[1].configName;
 
-            this.dbSelected(true);
-            this.dbSelected(false);
+                this.dbSelected(true);
+                this.dbSelected(false);
+            });
         },
         computed: {
             filteredTableData: function () {
@@ -223,13 +215,47 @@
                     });
                 }
                 return this.attData;
+            },
+            isTestCustom: function () {
+                return this.selectTestDbName === '' || this.selectTestDbName === '自定义';
+            },
+            isProdCustom: function () {
+                return this.selectProdDbName === '' || this.selectProdDbName === '自定义';
             }
         },
         methods: {
+            loadConnections: function () {
+                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('出错:' + response.data.errMsg);
+                    }
+                    for (let i = 0, j = response.data.length; i < j; i++) {
+                        let item = response.data[i];
+                        this.sqlConns.push({
+                            configName: item.name,
+                            dbTestIp: item.address,
+                            dbTestUser: item.account,
+                            dbTestPwd: '123456',
+                            dbTestName: '',
+                        });
+                    }
+                    this.sqlConns.push({
+                        configName: '自定义',
+                        dbTestIp: '',
+                        dbTestUser: '',
+                        dbTestPwd: '',
+                        dbTestName: '',
+                    });
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
             switchConfig: function () {
                 let ip = this.searchCond.dbTestIp;
                 let user = this.searchCond.dbTestUser;
                 let pwd = this.searchCond.dbTestPwd;
+                let configName = this.searchCond.testConfigName;
 
                 let db1 = this.searchCond.dbTestName;
                 let db2 = this.searchCond.dbProdName;
@@ -237,10 +263,12 @@
                 this.searchCond.dbTestIp = this.searchCond.dbProdIp;
                 this.searchCond.dbTestUser = this.searchCond.dbProdUser;
                 this.searchCond.dbTestPwd = this.searchCond.dbProdPwd;
+                this.searchCond.testConfigName = this.searchCond.prodConfigName;
                 this.loadTestDb();
                 this.searchCond.dbProdIp = ip;
                 this.searchCond.dbProdUser = user;
                 this.searchCond.dbProdPwd = pwd;
+                this.searchCond.prodConfigName = configName;
                 this.loadProdDb();
                 setTimeout(() => {
                     this.searchCond.dbTestName = db2;
@@ -251,6 +279,7 @@
                 this.searchCond.dbProdIp = this.searchCond.dbTestIp;
                 this.searchCond.dbProdUser = this.searchCond.dbTestUser;
                 this.searchCond.dbProdPwd = this.searchCond.dbTestPwd;
+                this.searchCond.prodConfigName = this.searchCond.testConfigName;
 
                 this.loadProdDb();
                 setTimeout(() => {
@@ -261,6 +290,7 @@
                 this.searchCond.dbTestIp = this.searchCond.dbProdIp;
                 this.searchCond.dbTestUser = this.searchCond.dbProdUser;
                 this.searchCond.dbTestPwd = this.searchCond.dbProdPwd;
+                this.searchCond.testConfigName = this.searchCond.prodConfigName;
 
                 this.loadTestDb();
                 setTimeout(() => {
@@ -272,8 +302,10 @@
                 if (!selectDbName)
                     return;
                 for (let i = 0, j = this.sqlConns.length; i < j; i++) {
-                    if (this.sqlConns[i].name === selectDbName) {
+                    if (this.sqlConns[i].configName === selectDbName) {
                         this.setDbFromOption(flg, this.sqlConns[i]);
+                        if (selectDbName === '自定义')
+                            return;
                         this.loadDbs(flg);
                         break;
                     }
@@ -284,10 +316,12 @@
                     this.searchCond.dbProdIp = conns.dbTestIp;
                     this.searchCond.dbProdUser = conns.dbTestUser;
                     this.searchCond.dbProdPwd = conns.dbTestPwd;
+                    this.searchCond.prodConfigName = conns.configName;
                 } else {
                     this.searchCond.dbTestIp = conns.dbTestIp;
                     this.searchCond.dbTestUser = conns.dbTestUser;
                     this.searchCond.dbTestPwd = conns.dbTestPwd;
+                    this.searchCond.testConfigName = conns.configName;
                 }
             },
             loadTestDb: function () {
@@ -300,19 +334,21 @@
                 if (isProd) {
                     if (!this.searchCond.dbProdIp || !this.searchCond.dbProdUser || !this.searchCond.dbProdPwd) {
                         alert('请输入右库IP/用户/密码');
-                        return;
+                        throw new Error('请输入右库IP/用户/密码');
                     }
                     return 'ip=' + this.searchCond.dbProdIp +
                         '&user=' + encodeURIComponent(this.searchCond.dbProdUser) +
-                        '&pwd=' + encodeURIComponent(this.searchCond.dbProdPwd);
+                        '&pwd=' + encodeURIComponent(this.searchCond.dbProdPwd) +
+                        '&name=' + encodeURIComponent(this.searchCond.prodConfigName);
                 }
                 if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
                     alert('请输入左库IP/用户/密码');
-                    return;
+                    throw new Error('请输入左库IP/用户/密码');
                 }
                 return 'ip=' + this.searchCond.dbTestIp +
                     '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
-                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd) +
+                    '&name=' + encodeURIComponent(this.searchCond.testConfigName);
             },
 
             // 加载数据库列表
