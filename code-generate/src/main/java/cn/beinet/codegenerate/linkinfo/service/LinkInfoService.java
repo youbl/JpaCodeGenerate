@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.linkinfo.service;
 
+import cn.beinet.codegenerate.controller.dto.NacosDto;
 import cn.beinet.codegenerate.controller.dto.RedisDto;
 import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.controller.dto.LinkInfoDto;
@@ -98,6 +99,23 @@ public class LinkInfoService {
                 .setPwd(info.getPwd())
                 .setPort(info.getPort());
     }
+
+    /**
+     * 根据name获取nacos配置信息填充
+     *
+     * @param dto dto
+     */
+    public void fillLinkInfo(NacosDto dto) {
+        if (!StringUtils.hasLength(dto.getName()))
+            return;
+        LinkInfo info = getLinkInfoByName(dto.getName());
+        if (info == null)
+            return;
+        dto.setUrl(info.getAddress())
+                .setUser(info.getAccount())
+                .setPwd(info.getPwd());
+    }
+
 
     /**
      * 获取单个连接信息

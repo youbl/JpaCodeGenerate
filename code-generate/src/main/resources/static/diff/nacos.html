@@ -29,13 +29,13 @@
 
         <el-form-item label="对比的源" style="font-weight: bold;">
             <el-form-item label="url">
-                <input type="text" v-model="searchCond.nacosTestIp" style="width:240px"/>
+                <input type="text" v-model.trim="searchCond.nacosTestIp" style="width:240px"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <input type="text" v-model="searchCond.nacosTestUser" style="width:60px"/>
+                <input type="text" v-model.trim="searchCond.nacosTestUser" style="width:60px"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model="searchCond.nacosTestPwd" style="width:60px"/>
+                <input type="password" v-model.trim="searchCond.nacosTestPwd" style="width:60px"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestNacosNs"></el-button>
 

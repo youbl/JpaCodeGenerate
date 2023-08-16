@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.job.backup;
 
+import cn.beinet.codegenerate.controller.dto.NacosDto;
 import cn.beinet.codegenerate.job.config.BackupConfigs;
 import cn.beinet.codegenerate.service.NacosService;
 import cn.beinet.codegenerate.util.FileHelper;
@@ -56,11 +57,12 @@ public class NacosConfigBackup implements Backup {
         log.info("准备备份ns {} {}", item.getUrl(), nameSpace);
         int idx = 0;
         try {
-            List<String> fileList = nacosService.getFiles(
-                    item.getUrl(),
-                    item.getUsername(),
-                    item.getPassword(),
-                    nameSpace);
+            NacosDto dto = new NacosDto()
+                    .setUrl(item.getUrl())
+                    .setUser(item.getUsername())
+                    .setPwd(item.getPassword())
+                    .setNameSpace(nameSpace);
+            List<String> fileList = nacosService.getFiles(dto);
             for (String file : fileList) {
                 backupFile(nameSpace, file, item);
                 idx++;
@@ -73,13 +75,14 @@ public class NacosConfigBackup implements Backup {
 
     private void backupFile(String nameSpace, String file, BackupConfigs.NacosSite item) {
         try {
-            String content = nacosService.getFile(
-                    item.getUrl(),
-                    item.getUsername(),
-                    item.getPassword(),
-                    nameSpace,
-                    file,
-                    "DEFAULT_GROUP");
+            NacosDto dto = new NacosDto()
+                    .setUrl(item.getUrl())
+                    .setUser(item.getUsername())
+                    .setPwd(item.getPassword())
+                    .setNameSpace(nameSpace)
+                    .setDataId(file)
+                    .setGroup("DEFAULT_GROUP");
+            String content = nacosService.getFile(dto);
             String filePath = getFileName(nameSpace, file, item);
             FileHelper.saveFile(filePath, content);
         } catch (Exception exp) {
