@@ -30,19 +30,19 @@
             <el-select v-model="selectConn" filterable placeholder="请选择环境" @change="connSelected">
                 <el-option
                         v-for="item in redisConnList"
-                        :key="item.name"
-                        :label="item.name"
-                        :value="item.name">
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
                 </el-option>
             </el-select>
             <el-form-item label="IP">
-                <input type="text" v-model.trim="searchCond.redisIP" style="width:240px"/>
+                <input type="text" v-model.trim="searchCond.redisIP" style="width:240px" :readonly="!isCustom"/>
             </el-form-item>
             <el-form-item label="端口">
-                <input type="text" v-model.trim="searchCond.redisPort" style="width:30px"/>
+                <input type="text" v-model.trim="searchCond.redisPort" style="width:30px" :readonly="!isCustom"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model.trim="searchCond.redisPwd" style="width:60px"/>
+                <input type="password" v-model.trim="searchCond.redisPwd" style="width:60px" :readonly="!isCustom"/>
             </el-form-item>
             <el-form-item label="DB索引">
                 <input type="text" v-model.trim="searchCond.redisDbIdx" style="width:30px"/>
@@ -52,9 +52,11 @@
             <tr>
                 <td style="width: 1010px;">
                     <el-form-item label="Redis的Key" prop="redisCmd" style="font-weight: bold;">
-                        <el-input type="text" v-model.trim="searchCond.redisCmd" placeholder="请输入Redis的KEY"
+                        <el-input type="text" v-model="searchCond.redisCmd" placeholder="请输入Redis的KEY"
                                   style="width:500px"/>
                     </el-form-item>
+                    <br>
+                    <span style="color: red">只允许输入key的名称，不允许输入命令(只支持info命令)</span>
                 </td>
                 <td>
                     <div style="font-weight: bold;">历史KEY列表</div>
@@ -85,18 +87,19 @@
         data: {
             loading: false,
 
-            selectConn: '生产-1',
+            selectConn: '',  // 默认选中的Redis实例
             redisConnList: [
-                {
-                    name: '生产-1',
-                    redisIP: '10.0.0.1',
-                    redisPort: 6379,
-                    redisPwd: '123456',
-                    redisDbIdx: 0,
-                    redisCmd: '',
-                },
+                // {// 要求数据结构如下
+                //     configName: '生产-1',
+                //     redisIP: '10.0.0.1',
+                //     redisPort: 6379,
+                //     redisPwd: '123456',
+                //     redisDbIdx: 0,
+                //     redisCmd: '',
+                // },
             ],
             searchCond: {
+                configName: '',
                 redisIP: '',
                 redisPort: 6379,
                 redisPwd: '',
@@ -115,11 +118,47 @@
             usingKey: 'usingRedisCmds',
         },
         created: function () {
-            this.usingRedisCmds = this.loadUsingRedisCmds();
-            this.searchCond = this.redisConnList[0];
+            this.loadConnections().then(() => {
+                this.usingRedisCmds = this.loadUsingRedisCmds();
+                this.searchCond = this.redisConnList[0];
+                this.selectConn = this.searchCond.configName;
+            });
         },
-        computed: {},
+        computed: {
+            isCustom: function () {
+                return this.selectConn === '' || this.selectConn === '自定义';
+            }
+        },
         methods: {
+            loadConnections: function () {
+                let url = BASE_URL + 'linkinfo/list?type=redis';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('出错:' + response.data.errMsg);
+                    }
+                    for (let i = 0, j = response.data.length; i < j; i++) {
+                        let item = response.data[i];
+                        this.redisConnList.push({
+                            configName: item.name,
+                            redisIP: item.address,
+                            redisPort: item.port,
+                            redisPwd: '123456',
+                            redisDbIdx: 0,
+                            redisCmd: '',
+                        });
+                    }
+                    this.redisConnList.push({
+                        configName: '自定义',
+                        redisIP: '',
+                        redisPort: 6379,
+                        redisPwd: '',
+                        redisDbIdx: 0,
+                        redisCmd: '',
+                    });
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
             connSelected: function () {
                 for (let i = 0, j = this.redisConnList.length; i < j; i++) {
                     if (this.redisConnList[i].name === this.selectConn) {
@@ -154,12 +193,13 @@
             combineDbPara: function () {
                 if (!this.searchCond.redisIP) {
                     alert('请输入IP');
-                    return '';
+                    throw new Error('请输入IP');
                 }
                 return 'ip=' + this.searchCond.redisIP +
                     '&port=' + this.searchCond.redisPort +
                     '&db=' + this.searchCond.redisDbIdx +
-                    '&pwd=' + encodeURIComponent(this.searchCond.redisPwd);
+                    '&pwd=' + encodeURIComponent(this.searchCond.redisPwd) +
+                    '&name=' + encodeURIComponent(this.searchCond.configName);
             },
             executeRedisCmd: function () {
                 if (!this.searchCond.redisDbIdx) {
@@ -170,17 +210,21 @@
                 }
                 this.attData = [];
 
-                let url = BASE_URL + 'v1/redis/executeCmd?';
-                let urlTest = url + this.combineDbPara();
                 if (this.loading) {
                     return alert('执行中，请稍候');
                 }
                 this.loading = true;
                 let beginTime = new Date();
                 let body = {
+                    ip: this.searchCond.redisIP,
+                    port: this.searchCond.redisPort,
+                    db: this.searchCond.redisDbIdx,
+                    pwd: this.searchCond.redisPwd,
+                    name: this.searchCond.configName,
                     cmd: this.searchCond.redisCmd,
                 };
-                return axios.post(urlTest, body).then(response => {
+                let url = BASE_URL + 'v1/redis/executeCmd';
+                return axios.post(url, body).then(response => {
                     this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
                     if (response.data.code !== 200) {

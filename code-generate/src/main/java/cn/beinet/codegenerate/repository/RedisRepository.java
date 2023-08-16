@@ -12,6 +12,7 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 
@@ -46,6 +47,15 @@ public class RedisRepository {
      */
     public RedisResultDto get(String key) {
         RedisResultDto ret = new RedisResultDto();
+        if (!StringUtils.hasLength(key)) {
+            ret.setResult("命令为空");
+            return ret;
+        }
+        if (key.equalsIgnoreCase("info")) {
+            ret.setResult(getInfo().replaceAll(", ", ",\n"));
+            return ret;
+        }
+
         if (key.indexOf('*') > 0) {
             ret.setResult(getKeysByLike(key));
             return ret;
@@ -54,6 +64,7 @@ public class RedisRepository {
         DataType type = getType(key);
         ret.setType(type.toString());
         if (type.equals(DataType.NONE)) {
+            ret.setResult("指定的key在Redis中不存在");
             return ret;
         }
 
@@ -84,6 +95,10 @@ public class RedisRepository {
         ret.setResult(result);
         ret.setTtl(getTTL(key));
         return ret;
+    }
+
+    public String getInfo() {
+        return getRedisTemplate().execute((RedisCallback<String>) connection -> connection.info().toString());
     }
 
     public String getKeysByLike(String key) {

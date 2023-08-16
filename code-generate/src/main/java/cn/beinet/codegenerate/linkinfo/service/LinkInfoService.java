@@ -1,10 +1,12 @@
 package cn.beinet.codegenerate.linkinfo.service;
 
+import cn.beinet.codegenerate.controller.dto.RedisDto;
 import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.controller.dto.LinkInfoDto;
 import cn.beinet.codegenerate.linkinfo.service.entity.LinkInfo;
 import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
+import cn.beinet.codegenerate.repository.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -77,6 +79,24 @@ public class LinkInfoService {
         dto.setIp(info.getAddress())
                 .setUser(info.getAccount())
                 .setPwd(info.getPwd());
+    }
+
+    public RedisRepository getRedisRepository(RedisDto dto) {
+        fillLinkInfo(dto);
+        return new RedisRepository(
+                dto.getIp(), dto.getPort(), dto.getDb(), dto.getPwd());
+    }
+
+    private void fillLinkInfo(RedisDto dto) {
+        if (!StringUtils.hasLength(dto.getName()))
+            return;
+
+        LinkInfo info = getLinkInfoByName(dto.getName());
+        if (info == null)
+            return;
+        dto.setIp(info.getAddress())
+                .setPwd(info.getPwd())
+                .setPort(info.getPort());
     }
 
     /**
