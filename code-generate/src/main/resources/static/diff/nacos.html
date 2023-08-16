@@ -28,14 +28,24 @@
              style="text-align: left">
 
         <el-form-item label="对比的源" style="font-weight: bold;">
+            <el-select v-model="selectTestName" filterable placeholder="请选择" @change="connsSelected(false)">
+                <el-option
+                        v-for="item in nacosConns"
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
+                </el-option>
+            </el-select>
             <el-form-item label="url">
-                <input type="text" v-model.trim="searchCond.nacosTestIp" style="width:240px"/>
+                <input type="text" v-model.trim="searchCond.nacosTestIp" style="width:240px" :readonly="!isTestCustom"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <input type="text" v-model.trim="searchCond.nacosTestUser" style="width:60px"/>
+                <input type="text" v-model.trim="searchCond.nacosTestUser" style="width:60px"
+                       :readonly="!isTestCustom"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model.trim="searchCond.nacosTestPwd" style="width:60px"/>
+                <input type="password" v-model.trim="searchCond.nacosTestPwd" style="width:60px"
+                       :readonly="!isTestCustom"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestNacosNs"></el-button>
 
@@ -63,14 +73,22 @@
         <br>
 
         <el-form-item label="对比目标" style="font-weight: bold;">
+            <el-select v-model="selectProdName" filterable placeholder="请选择" @change="connsSelected(true)">
+                <el-option
+                        v-for="item in nacosConns"
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
+                </el-option>
+            </el-select>
             <el-form-item label="url">
-                <input type="text" v-model="searchCond.nacosProdIp" style="width:240px"/>
+                <input type="text" v-model="searchCond.nacosProdIp" style="width:240px" :readonly="!isProdCustom"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <input type="text" v-model="searchCond.nacosProdUser" style="width:60px"/>
+                <input type="text" v-model="searchCond.nacosProdUser" style="width:60px" :readonly="!isProdCustom"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model="searchCond.nacosProdPwd" style="width:60px"/>
+                <input type="password" v-model="searchCond.nacosProdPwd" style="width:60px" :readonly="!isProdCustom"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdNacosNs"></el-button>
 
@@ -196,18 +214,24 @@
     const vueApp = new Vue({
         el: '#divApp',
         data: {
+            nacosConns: [], // 所有可用的nacos连接
+
+            selectTestName: '', // 左边选择的连接
+            selectProdName: '',// 右边选择的连接
             searchCond: {
                 nacosTestIp: 'http://10.51.30.102/nacos/',
                 nacosTestUser: 'nacos',
                 nacosTestPwd: 'nacos',
                 nacosTestNs: '',
                 nacosTestFile: '',
+                testConfigName: '',
 
                 nacosProdIp: 'http://10.51.30.102/nacos/',
                 nacosProdUser: 'nacos',
                 nacosProdPwd: 'nacos',
                 nacosProdNs: '',
                 nacosProdFile: '',
+                prodConfigName: '',
 
                 onlyDiff: 1,
             },
@@ -252,10 +276,14 @@
             if (!this.defaultName)
                 this.defaultName = 'beinet-prod';
 
-            if (this.searchCond.nacosTestIp)
-                this.loadTestNacosNs();
-            if (this.searchCond.nacosProdIp)
-                this.loadProdNacosNs();
+            this.loadConnections().then(() => {
+                this.selectTestName = this.nacosConns[0].configName;
+                if (this.nacosConns.length > 1)
+                    this.selectProdName = this.nacosConns[1].configName;
+
+                this.connsSelected(false);
+                this.connsSelected(true);
+            });
         },
         computed: {
             // 用于展示的内容
@@ -285,12 +313,71 @@
 
                 return this.attData;
             },
+            isTestCustom: function () {
+                return this.selectTestName === '' || this.selectTestName === '自定义';
+            },
+            isProdCustom: function () {
+                return this.selectProdName === '' || this.selectProdName === '自定义';
+            },
         },
         methods: {
+            loadConnections: function () {
+                let url = BASE_URL + 'linkinfo/list?type=nacos';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('出错:' + response.data.errMsg);
+                    }
+                    for (let i = 0, j = response.data.length; i < j; i++) {
+                        let item = response.data[i];
+                        this.nacosConns.push({
+                            configName: item.name,
+                            nacosIp: item.address,
+                            nacosUser: item.account,
+                            nacosPwd: '123456',
+                        });
+                    }
+                    this.nacosConns.push({
+                        configName: '自定义',
+                        nacosIp: '',
+                        nacosUser: '',
+                        nacosPwd: '',
+                    });
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            connsSelected: function (flg) {
+                let selectName = flg ? this.selectProdName : this.selectTestName;
+                if (!selectName)
+                    return;
+                for (let i = 0, j = this.nacosConns.length; i < j; i++) {
+                    if (this.nacosConns[i].configName === selectName) {
+                        this.setDbFromOption(flg, this.nacosConns[i]);
+                        if (selectName === '自定义')
+                            return;
+                        this.loadNacosNs(flg);
+                        break;
+                    }
+                }
+            },
+            setDbFromOption: function (flg, conns) {
+                if (flg) {
+                    this.searchCond.nacosProdIp = conns.nacosIp;
+                    this.searchCond.nacosProdUser = conns.nacosUser;
+                    this.searchCond.nacosProdPwd = conns.nacosPwd;
+                    this.searchCond.prodConfigName = conns.configName;
+                } else {
+                    this.searchCond.nacosTestIp = conns.nacosIp;
+                    this.searchCond.nacosTestUser = conns.nacosUser;
+                    this.searchCond.nacosTestPwd = conns.nacosPwd;
+                    this.searchCond.testConfigName = conns.configName;
+                }
+            },
             switchConfig: function () {
                 let ip = this.searchCond.nacosTestIp;
                 let user = this.searchCond.nacosTestUser;
                 let pwd = this.searchCond.nacosTestPwd;
+                let configName = this.searchCond.testConfigName;
 
                 let ns = this.searchCond.nacosTestNs;
                 let file = this.searchCond.nacosTestFile;
@@ -300,11 +387,15 @@
                 this.searchCond.nacosTestIp = this.searchCond.nacosProdIp;
                 this.searchCond.nacosTestUser = this.searchCond.nacosProdUser;
                 this.searchCond.nacosTestPwd = this.searchCond.nacosProdPwd;
+                this.searchCond.testConfigName = this.searchCond.prodConfigName;
                 this.loadTestNacosNs();
+
                 this.searchCond.nacosProdIp = ip;
                 this.searchCond.nacosProdUser = user;
                 this.searchCond.nacosProdPwd = pwd;
+                this.searchCond.prodConfigName = configName;
                 this.loadProdNacosNs();
+
                 setTimeout(() => {
                     this.searchCond.nacosTestNs = ns2;
                     this.searchCond.nacosTestFile = file2;
@@ -316,6 +407,7 @@
                 this.searchCond.nacosProdIp = this.searchCond.nacosTestIp;
                 this.searchCond.nacosProdUser = this.searchCond.nacosTestUser;
                 this.searchCond.nacosProdPwd = this.searchCond.nacosTestPwd;
+                this.searchCond.prodConfigName = this.searchCond.testConfigName;
                 this.loadProdNacosNs();
                 setTimeout(() => {
                     this.searchCond.nacosProdNs = this.searchCond.nacosTestNs;
@@ -326,6 +418,7 @@
                 this.searchCond.nacosTestIp = this.searchCond.nacosProdIp;
                 this.searchCond.nacosTestUser = this.searchCond.nacosProdUser;
                 this.searchCond.nacosTestPwd = this.searchCond.nacosProdPwd;
+                this.searchCond.testConfigName = this.searchCond.prodConfigName;
                 this.loadTestNacosNs();
                 setTimeout(() => {
                     this.searchCond.nacosTestNs = this.searchCond.nacosProdNs;
@@ -362,20 +455,18 @@
                 let user = isProd ? this.searchCond.nacosProdUser : this.searchCond.nacosTestUser;
                 let pwd = isProd ? this.searchCond.nacosProdPwd : this.searchCond.nacosTestPwd;
                 let file = isProd ? this.searchCond.nacosProdFile : this.searchCond.nacosTestFile;
+                let configName = isProd ? this.searchCond.prodConfigName : this.searchCond.testConfigName;
                 return ret + '&user=' + encodeURIComponent(user) +
                     '&pwd=' + encodeURIComponent(pwd) +
                     '&nameSpace=' + encodeURIComponent(ns) +
-                    '&dataId=' + encodeURIComponent(file);
+                    '&dataId=' + encodeURIComponent(file) +
+                    '&name=' + encodeURIComponent(configName);
             },
             loadTestNacosNs: function () {
-                this.loadNacosNs(false).then(() => {
-                    return this.loadNacosFile(false)
-                });
+                this.loadNacosNs(false);
             },
             loadProdNacosNs: function () {
-                this.loadNacosNs(true).then(() => {
-                    return this.loadNacosFile(true)
-                });
+                this.loadNacosNs(true);
             },
             loadNacosNs: function (isProd) {
                 let url = BASE_URL + 'v1/nacos/namespaces?' + this.getPara(isProd, false);
@@ -387,6 +478,7 @@
                         this.namespaceTestArr = response.data;
                         this.setByDefault('nacosTestNs', this.namespaceTestArr);
                     }
+                    this.loadNacosFile(isProd);
                 }).catch(error => {
                     this.ajaxError(error);
                 });

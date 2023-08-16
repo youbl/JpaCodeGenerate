@@ -40,9 +40,10 @@ public class NacosService {
             NacosNameSpaces nameSpaces = feignNacos.getNamespaces(new URI(url));
             List<String> ret = new ArrayList<>();
             for (NacosNameSpaces.NameSpace item : nameSpaces.getData()) {
-                String name = item.getNamespaceShowName();
-                if(!StringUtils.hasLength(name))
-                    name = item.getNamespace();
+                String nameShow = item.getNamespaceShowName();
+                String name = item.getNamespace();
+                if (StringUtils.hasLength(nameShow) && !nameShow.equalsIgnoreCase(name))
+                    name = nameShow + '|' + name;
                 ret.add(name);
             }
             return ret;
@@ -61,7 +62,8 @@ public class NacosService {
         try {
             URI uri = new URI(dto.getUrl());
             NacosToken token = feignNacos.login(uri, dto.getUser(), dto.getPwd());
-            NacosFiles files = feignNacos.getConfigFiles(uri, dto.getNameSpace(), token.getAccessToken());
+            String realNs = filterNamespace(dto.getNameSpace());
+            NacosFiles files = feignNacos.getConfigFiles(uri, realNs, token.getAccessToken());
             return files.getPageItems().stream()
                     .map(NacosFiles.File::getDataId)
                     .sorted()
@@ -71,13 +73,21 @@ public class NacosService {
         }
     }
 
+    private String filterNamespace(String ns) {
+        int idx = ns.indexOf('|');
+        if (idx >= 0)
+            return ns.substring(idx + 1);
+        return ns;
+    }
+
     // 获取文件内容
     public String getFile(NacosDto dto) {
         linkInfoService.fillLinkInfo(dto);
         try {
             URI uri = new URI(dto.getUrl());
             NacosToken token = feignNacos.login(uri, dto.getUser(), dto.getPwd());
-            return feignNacos.getConfig(uri, dto.getDataId(), dto.getNameSpace(), dto.getGroup(), token.getAccessToken());
+            String realNs = filterNamespace(dto.getNameSpace());
+            return feignNacos.getConfig(uri, dto.getDataId(), realNs, dto.getGroup(), token.getAccessToken());
         } catch (Exception exp) {
             throw new RuntimeException(exp);
         }
