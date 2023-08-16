@@ -17,9 +17,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public class RedisRepository {
@@ -52,7 +50,7 @@ public class RedisRepository {
             return ret;
         }
         if (key.equalsIgnoreCase("info")) {
-            ret.setResult(getInfo().replaceAll(", ", ",\n"));
+            ret.setResult(getInfo());
             return ret;
         }
 
@@ -98,7 +96,24 @@ public class RedisRepository {
     }
 
     public String getInfo() {
-        return getRedisTemplate().execute((RedisCallback<String>) connection -> connection.info().toString());
+        Properties properties = getRedisTemplate().execute((RedisCallback<Properties>) connection -> connection.info());
+
+        // 收集到list里，进行排序
+        List<Map.Entry<Object, Object>> list = new ArrayList<Map.Entry<Object, Object>>(properties.entrySet());
+        Collections.sort(list, (Map.Entry<Object, Object> o1, Map.Entry<Object, Object> o2) -> {
+            String key1 = o1.getKey() + "";
+            String key2 = o2.getKey() + "";
+            return key1.compareTo(key2);
+        });
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<Object, Object> item : list) {
+            stringBuilder.append(item.getKey())
+                    .append(" : ")
+                    .append(item.getValue())
+                    .append("\n");
+        }
+        return stringBuilder.toString();
     }
 
     public String getKeysByLike(String key) {

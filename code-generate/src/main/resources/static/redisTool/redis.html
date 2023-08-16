@@ -161,7 +161,7 @@
             },
             connSelected: function () {
                 for (let i = 0, j = this.redisConnList.length; i < j; i++) {
-                    if (this.redisConnList[i].name === this.selectConn) {
+                    if (this.redisConnList[i].configName === this.selectConn) {
                         this.searchCond = this.redisConnList[i];
                         break;
                     }
