@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.controller.execute.dto;
+package cn.beinet.codegenerate.controller.dto;
 
 import lombok.Data;
 

@@ -1,7 +1,9 @@
 package cn.beinet.codegenerate.service;
 
-import cn.beinet.codegenerate.controller.execute.dto.SqlDto;
+import cn.beinet.codegenerate.controller.dto.SqlDto;
+import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -14,13 +16,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class MySqlService {
+    private final LinkInfoService linkInfoService;
+
     public int executeDml(SqlDto sql) {
-        String ip = sql.getIp();
-        String user = sql.getUser();
-        String pwd = sql.getPwd();
-        String db = sql.getDb();
-        MySqlExecuteRepository repository = new MySqlExecuteRepository(ip, 3306, user, pwd, db);
+        MySqlExecuteRepository repository = linkInfoService.getExeRepository(sql);
 
         int affectedRows = 0;
         String[] arrSql = splitSql(sql.getSql());

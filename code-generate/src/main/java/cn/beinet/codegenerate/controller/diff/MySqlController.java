@@ -1,11 +1,13 @@
 package cn.beinet.codegenerate.controller.diff;
 
+import cn.beinet.codegenerate.controller.dto.SqlDto;
+import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.model.IndexDto;
 import cn.beinet.codegenerate.repository.ColumnRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -14,55 +16,43 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 public class MySqlController {
+    private final LinkInfoService linkInfoService;
 
     @GetMapping("mysql/databases")
-    public List<String> GetMySqlDbs(@RequestParam String ip,
-                                    @RequestParam String user,
-                                    @RequestParam String pwd) {
-        ColumnRepository columnRepository = getRepository(ip, user, pwd);
+    public List<String> GetMySqlDbs(SqlDto dto) {
+        ColumnRepository columnRepository = linkInfoService.getRepository(dto);
         return columnRepository.findDatabases();
     }
 
     @GetMapping("mysql/tableNames")
-    public List<String> GetMySqlTableNames(@RequestParam String ip,
-                                           @RequestParam String user,
-                                           @RequestParam String pwd,
-                                           @RequestParam String db) {
-        ColumnRepository columnRepository = getRepository(ip, user, pwd);
-        return columnRepository.findTables(db);
+    public List<String> GetMySqlTableNames(SqlDto dto) {
+        ColumnRepository columnRepository = linkInfoService.getRepository(dto);
+        return columnRepository.findTables(dto.getDb());
     }
 
     /**
      * 返回所有字段信息
      *
-     * @param db 读取哪个数据库
      * @return 字段信息
      */
     @GetMapping("mysql/tables/ddl")
-    public String GetMySqlTableDDL(@RequestParam String ip,
-                                   @RequestParam String user,
-                                   @RequestParam String pwd,
-                                   @RequestParam String db,
-                                   @RequestParam String tableName) {
-        ColumnRepository columnRepository = getRepository(ip, user, pwd);
-        return columnRepository.getTableDDL(db, tableName);
+    public String GetMySqlTableDDL(SqlDto dto) {
+        ColumnRepository columnRepository = linkInfoService.getRepository(dto);
+        return columnRepository.getTableDDL(dto.getDb(), dto.getTableName());
     }
 
     /**
      * 返回所有字段信息
      *
-     * @param db 读取哪个数据库
      * @return 字段信息
      */
     @GetMapping("mysql/tables")
-    public Map<String, List<ColumnDto>> GetMySqlTables(@RequestParam String ip,
-                                                       @RequestParam String user,
-                                                       @RequestParam String pwd,
-                                                       @RequestParam String db) {
-        ColumnRepository columnRepository = getRepository(ip, user, pwd);
+    public Map<String, List<ColumnDto>> GetMySqlTables(SqlDto dto) {
+        ColumnRepository columnRepository = linkInfoService.getRepository(dto);
 
-        List<ColumnDto> allCols = columnRepository.findColumnByTable(db, null);
+        List<ColumnDto> allCols = columnRepository.findColumnByTable(dto.getDb(), null);
         Map<String, List<ColumnDto>> ret = new HashMap<>();
         for (ColumnDto col : allCols) {
             List<ColumnDto> tableCols = ret.computeIfAbsent(col.getTable(), tableName -> new ArrayList<>());
@@ -74,17 +64,13 @@ public class MySqlController {
     /**
      * 返回值第一个Map的Key是表名，子Map的key是索引名,Value是建索引语句
      *
-     * @param db 读取哪个数据库
      * @return 索引信息
      */
     @GetMapping("mysql/indexes")
-    public Map<String, Map<String, String>> GetMySqlIndexes(@RequestParam String ip,
-                                                            @RequestParam String user,
-                                                            @RequestParam String pwd,
-                                                            @RequestParam String db) {
-        ColumnRepository columnRepository = getRepository(ip, user, pwd);
+    public Map<String, Map<String, String>> GetMySqlIndexes(SqlDto dto) {
+        ColumnRepository columnRepository = linkInfoService.getRepository(dto);
 
-        List<IndexDto> allIndexes = columnRepository.findIndexesByTable(db, null);
+        List<IndexDto> allIndexes = columnRepository.findIndexesByTable(dto.getDb(), null);
         Map<String, Map<String, String>> ret = new HashMap<>();
         Map<String, IndexDto> firstColPerIndex = new HashMap<>(); // 收集每个索引的一列, 随意，用于拼接其它信息
 
@@ -93,7 +79,7 @@ public class MySqlController {
             String tbName = index.getOriginTable();
             Map<String, String> tableIndexes = ret.computeIfAbsent(tbName, tableName -> new HashMap<>());
             String sql = tableIndexes.get(index.getIndexName());
-            if (!StringUtils.isEmpty(sql))
+            if (StringUtils.hasLength(sql))
                 sql += ",";
             else
                 sql = ""; // 必须赋初值，否则 sql += "xxx"; 得到 nullxxx
@@ -113,27 +99,21 @@ public class MySqlController {
                 String indexName = index.getKey();
                 String key = tableName + "-" + indexName;
 
-                IndexDto dto = firstColPerIndex.get(key);// 肯定有值拉
+                IndexDto idxDto = firstColPerIndex.get(key);// 肯定有值拉
                 // 拼接唯一、type、comment
                 StringBuilder sb = new StringBuilder();
-                if (dto.isUnique())
+                if (idxDto.isUnique())
                     sb.append(" UNIQUE");
                 sb.append(" INDEX ")
-                        .append(dto.getIndexName())
+                        .append(idxDto.getIndexName())
                         .append("(")
                         .append(index.getValue())
                         .append(") COMMENT \"")
-                        .append(dto.getComment())
+                        .append(idxDto.getComment())
                         .append("\"");
                 table.getValue().put(indexName, sb.toString());
             }
         }
         return ret;
-    }
-
-    ColumnRepository getRepository(String ip,
-                                   String user,
-                                   String pwd) {
-        return ColumnRepository.getRepository(ip, 3306, user, pwd);
     }
 }

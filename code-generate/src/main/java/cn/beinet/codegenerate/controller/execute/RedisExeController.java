@@ -1,7 +1,7 @@
 package cn.beinet.codegenerate.controller.execute;
 
 import cn.beinet.codegenerate.GlobalExceptionFilter;
-import cn.beinet.codegenerate.controller.execute.dto.RedisDto;
+import cn.beinet.codegenerate.controller.dto.RedisDto;
 import cn.beinet.codegenerate.model.RedisResultDto;
 import cn.beinet.codegenerate.repository.RedisRepository;
 import org.springframework.web.bind.annotation.PostMapping;

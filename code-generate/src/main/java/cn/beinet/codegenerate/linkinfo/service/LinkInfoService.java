@@ -1,11 +1,15 @@
 package cn.beinet.codegenerate.linkinfo.service;
 
+import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.controller.dto.LinkInfoDto;
 import cn.beinet.codegenerate.linkinfo.service.entity.LinkInfo;
+import cn.beinet.codegenerate.repository.ColumnRepository;
+import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +53,41 @@ public class LinkInfoService {
             ret.add(dto);
         }
         return ret;
+    }
+
+    public ColumnRepository getRepository(SqlDto dto) {
+        fillLinkInfo(dto);
+        return ColumnRepository.getRepository(
+                dto.getIp(), 3306, dto.getUser(), dto.getPwd());
+    }
+
+    public MySqlExecuteRepository getExeRepository(SqlDto dto) {
+        fillLinkInfo(dto);
+        return new MySqlExecuteRepository(
+                dto.getIp(), 3306, dto.getUser(), dto.getPwd(), dto.getDb());
+    }
+
+    private void fillLinkInfo(SqlDto dto) {
+        if (!StringUtils.hasLength(dto.getName()))
+            return;
+
+        LinkInfo info = getLinkInfoByName(dto.getName());
+        if (info == null)
+            return;
+        dto.setIp(info.getAddress())
+                .setUser(info.getAccount())
+                .setPwd(info.getPwd());
+    }
+
+    /**
+     * 获取单个连接信息
+     *
+     * @param name 连接名称
+     * @return 连接信息
+     */
+    private LinkInfo getLinkInfoByName(String name) {
+        String sql = "SELECT * FROM linkinfo a WHERE a.name=? LIMIT 1";
+        return jdbcTemplate.queryForObject(sql, new Object[]{name}, new BeanPropertyRowMapper<>(LinkInfo.class));
     }
 
     public int saveInfo(LinkInfoDto dto) {

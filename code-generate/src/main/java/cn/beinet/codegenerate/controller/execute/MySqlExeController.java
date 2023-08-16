@@ -2,7 +2,8 @@ package cn.beinet.codegenerate.controller.execute;
 
 import cn.beinet.codegenerate.GlobalExceptionFilter;
 import cn.beinet.codegenerate.configs.AuthDetails;
-import cn.beinet.codegenerate.controller.execute.dto.SqlDto;
+import cn.beinet.codegenerate.controller.dto.SqlDto;
+import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import cn.beinet.codegenerate.service.MySqlService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
 public class MySqlExeController {
 
     private final MySqlService mySqlService;
+    private final LinkInfoService linkInfoService;
 
     /**
      * 执行查询sql
@@ -29,12 +31,8 @@ public class MySqlExeController {
      */
     @PostMapping("mysql/executeSql")
     public GlobalExceptionFilter.ResponseData executeSelectSql(@RequestBody SqlDto sql) {
-        String ip = sql.getIp();
-        String user = sql.getUser();
-        String pwd = sql.getPwd();
-        String db = sql.getDb();
         String sqlStr = formatSql(sql.getSql());
-        MySqlExecuteRepository repository = new MySqlExecuteRepository(ip, 3306, user, pwd, db);
+        MySqlExecuteRepository repository = linkInfoService.getExeRepository(sql);
         List<Map<String, Object>> result = repository.queryData(sqlStr);
         return GlobalExceptionFilter.ResponseData.ok(sqlStr, result);
     }
