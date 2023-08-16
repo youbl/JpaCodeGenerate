@@ -18,19 +18,19 @@
             <el-select v-model="selectDbName" filterable placeholder="请选择环境" @change="dbSelected">
                 <el-option
                         v-for="item in sqlConns"
-                        :key="item.name"
-                        :label="item.name"
-                        :value="item.name">
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
                 </el-option>
             </el-select>
             <el-form-item label="IP">
-                <input type="text" v-model="searchCond.dbTestIp" style="width:240px"/>
+                <input type="text" v-model="searchCond.dbTestIp" style="width:240px" :readonly="!isCustom"/>
             </el-form-item>
             <el-form-item label="用户名">
-                <input type="text" v-model="searchCond.dbTestUser" style="width:60px"/>
+                <input type="text" v-model="searchCond.dbTestUser" style="width:60px" :readonly="!isCustom"/>
             </el-form-item>
             <el-form-item label="密码">
-                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"/>
+                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px" :readonly="!isCustom"/>
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
             <el-form-item label="刷新数据库列表">
@@ -64,17 +64,19 @@
         data: {
             loading: false,
 
-            selectDbName: '生产-1',
+            selectDbName: '', // 默认选中的数据库实例
             sqlConns: [
-                {
-                    name: '生产-1',
-                    dbTestIp: '10.0.0.1',
-                    dbTestUser: 'readonly',
-                    dbTestPwd: '123456',
-                    dbTestName: '',
-                },
+                // {  // 要求数据结构如下
+                //     configName: '生产-1',
+                //     dbTestIp: '10.0.0.1',
+                //     dbTestUser: 'readonly',
+                //     dbTestPwd: '123456',
+                //     dbTestName: '',
+                //     sql: 'SELECT 1 FROM DUAL',
+                // }
             ],
             searchCond: {
+                configName: '',
                 dbTestIp: '',
                 dbTestUser: '',
                 dbTestPwd: '',
@@ -88,18 +90,56 @@
             costTime: 0,
         },
         created: function () {
-            this.defaultName = getQueryString('name');
-            this.dbSelected();
+            this.loadConnections().then(() => {
+                this.defaultName = getQueryString('name');
+                this.dbSelected();
+            });
         },
-        computed: {},
+        computed: {
+            isCustom: function () {
+                return this.selectDbName === '' || this.selectDbName === '自定义';
+            }
+        },
         methods: {
             handleTabClick: function (tab, event) {
             },
+            loadConnections: function () {
+                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('出错:' + response.data.errMsg);
+                    }
+                    for (let i = 0, j = response.data.length; i < j; i++) {
+                        let item = response.data[i];
+                        this.sqlConns.push({
+                            configName: item.name,
+                            dbTestIp: item.address,
+                            dbTestUser: item.account,
+                            dbTestPwd: '123456',
+                            dbTestName: '',
+                        });
+                    }
+                    this.sqlConns.push({
+                        configName: '自定义',
+                        dbTestIp: '',
+                        dbTestUser: '',
+                        dbTestPwd: '',
+                        dbTestName: '',
+                    });
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
             dbSelected: function () {
+                if (!this.selectDbName && this.sqlConns.length) {
+                    this.selectDbName = this.sqlConns[0].configName;
+                }
                 for (let i = 0, j = this.sqlConns.length; i < j; i++) {
-                    if (this.sqlConns[i].name === this.selectDbName) {
+                    if (this.sqlConns[i].configName === this.selectDbName) {
                         this.searchCond = this.sqlConns[i];
                         this.searchCond['time'] = '1';
+                        if (this.searchCond.configName === '自定义')
+                            return;
                         this.loadDbs();
                         break;
                     }
@@ -108,11 +148,12 @@
             combineDbPara: function () {
                 if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
                     alert('请输入数据库IP/用户/密码');
-                    return;
+                    throw new Error('请输入数据库IP/用户/密码');
                 }
                 return 'ip=' + this.searchCond.dbTestIp +
                     '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
-                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd);
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd) +
+                    '&name=' + encodeURIComponent(this.searchCond.configName);
             },
             loadDbs: function () {
                 let currentIp = this.searchCond.dbTestIp;
@@ -160,6 +201,7 @@
                     'user': this.searchCond.dbTestUser,
                     'pwd': this.searchCond.dbTestPwd,
                     'db': this.searchCond.dbTestName,
+                    'name': this.searchCond.configName,
                 };
                 if (!confirm('危险操作，确认要开始吗？')) {
                     return;
