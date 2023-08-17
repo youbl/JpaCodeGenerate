@@ -64,6 +64,20 @@ public class OtpCodeController {
     }
 
     /**
+     * 删除当前登录用户的一条密钥记录
+     *
+     * @param id        记录id
+     * @param loginInfo 登录用户
+     * @return 影响行数
+     */
+    @DeleteMapping("")
+    public int delCode(@RequestParam int id, AuthDetails loginInfo) {
+        String username = loginInfo == null ? null : loginInfo.getAccount();
+        Assert.notNull(username, "未登录");
+        return otpCodeService.delOtpCode(id, username);
+    }
+
+    /**
      * 生成OTPCode密钥的二维码图片并返回
      *
      * @param id        记录id

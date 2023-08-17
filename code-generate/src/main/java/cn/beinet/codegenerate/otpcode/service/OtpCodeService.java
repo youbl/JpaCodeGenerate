@@ -70,6 +70,20 @@ public class OtpCodeService {
     }
 
     /**
+     * 按id和用户名，删除密钥
+     *
+     * @param id       记录id
+     * @param username 所属用户，防止删除别人的数据
+     * @return 影响行数
+     */
+    public int delOtpCode(int id, String username) {
+        String insertSql = "DELETE FROM otpcode WHERE id=? and username=?";
+        return jdbcTemplate.update(insertSql, new Object[]{
+                id, username
+        });
+    }
+
+    /**
      * 生成二维码url并返回
      *
      * @return url

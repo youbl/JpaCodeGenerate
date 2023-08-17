@@ -8,5 +8,6 @@ CREATE TABLE `otpcode` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_user_key` (`username`,`secure`)
+  UNIQUE KEY `uq_user_key` (`username`,`secure`),
+  UNIQUE KEY `uq_user_title` (`title`,`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户储存的otpcode密钥列表';
