@@ -17,7 +17,8 @@ import java.util.regex.Pattern;
 @Component
 public class NoNeedLoginValidator implements Validator {
     // 无须登录认证的url正则
-    private static final Pattern patternRequest = Pattern.compile("(?i)^/(actuator|githook)/?|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map)$");// |html?
+    private static final Pattern patternRequest =
+            Pattern.compile("(?i)^/(actuator|githook)/?|(menu.html|menuGroup|\\.(ico|jpg|png|bmp|txt|xml|js|css|ttf|woff|map))$");// |html?
 
     @Override
     public int getOrder() {

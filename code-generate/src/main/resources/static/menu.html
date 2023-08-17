@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HubStudio导航</title>
+    <script type="text/javascript" src="./static/unpkg/vue.min.js"></script>
+    <script type="text/javascript" src="./static/unpkg/elemeIndex.js"></script>
+    <script type="text/javascript" src="./static/unpkg/axios.min.js"></script>
+
+    <link rel="stylesheet" href="./res/unpkg/elemeIndex.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #F7F7F7;
+        }
+
+        .container {
+            background-color: #fff;
+        }
+
+        .container-header {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            height: 40px;
+            padding-left: 10px;
+        }
+
+        .container-body {
+            display: flex;
+            border-top: 1px solid #dfdfdf;
+            padding: 20px 10px 0 10px;
+            /*justify-content: space-between;*/
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .container div {
+            display: flex;
+        }
+
+        .item-block {
+            border: 1px solid #dfdfdf;
+            flex-direction: column;
+            height: 100px;
+            width: 260px;
+            margin-bottom: 20px;
+            margin-right: 20px;
+        }
+
+        a:link { /* 超链接正常状态下的样式 */
+            color: #000000; /* 黑色 */
+            text-decoration: none; /* 无下划线 */
+        }
+
+        a:visited { /* 访问过的超链接 */
+            color: #000000; /* 黑色 */
+            text-decoration: none; /* 无下划线 */
+        }
+
+        .lia:link {
+            text-decoration: underline;
+        }
+
+        .lia:visited {
+            text-decoration: underline;
+        }
+
+        .item-top {
+            height: 80px;
+            padding: 20px;
+        }
+
+        .item-logo {
+            width: 60px;
+            height: 60px;
+            margin-right: 20px;
+        }
+
+        .item-logo img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .item-body {
+            flex-direction: column;
+        }
+
+        .item-bottom {
+            height: 40px;
+            justify-content: space-around;
+            align-items: center;
+            color: #888888;
+            background-color: #F7F7F7;
+            font-size: 13px;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            padding-bottom: 10px;
+        }
+
+        .notice {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .divider {
+            height: 20px;
+            width: 1px;
+            background-color: #dfdfdf;
+        }
+
+        .popoverBackColor {
+            background-color: #ffefff;
+        }
+    </style>
+</head>
+<body style="padding: 10px">
+<div id="divApp">
+
+    <div class="container" v-for="menuGroup in menuGroupList">
+        <div class="container-header">{{menuGroup.title}}</div>
+        <div class="container-body">
+            <div class="item-block" v-for="mainMenu in menuGroup.menus">
+                <a :href="mainMenu.url?mainMenu.url:'javascript:void(0)'" :target="mainMenu.url?'_blank':'_self'" v-popover="'popover' + mainMenu.id">
+                    <div class="item-top">
+                        <div class="item-logo"><img v-if="mainMenu.img" :src="mainMenu.img"></div>
+                        <div class="item-body">
+                            <span class="title">{{mainMenu.title}}</span>
+                            <span class="notice">{{mainMenu.memo}}</span>
+                        </div>
+                    </div>
+                </a>
+
+                <el-popover v-if="mainMenu.subMenus" :ref="'popover' + mainMenu.id"
+                            placement="right" popper-class="popoverBackColor"
+                            :title="mainMenu.popTitle" :width="mainMenu.popWidth" trigger="hover">
+                    <ul>
+                        <li v-for="menu in mainMenu.subMenus">
+                            <a v-if="menu.url.length>0"
+                               :href="menu.url" target="_blank" class="lia">{{menu.title}}</a>
+                        </li>
+                    </ul>
+                </el-popover>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: function () {
+            return {
+                menuGroupList: [],
+            }
+        },
+        mounted: function () {
+            this.loadMenus();
+        },
+        computed: {},
+        methods: {
+            loadMenus: function () {
+                let url = BASE_URL + 'menuGroup';
+                axios.get(url).then(response => {
+                    this.menuGroupList = response.data;
+                }).catch(error => this.ajaxError(error));
+            }
+        },
+    });
+</script>
+</body>
+</html>
