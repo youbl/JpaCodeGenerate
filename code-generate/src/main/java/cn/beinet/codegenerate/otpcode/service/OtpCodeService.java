@@ -41,6 +41,7 @@ public class OtpCodeService {
             String code = OtpCodeGeneratorTool.countCodeStr(descryptedSecure);
 
             OtpCodeDto dto = new OtpCodeDto()
+                    .setId(item.getId())
                     .setCode(code)
                     .setCreateTime(item.getCreate_time())
                     .setTitle(item.getTitle())
@@ -69,6 +70,21 @@ public class OtpCodeService {
     }
 
     /**
+     * 生成二维码url并返回
+     *
+     * @return url
+     */
+    public String getQRCodeUrl(int id, String username) {
+        OtpCode codeObj = getRecordById(id);
+        if (codeObj == null || !codeObj.getUsername().equals(username)) {
+            throw new RuntimeException("指定的记录不存在，或不是您的数据");
+        }
+
+        String secure = descrypt(codeObj.getSecure());
+        return OtpCodeGeneratorTool.getQRBarcode(codeObj.getTitle(), username, secure);
+    }
+
+    /**
      * 从数据库读取保存的密钥清单
      *
      * @param username 用户名
@@ -81,6 +97,10 @@ public class OtpCodeService {
         return codes;
     }
 
+    private OtpCode getRecordById(int id) {
+        String sql = "SELECT * FROM otpcode a WHERE a.id=?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(OtpCode.class));
+    }
 
     // 入库前要加密
     private String encrypt(String sourceStr) {

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  */
 @Data
 public class OtpCode {
-    private long id;
+    private int id;
     private String username;
     private String title;
     private String secure;

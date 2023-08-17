@@ -2,12 +2,34 @@ package cn.beinet.codegenerate.otpcode.service;
 
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Base32;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 public class OtpCodeGeneratorTool {
     static long second_per_size = 30L;// 每次时间长度，默认30秒
+
+    /**
+     * 生成二维码所需的字符串，注：这个format不可修改，否则会导致身份验证器无法识别二维码
+     *
+     * @param title  标题
+     * @param user   绑定到的用户名
+     * @param secret 对应的secretKey
+     * @return 二维码字符串
+     */
+    public static String getQRBarcode(String title, String user, String secret) {
+        if (StringUtils.hasLength(title)) {
+            title = title.replaceAll(":", ""); // 不允许包含冒号
+            user = title + ":" + user;
+        }
+        String format = "otpauth://totp/%s?secret=%s";
+        String ret = String.format(format, user, secret);
+//        if (StringUtils.hasLength(title)) {
+//            ret += "&issuer=" + title;
+//        }
+        return ret;
+    }
 
     /**
      * 获取指定密钥的otpcode

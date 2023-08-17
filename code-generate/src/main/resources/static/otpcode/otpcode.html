@@ -51,9 +51,15 @@
                 <span>{{scope.row[key]}}</span>
             </template>
         </el-table-column>
+        <el-table-column label="操作">
+            <template slot-scope="scope">
+                <el-button type="primary" @click="showQRCode(scope.row)">导出</el-button>
+            </template>
+        </el-table-column>
     </el-table>
 
-    <el-dialog title="保存OtpCode密钥" :visible.sync="savedSecureShow">
+    <el-dialog title="保存OtpCode密钥" :visible.sync="savedSecureShow" :close-on-press-escape="true"
+               :close-on-click-modal="false">
         <div>
             <el-form>
                 <el-form-item label="说明">
@@ -66,6 +72,14 @@
         </div>
         <div>
             <el-button type="primary" @click="saveMySecure">保存OTPCode信息</el-button>
+        </div>
+    </el-dialog>
+
+    <el-dialog title="导出" :visible.sync="qrCodeShow" :close-on-press-escape="true"
+               :close-on-click-modal="false" :show-close="true">
+        <div style="text-align: left;">
+            请用手机上的Google身份验证器，扫码绑定:
+            <img :src="qrCodeUrl"/>
         </div>
     </el-dialog>
 </div>
@@ -85,6 +99,9 @@
 
             costTime: 0,
             resultData: [],
+
+            qrCodeShow: false,// 是否显示dialog对话框
+            qrCodeUrl: "",
         },
         created: function () {
             this.getLoginUser()
@@ -127,6 +144,14 @@
                 }).catch(error => {
                     this.ajaxError(error);
                 });
+            },
+            showQRCode: function (row) {
+                // 使用后端画图，减少网络传输数据泄露概率（实际上图片就已经泄露了 ^_^
+                this.getQRCodeImg(row.id);
+                this.qrCodeShow = true;
+            },
+            getQRCodeImg: function (rowId) {
+                this.qrCodeUrl = BASE_URL + 'otpcode/export?id=' + rowId;
             },
             ajaxError: function (error) {
                 if (error.response && error.response.data) {

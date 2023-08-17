@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @Accessors(chain = true)
 public class OtpCodeDto {
+    private int id;
     /**
      * 用户名
      */
