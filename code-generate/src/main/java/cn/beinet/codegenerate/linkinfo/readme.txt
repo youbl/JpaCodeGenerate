@@ -6,11 +6,11 @@ CREATE TABLE `linkinfo` (
   `name` varchar(50) NOT NULL DEFAULT '' COMMENT '说明',
   `address` varchar(500) NOT NULL DEFAULT '' COMMENT 'IP或域名、URL信息',
   `account` varchar(20) NOT NULL DEFAULT '' COMMENT '登录账号',
-  `pwd` varchar(50) NOT NULL DEFAULT '' COMMENT '登录密码',
+  `pwd` varchar(200) NOT NULL DEFAULT '' COMMENT 'AES加密后的登录密码',
   `port` int(11) NOT NULL DEFAULT '0' COMMENT '连接端口信息',
   `info` varchar(8000) NOT NULL DEFAULT '' COMMENT 'json结构，其它连接信息',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='连接信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='连接信息表';

@@ -8,6 +8,7 @@ import cn.beinet.codegenerate.linkinfo.service.entity.LinkInfo;
 import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import cn.beinet.codegenerate.repository.RedisRepository;
+import cn.beinet.codegenerate.util.AESUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -79,7 +80,7 @@ public class LinkInfoService {
             return;
         dto.setIp(info.getAddress())
                 .setUser(info.getAccount())
-                .setPwd(info.getPwd());
+                .setPwd(descrypt(info.getPwd()));
     }
 
     public RedisRepository getRedisRepository(RedisDto dto) {
@@ -96,7 +97,7 @@ public class LinkInfoService {
         if (info == null)
             return;
         dto.setIp(info.getAddress())
-                .setPwd(info.getPwd())
+                .setPwd(descrypt(info.getPwd()))
                 .setPort(info.getPort());
     }
 
@@ -113,7 +114,7 @@ public class LinkInfoService {
             return;
         dto.setUrl(info.getAddress())
                 .setUser(info.getAccount())
-                .setPwd(info.getPwd());
+                .setPwd(descrypt(info.getPwd()));
     }
 
 
@@ -129,15 +130,31 @@ public class LinkInfoService {
     }
 
     public int saveInfo(LinkInfoDto dto) {
+        String encryptedPwd = encrypt(dto.getPwd());
+
         String insertSql = "INSERT INTO linkinfo(link_type, name, address, account, pwd, port, info)VALUES(?,?,?,?,?,?,?)";
         return jdbcTemplate.update(insertSql, new Object[]{
                 dto.getLink_type(),
                 dto.getName(),
                 dto.getAddress(),
                 dto.getAccount(),
-                dto.getPwd(),
+                encryptedPwd,
                 dto.getPort(),
                 dto.getInfo()
         });
+    }
+
+    // 入库前要加密
+    private String encrypt(String sourceStr) {
+        if (StringUtils.hasLength(sourceStr))
+            return AESUtil.encrypt(sourceStr);
+        return sourceStr;
+    }
+
+    // 出库后要解密
+    private String descrypt(String encryptedStr) {
+        if (StringUtils.hasLength(encryptedStr))
+            return AESUtil.decrypt(encryptedStr);
+        return encryptedStr;
     }
 }
