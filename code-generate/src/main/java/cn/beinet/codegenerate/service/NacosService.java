@@ -74,10 +74,13 @@ public class NacosService {
     }
 
     private String filterNamespace(String ns) {
-        int idx = ns.indexOf('|');
+        String ret = ns;
+        int idx = ret.indexOf('|');
         if (idx >= 0)
-            return ns.substring(idx + 1);
-        return ns;
+            ret = ret.substring(idx + 1);
+        if (ret.equals("public")) // 如果给nacos的url里， tenant=public 会获取不到数据
+            return "";
+        return ret;
     }
 
     // 获取文件内容
