@@ -36,6 +36,10 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     @Value("${server.servlet.context-path}")
     private String prefix;
 
+    @Value("${spring.ldap.email-domain}")
+    private String emailDomain;
+
+
     // token校验md5的盐值
     private static final String TOKEN_SALT = "beinet.cn";
 
@@ -221,8 +225,8 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     }
 
     private boolean validateFromLDAP(String username, String pwd) {
-        if (username.indexOf("@") <= 0) {
-            username += "@fzzixun.com";
+        if (username.indexOf("@") < 0 && StringUtils.hasLength(emailDomain)) {
+            username += "@" + emailDomain;
         }
         try {
             Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);

@@ -26,6 +26,7 @@ spring:
   ldap:
     urls: ldap://beinet.cn:389
     base: OU=OrgUnit,DC=beinet,DC=cn
+    email-domain: "beinet.cn"  # 登录ldap时，如果配置了此域名，会在用户名后添加@域名
 
 logging:
   level:
