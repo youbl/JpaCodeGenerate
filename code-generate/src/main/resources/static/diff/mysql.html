@@ -572,7 +572,7 @@
                     let tmpComment = sourceCol.comment.replace(/\s+/g, ' ').replace(/'/g, '\\\'');
                     comment = ' COMMENT \'' + tmpComment + '\' ';
                 }
-                return '\n  `' + sourceCol.originColumn + '` ' + sourceCol.type +
+                return '\n  `' + sourceCol.column + '` ' + sourceCol.type +
                     defaultVal + nullable + autoInc + primaryKey + comment;
             },
             cellStyle(row, column, rowIndex, columnIndex) {
@@ -630,7 +630,7 @@
                         loadedAtt[key] = {
                             test: this.combineCol(col),
                             table: att,
-                            column: col.originColumn,
+                            column: col.column,
                             prod: '字段不存在',
                             comment: col.comment,
                             testDefine: col,
@@ -668,7 +668,7 @@
                             loadedAtt[key] = {
                                 test: '字段不存在',
                                 table: att,
-                                column: col.originColumn,
+                                column: col.column,
                                 prod: this.combineCol(col),
                                 comment: col.comment,
                                 testDefine: null,
