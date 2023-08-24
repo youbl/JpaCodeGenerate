@@ -29,6 +29,8 @@ public class NacosConfigBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs == null)
+            return false;
         if (configs.getEnable() != null && !configs.getEnable())
             return false;
         return true;
@@ -36,6 +38,8 @@ public class NacosConfigBackup implements Backup {
 
     @Override
     public void operate() {
+        if (configs.getSites() == null || configs.getSites().length <= 0)
+            return;
         for (BackupConfigs.NacosSite item : configs.getSites()) {
             if (item.getEnable() != null && !item.getEnable())
                 continue;

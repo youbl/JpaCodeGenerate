@@ -27,11 +27,15 @@ public class FilesBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs == null)
+            return false;
         return configs.getEnable() == null || configs.getEnable();
     }
 
     @Override
     public void operate() {
+        if (configs.getPaths() == null || configs.getPaths().length <= 0)
+            return;
         for (String item : configs.getPaths()) {
             if (!StringUtils.hasLength(item)) {
                 continue;
@@ -45,7 +49,7 @@ public class FilesBackup implements Backup {
         }
     }
 
-    public static void copy(String source, String targetDir) throws IOException {
+    private static void copy(String source, String targetDir) throws IOException {
         File itemObj = new File(source);
         if (!itemObj.exists()) {
             log.error("要备份的文件或目录不存在: {}", source);

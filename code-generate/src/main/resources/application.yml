@@ -46,7 +46,7 @@ backup:
     rootDir: /work/source/backups
   # 要备份的nacos服务列表，备份每个nacos所有命名空间的配置
   nacos:
-    enable: true
+    enable: false
     backDir: /work/source/backups/nacos
     sites:
       - url: http://test.beinet.cn/nacos/
@@ -57,7 +57,7 @@ backup:
         password: 123456
   # 要备份的mysql服务列表，备份每个mysql的表结构和数据增长情况
   mysql:
-    enable: true
+    enable: false
     backDir: /data/app/backups/mysql
     instances:
       - ip: 10.2.5.2
@@ -70,7 +70,7 @@ backup:
         password: 123456
   # 要备份的jenkins服务列表，备份每个job的xml配置
   jenkins:
-    enable: true
+    enable: false
     backDir: /data/app/backups/jenkins
     sites:
       - url: http://10.100.72.165:8080/
@@ -78,7 +78,7 @@ backup:
         password: 123456
   # 要备份的目录或文件列表
   files:
-    enable: true
+    enable: false
     backDir: /data/app/backups/backFiles # 备份到哪里
     paths:
       - /etc/nginx                 # 要备份的目录或文件

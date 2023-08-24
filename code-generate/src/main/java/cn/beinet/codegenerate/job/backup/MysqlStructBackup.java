@@ -27,6 +27,8 @@ public class MysqlStructBackup implements Backup {
 
     @Override
     public boolean enabled() {
+        if (configs == null)
+            return false;
         if (configs.getEnable() != null && !configs.getEnable())
             return false;
 
@@ -37,6 +39,8 @@ public class MysqlStructBackup implements Backup {
 
     @Override
     public void operate() {
+        if (configs.getInstances() == null || configs.getInstances().length <= 0)
+            return;
         for (BackupConfigs.MysqlInstance item : configs.getInstances()) {
             if (item.getEnable() != null && !item.getEnable())
                 continue;
