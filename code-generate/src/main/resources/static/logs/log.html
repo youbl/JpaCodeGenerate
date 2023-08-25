@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>操作日志</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/sql-formatter.min.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <el-form ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        当前登录用户: {{loginuser}}
+        <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+        <span style="padding-left:20px;"
+              v-show="resultData.length">请求耗时: {{costTime}}ms, 数据条数: {{resultData.length}}</span>
+    </el-form>
+    <br>
+
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              :data="resultData"
+              :header-row-class-name="'tableHeader'">
+        <el-table-column align="center" label="序号" type="index" width="80"></el-table-column>
+        <el-table-column :label="key"
+                         sortable
+                         :sort-by="key"
+                         v-for="(value, key, index) in resultData[0]"
+                         v-if="isShow(key)">
+            <template slot-scope="scope">
+                <input type="text" :value="scope.row[key]" style="width:100%"
+                       @click="showFieldValue(scope.row, key)">
+            </template>
+        </el-table-column>
+    </el-table>
+
+
+    <el-dialog :title="'详情:' + selectedField + '（按ESC关窗）'" :visible.sync="fieldValueShow">
+        <el-input
+                type="textarea"
+                :rows="20"
+                v-model="selectedFieldValue">
+        </el-input>
+        <br>
+        <template>
+            <el-button type="primary" @click="formatJson">JSON格式化</el-button>
+        </template>
+    </el-dialog>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loginuser: '',
+            loading: false,
+
+            costTime: 0,
+            resultData: [],
+
+            fieldValueShow: false,
+            selectedField: '',
+            selectedFieldValue: '',
+        },
+        created: function () {
+            this.getLoginUser()
+                .then(this.getLogs);
+        },
+        computed: {},
+        methods: {
+            handleTabClick: function (tab, event) {
+            },
+            getLoginUser: function () {
+                let url = BASE_URL + 'loginuser';
+                return axios.get(url).then(response => {
+                    this.loginuser = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            getLogs: function () {
+                let url = BASE_URL + 'logs';
+                return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert('出错:\n' + response.data.errMsg);
+                    }
+                    this.resultData = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            isShow: function (column) {
+                if (column === 'id' ||
+                    column === 'requestHeaderMap' ||
+                    column === 'responseHeaderMap' ||
+                    column === 'responseContent')
+                    return false;
+                return true;
+            },
+
+            showFieldValue: function (row, key) {
+                let val = row[key];
+                if (val === null || val.length === 0)
+                    return;
+                this.fieldValueShow = true;
+                this.selectedField = key;
+                this.selectedFieldValue = val;
+            },
+            formatJson: function () {
+                try {
+                    this.selectedFieldValue = JSON.stringify(JSON.parse(this.selectedFieldValue), null, 4);
+                } catch (e) {
+                    alert('错误:' + e);
+                }
+            },
+
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+
+    /**
+     * 判断对象有属性
+     * @param obj 对象
+     * @returns {boolean} 有或没有
+     */
+    function hasAnyProperty(obj) {
+        if (!obj)
+            return false;
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 获取url里的变量值
+     * @param {string} name 变量名
+     * @return {string}
+     */
+    function getQueryString(name) {
+        if (typeof (name) !== 'string') {
+            return '';
+        }
+        name = name.trim();
+        if (name.length === 0) {
+            return '';
+        }
+        let localSearch = location.search.toLocaleLowerCase();
+        name = name.toLowerCase() + '=';
+        let tmpName = '?' + name;
+        let idx = localSearch.indexOf(tmpName);
+        if (idx < 0) {
+            tmpName = '&' + name;
+            idx = localSearch.indexOf(tmpName);
+            if (idx < 0) {
+                return '';
+            }
+        }
+        name = tmpName;
+        let tmp = location.search.substr(idx + name.length);
+        idx = tmp.indexOf('&');
+        if (idx === 0)
+            return '';
+        let ret;
+        if (idx < 0) {
+            ret = tmp;
+        } else {
+            ret = tmp.substr(0, idx);
+        }
+        return decodeURIComponent(ret.trim());
+    }
+</script>
+</body>
+</html>
