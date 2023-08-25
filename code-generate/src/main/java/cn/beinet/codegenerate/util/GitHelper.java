@@ -2,12 +2,15 @@ package cn.beinet.codegenerate.util;
 
 import cn.beinet.codegenerate.job.config.BackupConfigs;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.errors.EmptyCommitException;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.springframework.stereotype.Component;
 
@@ -32,21 +35,11 @@ public final class GitHelper {
             return;
         }
 
-        File dir = new File(configs.getGitlab().getRootDir());
-        if (dir.exists()) {
-            log.info("Git目录已存在，跳过初始化");
-            return;
-        }
-        UsernamePasswordCredentialsProvider provider = getCredentialsProvider();
         try {
-            Git.cloneRepository()
-                    .setURI(configs.getGitlab().getUrl())
-                    .setCredentialsProvider(provider)
-                    .setBranch("master")
-                    .setDirectory(dir)
-                    .call();
+            log.info("Git初始化开始");
+            cloneGitIgnoreSsl();
             log.info("Git初始化成功");
-        } catch (GitAPIException e) {
+        } catch (Exception e) {
             log.error("Git初始化失败", e);
         }
     }
@@ -104,5 +97,49 @@ public final class GitHelper {
                 configs.getGitlab().getUsername(),
                 configs.getGitlab().getPassword()
         );
+    }
+
+    // 与cloneGit方法对比，这个方法，可以绕过https认证，直接克隆
+    @SneakyThrows
+    private void cloneGitIgnoreSsl() {
+        File dir = new File(configs.getGitlab().getRootDir());
+        if (dir.exists()) {
+            log.info("Git目录已存在，跳过初始化");
+            return;
+        }
+        Git repo = Git.init().setDirectory(dir).call();
+        repo.getRepository()
+                .getConfig()
+                .setBoolean("http", null, "sslVerify", false);
+        //.setBoolean("http", "https://git.beinet.cn", "sslVerify", false);
+        RemoteAddCommand command = repo.remoteAdd();
+        command.setName("origin");
+        URIish uri = new URIish(configs.getGitlab().getUrl());
+        command.setUri(uri);
+        command.call();
+        repo.pull()
+                .setCredentialsProvider(getCredentialsProvider())
+                .setRemote("origin")
+                .setRemoteBranchName("master")
+                .call();
+    }
+
+    // 无法跳过ssl认证，如果不需要，可以直接用这个方法
+    @SneakyThrows
+    private void cloneGit() {
+        File dir = new File(configs.getGitlab().getRootDir());
+        if (dir.exists()) {
+            log.info("Git目录已存在，跳过初始化");
+            return;
+        }
+        CloneCommand command = Git.cloneRepository()
+                .setURI(configs.getGitlab().getUrl())
+                .setCredentialsProvider(getCredentialsProvider())
+                .setBranch("master")
+                .setDirectory(dir);
+        // cloneRepository 无法getConfig做操作
+//            command.getRepository().getConfig()
+//                    .setBoolean("http", "https://git.ziniao.com", "sslVerify", false);
+        command.call();
     }
 }
