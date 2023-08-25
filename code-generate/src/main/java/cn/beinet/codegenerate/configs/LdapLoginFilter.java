@@ -7,13 +7,16 @@ import cn.beinet.codegenerate.util.StringHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,6 +35,7 @@ import java.util.List;
 @Component
 @Slf4j
 @RequiredArgsConstructor
+@Order(-999) // 需要设置登录信息，所以filter的顺序要高一些
 public class LdapLoginFilter extends OncePerRequestFilter {
     @Value("${server.servlet.context-path}")
     private String prefix;
@@ -39,6 +43,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     @Value("${spring.ldap.email-domain}")
     private String emailDomain;
 
+    private static final String LOGIN_INFO = "loginUser";
 
     // token校验md5的盐值
     private static final String TOKEN_SALT = "beinet.cn";
@@ -84,7 +89,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
 
         // 判断cookie是否有效
         String token = RequestHelper.getCookie(TOKEN_COOKIE_NAME, request);
-        log.info("url:{} token: {}", url, token);
+        log.debug("url:{} token: {}", url, token);
         String loginUser = getLoginUserFromToken(token);
         if (!StringUtils.hasLength(loginUser)) {
             log.debug("token无效: {}", token);
@@ -98,12 +103,25 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         }
 
         // 添加登录后的信息
-        request.setAttribute("loginUser", loginUser);
+        request.setAttribute(LOGIN_INFO, loginUser);
 
         log.debug("token校验成功: {}", token);
         filterChain.doFilter(request, response);
     }
 
+    public static String getLoginInfo(WebRequest request) {
+        Object ret = request.getAttribute(LOGIN_INFO, 0);
+        if (ret == null)
+            return "";
+        return ret.toString();
+    }
+
+    public static String getLoginInfo(ServletRequest request) {
+        Object ret = request.getAttribute(LOGIN_INFO);
+        if (ret == null)
+            return "";
+        return ret.toString();
+    }
 
     /**
      * 提取用户名密码，并进行登录

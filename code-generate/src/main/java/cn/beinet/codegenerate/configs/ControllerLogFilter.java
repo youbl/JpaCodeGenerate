@@ -1,6 +1,10 @@
 package cn.beinet.codegenerate.configs;
 
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,16 +21,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ControllerLogFilter extends OncePerRequestFilter {
     static Pattern patternRequest = Pattern.compile("(?i)^/actuator/?|\\.(ico|jpg|png|bmp|txt|xml|html?|js|css|ttf|woff|map)$");
+
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -53,7 +58,7 @@ public class ControllerLogFilter extends OncePerRequestFilter {
             throw exp;
         } finally {
             long latency = System.currentTimeMillis() - startTime;
-            doLog(request, response, latency, exception);
+            readAndLog(request, response, latency, exception);
             repairResponse(response);
         }
     }
@@ -66,22 +71,16 @@ public class ControllerLogFilter extends OncePerRequestFilter {
         return matcher.find();
     }
 
-    private void doLog(HttpServletRequest request, HttpServletResponse response, long latency, Exception exception) {
-        StringBuilder sb = new StringBuilder();
+    private void readAndLog(HttpServletRequest request, HttpServletResponse response, long latency, Exception exception) {
+        RequestLog logRec = new RequestLog();
         try {
-            getRequestMsg(request, sb);
-
-            sb.append("\n--响应 ")
-                    .append(response.getStatus())
-                    .append("  耗时 ")
-                    .append(latency)
-                    .append("ms");
-
-            getResponseMsg(response, sb);
+            logRec.setLoginUser(LdapLoginFilter.getLoginInfo(request));
+            logRec.setCostMillis(latency);
+            getRequestMsg(request, logRec);
+            getResponseMsg(response, logRec);
 
             if (exception != null) {
-                sb.append("\n--异常 ")
-                        .append(exception.getMessage());
+                logRec.setExp(exception.getMessage());
             }
             /* // 直接输出到响应流里
             try (ServletOutputStream stream = response.getOutputStream()) {
@@ -89,70 +88,75 @@ public class ControllerLogFilter extends OncePerRequestFilter {
                 stream.flush();
             }
             */
-
-            logger.debug(sb.toString());
         } catch (Exception exp) {
-            sb.append("\n").append(exp.getMessage());
-            logger.error(sb.toString());
+            String msg = exp.getMessage();
+            if (StringUtils.hasLength(logRec.getExp()))
+                msg += "; " + logRec.getExp();
+            logRec.setExp(msg);
+        }
+        doLog(logRec);
+    }
+
+    private void doLog(RequestLog logRec) {
+        try {
+            saveToDB(logRec);
+        } catch (Exception exp) {
+            log.error("写日志出错：", exp);
         }
     }
 
-    private static void getRequestMsg(HttpServletRequest request, StringBuilder sb) throws IOException {
-        String query = request.getQueryString();
-        if (!StringUtils.isEmpty(query)) {
-            query = "?" + query;
-        } else {
-            query = "";
-        }
-        sb.append("\n")
-                .append(request.getMethod())
-                .append(" ")
-                .append(request.getRequestURL())
-                .append(query)
-                .append("\n--用户IP: ")
-                .append(request.getRemoteAddr())
-                .append("\n--请求Header:");
+    private static void getRequestMsg(HttpServletRequest request, RequestLog logRec) throws IOException {
+        logRec.setMethod(request.getMethod())
+                .setUrl(request.getRequestURI())  // getRequestURI没有域名，getRequestURL会带域名
+                .setQuery(request.getQueryString())
+                .setIp(request.getRemoteAddr())
+                .setRequestHeaders(new HashMap<>());
+
+        Map<String, String> headers = logRec.getRequestHeaders();
+
         // 读取请求头信息
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
+            String value = "";
             Enumeration<String> values = request.getHeaders(header);
             while (values.hasMoreElements()) {
-                sb.append("\n")
-                        .append(header)
-                        .append(" : ")
-                        .append(values.nextElement()).append("; ");
+                if (value.length() > 0)
+                    value += "; ";
+                value += values.nextElement();
             }
+            headers.put(header, value);
         }
+
         // 读取请求体
         String requestBody = readFromStream(request.getInputStream());
-        if (!StringUtils.isEmpty(requestBody)) {
-            sb.append("\n--请求体:\n")
-                    .append(requestBody);
-        }
+        logRec.setRequestBody(requestBody);
     }
 
-    private static void getResponseMsg(HttpServletResponse response, StringBuilder sb) throws UnsupportedEncodingException {
-        sb.append("\n--响应Header: ");
+    private static void getResponseMsg(HttpServletResponse response, RequestLog logRec) throws UnsupportedEncodingException {
+        logRec.setResponseStatus(response.getStatus())
+                .setResponseHeaders(new HashMap<>());
+
+        // 读取响应的头信息
+        Map<String, String> headers = logRec.getResponseHeaders();
         for (String header : response.getHeaderNames()) {
+            String value = "";
             Collection<String> values = response.getHeaders(header);//.stream().collect(Collectors.joining("; "));
-            for (String value : values) {
-                sb.append("\n")
-                        .append(header)
-                        .append(" : ")
-                        .append(value);
+            for (String item : values) {
+                if (value.length() > 0)
+                    value += "; ";
+                value += item;
             }
+            headers.put(header, value);
         }
+
         // 读取响应体
         ContentCachingResponseWrapper wrapper = WebUtils.getNativeResponse(response, ContentCachingResponseWrapper.class);
         if (wrapper != null) {
             // 不能用 wrapper.getCharacterEncoding()
             String responseBody = transferFromByte(wrapper.getContentAsByteArray(), StandardCharsets.UTF_8.name());
-            if (!StringUtils.isEmpty(responseBody)) {
-                sb.append("\n--响应Body:\n")
-                        .append(responseBody);
-            } else {
-                sb.append("\n--无响应Body.");
+            if (StringUtils.hasLength(responseBody)) {
+                logRec.setResponseContent(responseBody);
             }
         }
     }
@@ -176,4 +180,82 @@ public class ControllerLogFilter extends OncePerRequestFilter {
     private static String transferFromByte(byte[] arr, String encoding) throws UnsupportedEncodingException {
         return new String(arr, encoding);
     }
+
+    @Data
+    @Accessors(chain = true)
+    private class RequestLog {
+        private String loginUser;
+
+        private String method;
+        private String url;
+        private String query;
+        private String ip;
+        private Map<String, String> requestHeaders;
+        private String requestBody;
+
+        private int responseStatus;
+        private String responseContent;
+        private Map<String, String> responseHeaders;
+
+        private long costMillis;
+        private String exp;
+    }
+
+    private void saveToDB(RequestLog logRec) {
+        String sql = "INSERT INTO admin_log" +
+                "(loginUser, method, url, query, ip, requestHeaders, requestBody, responseStatus, responseHeaders, costMillis, exp)" +
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+        jdbcTemplate.update(sql, new Object[]{
+                transNull(logRec.getLoginUser()),
+                transNull(logRec.getMethod()),
+                transNull(logRec.getUrl()),
+                transNull(logRec.getQuery()),
+                transNull(logRec.getIp()),
+                combineMap(logRec.getRequestHeaders()),
+                transNull(logRec.getRequestBody()),
+                logRec.getResponseStatus(),
+                combineMap(logRec.getResponseHeaders()),
+                logRec.getCostMillis(),
+                transNull(logRec.getExp())
+        });
+    }
+
+    private String transNull(String val) {
+        if (val == null)
+            return "";
+        return val;
+    }
+
+    private String combineMap(Map<String, String> map) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> item : map.entrySet()) {
+            if (sb.length() > 0)
+                sb.append("\n");
+            sb.append(item.getKey())
+                    .append(" : ")
+                    .append(item.getValue());
+        }
+        return sb.toString();
+    }
 }
+
+/**
+ CREATE TABLE `admin_log` (
+ `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+ `loginUser` varchar(50) NOT NULL DEFAULT '' COMMENT '登录人',
+ `method` varchar(10) NOT NULL DEFAULT '' COMMENT '请求方法',
+ `url` varchar(200) NOT NULL DEFAULT '' COMMENT '请求地址',
+ `query` varchar(2000) NOT NULL DEFAULT '' COMMENT '查询串',
+ `ip` varchar(20) NOT NULL DEFAULT '' COMMENT '请求IP',
+ `requestHeaders` text NOT NULL COMMENT '请求头',
+ `requestBody` text NOT NULL COMMENT '请求体',
+ `responseStatus` int(11) NOT NULL DEFAULT '0' COMMENT '响应状态',
+ `responseHeaders` text NOT NULL COMMENT '响应头',
+ `costMillis` int(11) NOT NULL DEFAULT '0' COMMENT '耗时ms',
+ `exp` text NOT NULL COMMENT '异常',
+ `createDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+ PRIMARY KEY (`id`),
+ KEY `idx_user` (`loginUser`),
+ KEY `idx_url` (`url`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='请求日志表';
+ */

@@ -30,7 +30,7 @@ public class AuthDetailArgumentResolver implements HandlerMethodArgumentResolver
 //            return ret;
 //        }
 //        ret.setAccount(principal.getName());
-        ret.setAccount(webRequest.getAttribute("loginUser", 0) + "");
+        ret.setAccount(LdapLoginFilter.getLoginInfo(webRequest));
 
         return ret;
     }
