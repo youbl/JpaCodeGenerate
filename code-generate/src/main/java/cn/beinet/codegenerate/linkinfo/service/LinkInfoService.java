@@ -126,7 +126,10 @@ public class LinkInfoService {
      */
     private LinkInfo getLinkInfoByName(String name) {
         String sql = "SELECT * FROM linkinfo a WHERE a.name=? LIMIT 1";
-        return jdbcTemplate.queryForObject(sql, new Object[]{name}, new BeanPropertyRowMapper<>(LinkInfo.class));
+        List<LinkInfo> lst = jdbcTemplate.query(sql, new Object[]{name}, new BeanPropertyRowMapper<>(LinkInfo.class));
+        if (lst.size() > 0)
+            return lst.get(0);
+        return null;
     }
 
     public int saveInfo(LinkInfoDto dto) {

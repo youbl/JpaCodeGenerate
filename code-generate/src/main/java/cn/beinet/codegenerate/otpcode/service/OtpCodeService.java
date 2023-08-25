@@ -113,7 +113,10 @@ public class OtpCodeService {
 
     private OtpCode getRecordById(int id) {
         String sql = "SELECT * FROM otpcode a WHERE a.id=?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(OtpCode.class));
+        List<OtpCode> lst = jdbcTemplate.query(sql, new Object[]{id}, new BeanPropertyRowMapper<>(OtpCode.class));
+        if (lst.size() > 0)
+            return lst.get(0);
+        return null;
     }
 
     // 入库前要加密
