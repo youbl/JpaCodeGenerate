@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.configs;
 
+import cn.beinet.codegenerate.util.MultiReadHttpServletRequest;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -8,7 +9,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 import org.springframework.web.util.WebUtils;
 
@@ -41,9 +41,9 @@ public class ControllerLogFilter extends OncePerRequestFilter {
         }
 
         long startTime = System.currentTimeMillis();
-        if (!(request instanceof ContentCachingRequestWrapper)) {
+        if (!(request instanceof MultiReadHttpServletRequest)) {
             // 解决 inputStream 只能读取一次的问题
-            request = new ContentCachingRequestWrapper(request);
+            request = new MultiReadHttpServletRequest(request);
         }
         if (!(response instanceof ContentCachingResponseWrapper)) {
             // 同样用于解决 响应只能读取一次的问题，注意要在最后调用 responseWrapper.copyBodyToResponse();
@@ -129,6 +129,7 @@ public class ControllerLogFilter extends OncePerRequestFilter {
         }
 
         // 读取请求体
+        //String requestBody = IOUtils.toString(request.getReader());
         String requestBody = readFromStream(request.getInputStream());
         logRec.setRequestBody(requestBody);
     }
