@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.job.backup;
 
 import cn.beinet.codegenerate.job.backup.services.JenkinsService;
+import cn.beinet.codegenerate.job.backup.services.dto.JenkinsJob;
 import cn.beinet.codegenerate.job.config.BackupConfigs;
 import cn.beinet.codegenerate.util.FileHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -50,10 +51,9 @@ public class JenkinsJobBackup implements Backup {
 
             try {
                 JenkinsService jenkinsService = new JenkinsService(item.getUrl(), item.getUsername(), item.getPassword());
-                List<String> jobNames = jenkinsService.getAllJobName();
-                for (String job : jobNames) {
-                    String xml = jenkinsService.getJobConfig(job);
-                    backupJob(job, xml);
+                List<JenkinsJob> jobNames = jenkinsService.getAllJobName();
+                for (JenkinsJob job : jobNames) {
+                    backupJob(job, jenkinsService);
                 }
             } catch (Exception namespaceEx) {
                 log.error("备份出错:{} {}", item.getUrl(), namespaceEx.getMessage());
@@ -61,12 +61,18 @@ public class JenkinsJobBackup implements Backup {
         }
     }
 
-    private void backupJob(String jobName, String xml) {
+    private void backupJob(JenkinsJob job, JenkinsService jenkinsService) {
         try {
-            String filePath = getFileName(jobName);
+            String xml = jenkinsService.getJobConfig(job);
+            String filePath = getFileName(job.getUrl());
             FileHelper.saveFile(filePath, xml);
+            if (job.getSubJobs() != null) {
+                for (JenkinsJob subJob : job.getSubJobs()) {
+                    backupJob(subJob, jenkinsService);
+                }
+            }
         } catch (Exception exp) {
-            log.error("备份jenkins出错:{} {}", jobName, exp.getMessage());
+            log.error("备份jenkins出错:{} {}", job.getName(), exp.getMessage());
         }
 
     }
@@ -75,6 +81,17 @@ public class JenkinsJobBackup implements Backup {
         String dir = configs.getBackDir();
         if (!dir.endsWith("/"))
             dir += "/";
+
+        int idx = jobName.indexOf("/", "https://".length() + 1); // 查找http协议之后的第一个斜杠
+        if (idx > 0) {
+            jobName = jobName.substring(idx + 1);
+        }
+        if (jobName.startsWith("job/")) {
+            jobName = jobName.substring(4);
+        }
+        if (jobName.endsWith("/")) {
+            jobName = jobName.substring(0, jobName.length() - 1);
+        }
 
         jobName = FileHelper.replaceInvalidCh(jobName);
 
