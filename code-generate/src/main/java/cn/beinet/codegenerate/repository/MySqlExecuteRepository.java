@@ -24,7 +24,7 @@ public class MySqlExecuteRepository {
 
     public MySqlExecuteRepository(String ip, int port, String userName, String pwd, String dbName) {
         this.url = "jdbc:mysql://" + ip + ":" + port +
-                "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=true&serverTimezone=Asia/Shanghai&useSSL=false";
+                "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false";
         this.userName = userName;
         this.pwd = pwd;
     }

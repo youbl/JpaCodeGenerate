@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class ControllerLogFilter extends OncePerRequestFilter {
-    static Pattern patternRequest = Pattern.compile("(?i)^/(actuator|loginuser|logs)/?|\\.(ico|jpg|png|bmp|txt|xml|html?|js|css|ttf|woff|map)$");
+    static Pattern patternRequest = Pattern.compile("(?i)^/(actuator|loginuser|logs)/?|\\.(ico|jpg|png|bmp|txt|xml|html?|js|css|ttf|woff|map|svg)$");
 
     private final RequestLogService logService;
 
@@ -66,6 +66,8 @@ public class ControllerLogFilter extends OncePerRequestFilter {
         //request.getRequestURL() 带有域名，所以不用
         //request.getRequestURI() 带有ContextPath，所以不用
         String url = request.getServletPath();
+        if (url.equals("/"))
+            return true;
         Matcher matcher = patternRequest.matcher(url);
         return matcher.find();
     }

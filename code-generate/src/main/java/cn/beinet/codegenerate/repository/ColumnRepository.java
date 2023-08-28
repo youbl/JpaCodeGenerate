@@ -45,7 +45,7 @@ public class ColumnRepository {
 
     public ColumnRepository(String ip, int port, String userName, String pwd) {
         this.url = "jdbc:mysql://" + ip + ":" + port +
-                "/mysql?characterEncoding=utf8&allowMultiQueries=true&serverTimezone=Asia/Shanghai&useSSL=false";
+                "/mysql?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false";
         // ?allowMultiQueries=true&useUnicode=true&characterEncoding=utf8&socketTimeout=2000&connectTimeout=2000&rewriteBatchedStatements=true&useSSL=false&serverTimezone=Asia/Shanghai&useSSL=false
         this.userName = userName;
         this.pwd = pwd;

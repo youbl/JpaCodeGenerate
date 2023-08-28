@@ -62,7 +62,7 @@
                 <td style="width: 1010px;">
                     <el-checkbox v-model="showAsTextBox">文本框展示结果</el-checkbox>
                     <el-button size="small" type="primary" icon="el-icon-search" @click="executeSql">执行SQL</el-button>
-                    <span>不支持更新语句。另：如果SQL没有LIMIT，默认添加LIMIT 200</span>
+                    <span>不支持更新语句，不支持多条语句。另：SQL会默认添加LIMIT 200</span>
                     <p></p>
                     <el-input type="textarea" :rows="20" v-model="searchCond.sql" placeholder="请输入SQL"
                               style="width:1000px"/>
