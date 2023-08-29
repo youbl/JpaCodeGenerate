@@ -98,7 +98,7 @@
                                                    @click="removeSql(idx, 1)"></el-button>
                                         <span>
                                     {{idx+1}}:【{{item.cnt}}条/{{item.ms}}ms/{{item.dbName}}】<br>
-                                    <a href="javascript:void(0)" @click="setSql(idx, 1)">{{item.sql}}</a>
+                                    <a href="javascript:void(0)" @click="setSqlAndLinkInfo(idx, 1)">{{item.sql}}</a>
                                 </span>
                                     </li>
                                 </ul>
@@ -117,7 +117,8 @@
                                         <el-button size="mini" circle icon="el-icon-delete"
                                                    @click="removeSql(idx, 2)"></el-button>
                                         <span>
-                                    {{idx+1}}:<a href="javascript:void(0)" @click="setSql(idx, 2)" :title="item.sql">【{{item.title}}/{{item.dbName}}】</a>
+                                    {{idx+1}}:<a href="javascript:void(0)" @click="setSqlAndLinkInfo(idx, 2)"
+                                                 :title="item.sql">【{{item.title}}/{{item.dbName}}】</a>
                                 </span>
                                     </li>
                                 </ul>
@@ -214,7 +215,6 @@
                 //     dbTestUser: 'readonly',
                 //     dbTestPwd: '123456',
                 //     dbTestName: '',
-                //     sql: 'SELECT 1 FROM DUAL',
                 // }
             ],
             searchCond: {
@@ -298,12 +298,18 @@
                 }
                 for (let i = 0, j = this.sqlConns.length; i < j; i++) {
                     if (this.sqlConns[i].configName === this.selectDbName) {
-                        this.searchCond = this.sqlConns[i];
+                        this.copyAtts(this.sqlConns[i]);
                         if (this.searchCond.configName === '自定义')
                             return;
                         this.loadDbs();
                         break;
                     }
+                }
+            },
+            copyAtts: function (sqlConn) {
+                // 修复sql无法设置或只读的bug
+                for (const prop in sqlConn) {
+                    Vue.set(this.searchCond, prop, sqlConn[prop]);
                 }
             },
             dbChange: function () {
@@ -321,9 +327,10 @@
                 else
                     this.savedSqls = arr;
             },
-            setSql: function (idx, flg) {
+            setSqlAndLinkInfo: function (idx, flg) {
                 let arrSql = this.getArrSql(flg);
                 let item = arrSql[idx];
+                this.realSetSql(item.sql);
 
                 if (item.insName !== this.selectDbName ||
                     item.dbName !== this.searchCond.dbTestName) {
@@ -332,7 +339,10 @@
 
                     this.dbSelected();
                 }
-                this.searchCond.sql = item.sql;
+            },
+            realSetSql: function (sql) {
+                Vue.set(this.searchCond, 'sql', sql);
+                //console.log(sql)
             },
             exportSql: function (flg) {
                 let arrSql = this.getArrSql(flg);
@@ -366,6 +376,7 @@
                 return JSON.parse(obj);
             },
             saveUsingSqls: function (title, sql, rowCnt, costMs, instanceName, dbName, flg) {
+                this.realSetSql(sql);
                 let item = {
                     title: title,
                     sql: sql,
@@ -374,7 +385,6 @@
                     insName: instanceName,
                     dbName: dbName,
                 };
-                this.searchCond.sql = sql;
 
                 let arrSql = this.getArrSql(flg);
                 this.addAndDistinct(item, arrSql);
@@ -465,7 +475,7 @@
                     + this.selectedTable + '` a\n WHERE 1=1\n ORDER BY '
                     + this.generatePrimaryKey()
                     + ' DESC LIMIT 200;';
-                this.searchCond.sql = sql;
+                this.realSetSql(sql);
                 this.generateSqlShow = false;
 
                 this.executeSql();
@@ -501,7 +511,7 @@
                     sql += '`' + fieldList[i] + '`=\'{' + fieldList[i] + '}\'';
                 }
                 sql += '\n WHERE ' + this.generatePrimaryKey() + '={xxx};';
-                this.searchCond.sql = sql;
+                this.realSetSql(sql);
                 this.generateSqlShow = false;
             },
             generateInsertSql: function () {
@@ -523,7 +533,7 @@
                     sql += '\'{' + fieldList[i] + '}\'';
                 }
                 sql += '\n);';
-                this.searchCond.sql = sql;
+                this.realSetSql(sql);
                 this.generateSqlShow = false;
             },
             generateFields: function () {
@@ -559,22 +569,23 @@
 
             setByDefault: function (prop, arr) {
                 if (arr.length <= 0) {
-                    this.searchCond[prop] = '';
+                    Vue.set(this.searchCond, prop, '');
                     return;
                 }
                 if (this.defaultName) {
                     for (let i = 0, j = arr.length; i < j; i++) {
                         if (arr[i].indexOf(this.defaultName) >= 0) {
-                            this.searchCond[prop] = arr[i];
+                            Vue.set(this.searchCond, prop, arr[i]);
                             return;
                         }
                     }
                 }
-                this.searchCond[prop] = arr[0];
+                Vue.set(this.searchCond, prop, arr[0]);
             },
             formatSql: function () {
-                this.searchCond.sql = sqlFormatter.format(this.searchCond.sql,
+                let sql = sqlFormatter.format(this.searchCond.sql,
                     {language: 'sql', indent: '  '});
+                this.realSetSql(sql);
             },
             executeSql: function () {
                 if (!this.searchCond.dbTestName) {
