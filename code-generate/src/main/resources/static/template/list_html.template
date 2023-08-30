@@ -126,6 +126,9 @@
                 let para = {'params': this.searchCondition};
                 return axios.get(url, para).then(response => {
                     this.loading = false;
+                    if (!response.data || !response.data.length) {
+                        return alert('获取数据列表失败:' + this.getMsg(response));
+                    }
                     this.dataList = response.data;
                     this.statusTxt = this.dataList.length + '行，耗时:' + ((new Date()) - startTime) + 'ms';
                 }).catch(error => this.ajaxError(error));
@@ -264,18 +267,21 @@
             },
             ajaxError: function (error) {
                 this.loading = false;
-                if (error.response && error.response.data) {
-                    console.log(JSON.stringify(error.response.data));
-                    let msg = error.response.data['error'];
-                    if (msg && msg === 'Unauthorized') {
-                        this.goLogin();
-                    } else {
-                        alert(msg ? msg : '出错了');
-                    }
+                let msg = this.getMsg(error.response);
+                if (msg && msg === 'Unauthorized') {
+                    this.goLogin();
                 } else {
-                    console.log(JSON.stringify(error));
-                    alert('未知错误');
+                    alert(msg ? msg : '出错了');
                 }
+            },
+            getMsg: function (response) {
+                if (!response || !response.data)
+                    return '';
+                console.log(JSON.stringify(response.data));
+                let msg = response.data['error'];
+                if (!msg)
+                    msg = response.data['msg'];
+                return msg ? msg : '';
             },
         },
     });

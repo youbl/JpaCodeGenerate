@@ -5,7 +5,6 @@ import cn.beinet.codegenerate.codeGenerate.dto.GenerateResult;
 import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
 import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
 import cn.beinet.codegenerate.model.ColumnDto;
-import cn.beinet.codegenerate.util.StringHelper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -159,7 +158,7 @@ public class ModelGenerater implements Generater {
                 .append(table)
                 .append("Dto();\n");
         for (ColumnDto column : columns) {
-            String colName = StringHelper.upFirstChar(column.getColumn());
+            String colName = getFieldName(column.getColumn(), false);
             sb.append("        ")
                     .append("result.set")
                     .append(colName)

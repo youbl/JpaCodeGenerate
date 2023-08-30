@@ -6,7 +6,6 @@ import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
 import cn.beinet.codegenerate.codeGenerate.enums.Vars;
 import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
 import cn.beinet.codegenerate.model.ColumnDto;
-import cn.beinet.codegenerate.util.StringHelper;
 import cn.beinet.codegenerate.util.TimeHelper;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +54,7 @@ public class MybatisServiceGenerater implements Generater {
 
         StringBuilder sb = new StringBuilder("\n");
         for (ColumnDto item : columns) {
-            String colName = StringHelper.upFirstChar(item.getColumn());
+            String colName = getFieldName(item.getColumn(), false);
             // wrapper.eq(dto.getCreateMember() != null, {{entity_name}}::getCreateMember, dto.getCreateMember());
             String cond = "wrapper.eq(dto.get" + colName +
                     "() != null, " + entityName + "::get" + colName +

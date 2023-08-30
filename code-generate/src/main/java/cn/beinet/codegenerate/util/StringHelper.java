@@ -22,9 +22,60 @@ public final class StringHelper {
      * @return 首字母大写
      */
     public static String upFirstChar(String name) {
-        if (StringUtils.isEmpty(name))
+        if (!StringUtils.hasLength(name))
             return "";
         return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    /**
+     * 把传入的字符串转换为Pascal格式，即：
+     * 首字母大写，之后的每个下划线后第一个字母大写，并移除下划线
+     *
+     * @param name 名称
+     * @return Pascal格式
+     */
+    public static String castToPascal(String name) {
+        return cast(name, false);
+    }
+
+    /**
+     * 把传入的字符串转换为Camel格式，即：
+     * 首字母小写，之后的每个下划线后第一个字母大写，并移除下划线
+     *
+     * @param name 名称
+     * @return Camel格式
+     */
+    public static String castToCamel(String name) {
+        return cast(name, true);
+    }
+
+    private static String cast(String name, boolean isCamel) {
+        if (!StringUtils.hasLength(name))
+            return "";
+        StringBuilder sb = new StringBuilder();
+        String chFirst = String.valueOf(name.charAt(0));
+        String strCh = isCamel ? chFirst.toLowerCase() : chFirst.toUpperCase();
+        sb.append(strCh);
+
+        boolean isUnderline = false;
+        int chIdx = 0;
+        for (char item : name.toCharArray()) {
+            chIdx++;
+            if (chIdx == 1)
+                continue; // 第一个字符，上面已经append了
+
+            if (isUnderline) {
+                // 不考虑连续2个下划线的情况，也不考虑首字母为下划线的情况
+                sb.append(String.valueOf(item).toUpperCase());
+                isUnderline = false;
+                continue;
+            }
+            isUnderline = (item == '_');
+            if (!isUnderline) {
+                sb.append(item);
+            }
+        }
+        return sb.toString();
     }
 
     /**

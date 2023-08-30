@@ -59,7 +59,7 @@ public class HtmlGenerater implements Generater {
         for (ColumnDto dto : columns) {
             if (sb.length() > 0)
                 sb.append(',');
-            String colName = StringHelper.lowFirstChar(dto.getColumn());
+            String colName = getFieldName(dto.getColumn(), true);
             sb.append("'").append(colName).append("'");
         }
         return sb.toString();

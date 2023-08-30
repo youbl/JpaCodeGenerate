@@ -22,6 +22,9 @@
 - 解压的文件，除html，其它文件复制到你的SpringBoot项目对应的java目录下
 - html复制到你的SpringBoot项目的`resources\static`目录下
 - 复制项目根目录下的`res.zip`，就是html页面依赖的js、css、字体等文件，解压到`resources\static`目录下
+- 在你的项目pom.xml里添加mapstruct的如下2个引用，并进行maven构建：
+  * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
+  * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct-processor</artifactId></dependency>
 - OK，可以启动你的项目，访问生成的html验证了
 
 操作界面：

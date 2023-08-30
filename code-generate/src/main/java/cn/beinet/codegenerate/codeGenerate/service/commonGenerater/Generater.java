@@ -58,7 +58,8 @@ public interface Generater {
     GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto);
 
     /**
-     * 根据表名，获取代码中使用的Entity名称
+     * 根据表名，获取代码中使用的Entity名称.
+     * Pascal格式返回
      *
      * @param table        表名
      * @param removePrefix 要移除的表名前缀
@@ -67,7 +68,20 @@ public interface Generater {
     default String getEntityName(String table, String removePrefix) {
         if (StringUtils.hasLength(removePrefix))
             table = table.replace(removePrefix, "");
-        return StringHelper.upFirstChar(table);
+        return StringHelper.castToPascal(table);
+    }
+
+    /**
+     * 根据表的列名，获取代码中使用的字段名称.
+     * Camel格式返回
+     *
+     * @param column 列名
+     * @return 字段名
+     */
+    default String getFieldName(String column, boolean isCamel) {
+        if (isCamel)
+            return StringHelper.castToCamel(column);
+        return StringHelper.castToPascal(column);
     }
 
     /**
@@ -98,7 +112,7 @@ public interface Generater {
      * @return 定义串
      */
     default String getColumnDefine(ColumnDto column) {
-        String colName = StringHelper.lowFirstChar(column.getColumn());
+        String colName = getFieldName(column.getColumn(), true);
         return "    private " +
                 column.getManagerType() +
                 ' ' +
