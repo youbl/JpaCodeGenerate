@@ -16,6 +16,7 @@
 - dto
 - entity与dto互转的mapstruct-mapper转换类
 - 基于VUE2.0的前端html页面  
+- 注意：**表主键请使用int或long类型的id**
 
 生成说明：
 - 点击页面的`下载文件`, 并解压

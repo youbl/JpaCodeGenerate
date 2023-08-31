@@ -85,6 +85,22 @@ public interface Generater {
     }
 
     /**
+     * 返回第一个主键字段
+     *
+     * @param columns 字段列表
+     * @param isCamel 返回Pascal还是camel格式
+     * @return 主键字段名
+     */
+    default String getKeyName(List<ColumnDto> columns, boolean isCamel) {
+        for (ColumnDto column : columns) {
+            if (column.isPrimaryKey()) {
+                return getFieldName(column.getColumn(), isCamel);
+            }
+        }
+        return "";
+    }
+
+    /**
      * 获取程序包里的模板文件内容
      *
      * @return 内容

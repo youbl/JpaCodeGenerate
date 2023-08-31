@@ -21,6 +21,7 @@ public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {
         if (dto != null) {
             {{service_cond_fields}}
         }
+        wrapper.orderByDesc({{entity_name}}::getId).last(" LIMIT 123");
         return {{entity_name}}EntityMapper.INSTANCE.entity2dto(list(wrapper));
     }
 }
