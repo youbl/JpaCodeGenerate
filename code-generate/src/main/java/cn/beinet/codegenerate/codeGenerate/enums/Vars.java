@@ -28,6 +28,14 @@ public enum Vars {
      */
     DTO_FIELDS("dto_fields"),
     /**
+     * 首字母大写的主键名
+     */
+    UP_KEY_FIELD("up_key_field"),
+    /**
+     * 首字母小写的主键名
+     */
+    LOW_KEY_FIELD("low_key_field"),
+    /**
      * 生成文件的注释里的时间
      */
     DATE_TIME("date_time"),

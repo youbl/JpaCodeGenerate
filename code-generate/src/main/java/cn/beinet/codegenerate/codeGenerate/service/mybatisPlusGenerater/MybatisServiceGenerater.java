@@ -47,6 +47,8 @@ public class MybatisServiceGenerater implements Generater {
 
         replaceSymbol(sb, Vars.SERVICE_COND_FIELDS, getBody(columns, entityName));
 
+        // replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, false));
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 
