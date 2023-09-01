@@ -8,6 +8,10 @@ package cn.beinet.codegenerate.codeGenerate.enums;
  */
 public enum Vars {
     /**
+     * 用start-modify_content 和 end-modify_content 包括的编辑块
+     */
+    MODIFY_CONTENT("modify_content"),
+    /**
      * 生成文件所在的包名
      */
     PACKAGE_NAME("package_name"),

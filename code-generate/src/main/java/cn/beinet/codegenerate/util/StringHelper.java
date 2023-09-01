@@ -206,4 +206,28 @@ public final class StringHelper {
         }
         return ret;
     }
+
+    /**
+     * 从StringBuilder里查找起始串和结束串，把包含起始和结束的所有内容替换掉
+     *
+     * @param builder StringBuilder
+     * @param start   要被替换的起始串
+     * @param end     要被替换的结束串
+     * @param to      要替换为哪个新串
+     * @return 替换成功还是失败
+     */
+    public static boolean replaceByStartAndEnd(StringBuilder builder, String start, String end, String to) {
+        int indexStart = builder.indexOf(start);
+        int indexEnd = builder.indexOf(end);
+        if (indexStart >= 0 && indexEnd <= 0)
+            throw new RuntimeException("找到了开始标志，没找到结束");
+        if (indexStart < 0 && indexEnd >= 0)
+            throw new RuntimeException("找到了结束标志，没找到开始");
+
+        if (indexStart >= 0) {
+            builder.replace(indexStart, indexEnd + end.length(), to);
+            return true;
+        }
+        return false;
+    }
 }

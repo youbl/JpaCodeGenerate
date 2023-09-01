@@ -40,12 +40,17 @@ public class HtmlGenerater implements Generater {
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
         StringBuilder sb = new StringBuilder(getTemplate());
 
+        // 开启or关闭增删改代码
+        if (generateDto.getModify() != null && !generateDto.getModify()) {
+            replaceSymbolAndInner(sb, Vars.MODIFY_CONTENT, "");
+        } else {
+            removeSymbol(sb, Vars.MODIFY_CONTENT);
+        }
+
         String now = TimeHelper.getNow();
         replaceSymbol(sb, Vars.DATE_TIME, now);
 
         String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
-        replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
-
         String lowEntityName = StringHelper.lowFirstChar(entityName);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, lowEntityName);
 

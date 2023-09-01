@@ -137,7 +137,38 @@ public interface Generater {
     }
 
     default void replaceSymbol(StringBuilder sb, Vars symbol, String replace) {
+        if (!StringUtils.hasLength(replace))
+            replace = "";
         String oldStr = "{{" + symbol.getVal() + "}}";
         StringHelper.replaceAll(sb, oldStr, replace);
+    }
+
+    /**
+     * 替换模板里的开始到结束部分的内容
+     *
+     * @param builder
+     * @param symbol
+     */
+    default void replaceSymbolAndInner(StringBuilder builder, Vars symbol, String replace) {
+        if (!StringUtils.hasLength(replace))
+            replace = "";
+        String startStr = "{{start-" + symbol.getVal() + "}}";
+        String endStr = "{{end-" + symbol.getVal() + "}}";
+        while (StringHelper.replaceByStartAndEnd(builder, startStr, endStr, replace)) {
+            // 循环到替换失败为止
+        }
+    }
+
+    /**
+     * 替换模板里的开始标志 和 结束标志，中间内容不处理
+     *
+     * @param builder
+     * @param symbol
+     */
+    default void removeSymbol(StringBuilder builder, Vars symbol) {
+        String startStr = "{{start-" + symbol.getVal() + "}}";
+        String endStr = "{{end-" + symbol.getVal() + "}}";
+        StringHelper.replaceAll(builder, startStr, "");
+        StringHelper.replaceAll(builder, endStr, "");
     }
 }

@@ -36,6 +36,12 @@ public class ControllerGenerater implements Generater {
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
         StringBuilder sb = new StringBuilder(getTemplate());
+        // 开启or关闭增删改代码
+        if (generateDto.getModify() != null && !generateDto.getModify()) {
+            replaceSymbolAndInner(sb, Vars.MODIFY_CONTENT, "");
+        } else {
+            removeSymbol(sb, Vars.MODIFY_CONTENT);
+        }
         replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageName());
 
         String now = TimeHelper.getNow();

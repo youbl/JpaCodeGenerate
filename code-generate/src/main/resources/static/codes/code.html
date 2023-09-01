@@ -64,7 +64,7 @@
                 </div>
                 <div style="margin-top: 10px;">
                     <span style="display: inline-block;width:150px; text-align: right">选数据库：</span>
-                    <div style="width: 280px; display: inline-block;">
+                    <div style="width: 680px; display: inline-block;">
                         <multiselect placeholder="请选择数据库" @input="databaseChange" v-model="dbCond.database"
                                      :options="databaseArr"
                                      :multiple="false" :taggable="false" :searchable="true"
@@ -73,7 +73,7 @@
                 </div>
                 <div style="margin-top: 10px;">
                     <span style="display: inline-block;width:150px; text-align: right">表(多选)：</span>
-                    <div style="width: 280px; display: inline-block;">
+                    <div style="width: 680px; display: inline-block;">
                         <multiselect placeholder="请选择表" @input="tableChange" v-model="dbCond.tables"
                                      :options="tableArr"
                                      :multiple="true" :taggable="false" :searchable="true"
@@ -93,6 +93,12 @@
                     </span>
                     <span style="color:blue;">生成的entity类名，不包含这个前缀</span>
                 </div>
+                <div style="margin-top: 10px;">
+                    <span style="display: inline-block;width:150px;text-align: right">增删改代码生成：</span>
+                    <span style="display: inline-block;width:150px;">
+                        <el-checkbox v-model="codeCond.modify"></el-checkbox>
+                    </span>
+                </div>
                 <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
                     <button v-show="false" @click="generateCodeJpa">生成JPA文件</button>
                     <el-button type="primary" @click="generateMybatisCodePreview" size="medium" icon="el-icon-view">
@@ -102,7 +108,10 @@
                         下载MybatisPlus文件
                     </el-button>
                     <a v-show="codeLink" :href="codeLink">如未自动下载，点这里</a>
-                    <span v-show="codeGenerateTime">生成时间:{{codeGenerateTime}}</span>
+                    <span v-show="codeGenerateTime">生成时间:{{codeGenerateTime}}</span>&nbsp;
+                    <el-button @click="location.reload()" size="medium" icon="el-icon-refresh">
+                        刷新
+                    </el-button>
                 </div>
                 <div v-show="codeDesc" style="color:red;text-align: center; vertical-align: bottom; margin-top: 10px;">
                     {{codeDesc}}
@@ -156,8 +165,9 @@
                 tables: [],
             },
             codeCond: {
-                packageName: 'cn.beinet.codeGenerate',
+                packageName: '',
                 removePrefix: 't_cb_',
+                modify: true,
                 columnArr: [],
             },
             databaseArr: [], // 用于下拉列表
@@ -238,13 +248,15 @@
                 this.codeGenerateTime = '';
                 this.codeDesc = '';
 
-                this.codeCond.packageName = this.codeCond.packageName.replaceAll(/;/g, '');
+                this.codeCond.packageName = this.codeCond.packageName
+                    .replaceAll(/[\s;]/g, '')
+                    .replaceAll(/\.+$/g, '');
                 if (!this.codeCond.packageName) {
                     alert('请输入包名');
                     return false;
                 }
-                if (!this.codeCond || this.codeCond.columnArr.length === 0) {
-                    alert('请选择表');
+                if (!this.codeCond.columnArr || this.codeCond.columnArr.length === 0) {
+                    alert('请选择库和表');
                     return false;
                 }
                 return true;

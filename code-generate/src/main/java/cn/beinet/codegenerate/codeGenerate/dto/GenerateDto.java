@@ -20,6 +20,7 @@ public class GenerateDto {
     private String database;
     private ColumnDto[] columnArr;
     private String removePrefix;
+    private Boolean modify;
 
     public Map<String, List<ColumnDto>> getTableMap() {
         if (columnArr == null || columnArr.length == 0)
