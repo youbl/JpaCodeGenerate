@@ -23,11 +23,11 @@
         <el-form-item label="密码" prop="beinetPwd" label-width="200px">
             <el-input v-model="login.beinetPwd" placeholder="请输入" show-password></el-input>
         </el-form-item>
-        <!--        <el-form-item label="验证码" prop="imgCode" label-width="200px" style="text-align: left">-->
-        <!--            <el-input v-model="login.imgCode" placeholder="请输入图形验证码" maxlength="6" style="width:50%"></el-input>-->
-        <!--            <img :src="imgCodeBase64" style="cursor: pointer; height: 30px; vertical-align: middle"-->
-        <!--                 @click="getImgCode"/>-->
-        <!--        </el-form-item>-->
+        <el-form-item label="验证码" prop="beinetCode" label-width="200px" style="text-align: left">
+            <el-input v-model="login.beinetCode" placeholder="请输入图形验证码" maxlength="6" style="width:50%"></el-input>
+            <img :src="beinetCodeBase64" style="cursor: pointer; height: 30px; vertical-align: middle"
+                 @click="getBeinetCode"/>
+        </el-form-item>
         <div>
             <el-button icon="el-icon-success" type="primary" @click="doLogin('loginForm')">登 录</el-button>
             <span style="color:red; font-weight: bold">请使用公司账号登录</span>
@@ -41,12 +41,12 @@
         data: function () {
             return {
                 env: '',
-                imgCodeBase64: '/favicon.ico',
+                beinetCodeBase64: '/favicon.ico',
                 login: {
                     beinetUser: '',
                     beinetPwd: '',
-                    imgSn: '',
-                    imgCode: '',
+                    beinetCodeSn: '',
+                    beinetCode: '',
                     beinetRemember: 1, // 用于后台记住登录状态
                 },
                 rulesLogin: {
@@ -58,9 +58,9 @@
                         {required: true, message: '密码不能为空', trigger: 'blur'},
                         {min: 5, max: 30, message: '密码长度为5~30个字符', trigger: 'blur'},
                     ],
-                    // imgCode: [
-                    //     {required: true, message: '图形验证码不能为空', trigger: 'blur'},
-                    // ],
+                    beinetCode: [
+                        {required: true, message: '图形验证码不能为空', trigger: 'blur'},
+                    ],
                 },
             }
         },
@@ -68,7 +68,7 @@
         },
         created: function () {
             this.enterLogin()
-            //this.getImgCode();
+            this.getBeinetCode();
         },
         computed: {},
         methods: {
@@ -81,17 +81,16 @@
                     }
                 }
             },
-            // getImgCode: function () {
-            //     return;
-            //     let url = BASE_URL + 'validcode/img';
-            //     return axios.get(url).then(response => {
-            //         if (!response || !response.data || !response.data.sn) {
-            //             return alert('获取图形验证码失败');
-            //         }
-            //         this.imgCodeBase64 = "data:image/jpg;base64," + response.data.img;
-            //         this.login.imgSn = response.data.sn;
-            //     }).catch(error => this.ajaxError(error));
-            // },
+            getBeinetCode: function () {
+                let url = BASE_URL + 'login/imgcode';
+                return axios.get(url).then(response => {
+                    if (!response || !response.data || !response.data.codeSn) {
+                        return alert('获取图形验证码失败');
+                    }
+                    this.beinetCodeBase64 = "data:image/jpg;base64," + response.data.codeBase64;
+                    this.login.beinetCodeSn = response.data.codeSn;
+                }).catch(error => this.ajaxError(error));
+            },
             doLogin: function (form) {
                 this.$refs[form].validate(valid => {
                     if (!valid)
@@ -100,18 +99,20 @@
                     // 默认登录使用的是form形式，因此要用Qs转换一下
                     return axios.post(url, Qs.stringify(this.login)).then(response => {
                         if (response.data.ret && response.data.ret !== 200) {
+                            this.getBeinetCode();
                             alert('登录失败 ' + response.data.msg);
                             return;
                         }
                         let goUrl = 'index.html';
                         top.location.href = goUrl;
                     }).catch(error => {
-                        //this.getImgCode();
+                        this.getBeinetCode();
                         this.ajaxError(error);
                     });
                 });
             },
             ajaxError: function (error) {
+                this.getBeinetCode();
                 if (error.response && error.response.data) {
                     console.log(JSON.stringify(error.response.data));
                     let msg = error.response.data['msg'];

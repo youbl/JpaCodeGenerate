@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.configs;
 
+import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.logins.Validator;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
@@ -66,6 +67,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final List<Validator> validatorList;
+    private final ImgCodeService codeService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -130,6 +132,12 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      * @param response 响应上下文
      */
     private void processLoginRequest(HttpServletRequest request, HttpServletResponse response) {
+        if (!validateCode(request)) {
+            addToken("", response);
+            endResponse(request, response, "验证码错误");
+            return;
+        }
+
         String username = request.getParameter(USER_PARA);
         String pwd = request.getParameter(PWD_PARA);
         log.debug("用户名: {}, 准备登录", username);
@@ -144,6 +152,12 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         log.debug("用户名: {}, ldap认证成功", username);
         addToken(username, response);
         redirect(response, "index.html");
+    }
+
+    private boolean validateCode(HttpServletRequest request) {
+        String sn = request.getParameter("beinetCodeSn");
+        String code = request.getParameter("beinetCode");
+        return (codeService.validImgCode(sn, code));
     }
 
     /**
