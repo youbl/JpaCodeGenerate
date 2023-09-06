@@ -91,7 +91,7 @@
             handleTabClick: function (tab, event) {
             },
             getLoginUser: function () {
-                let url = BASE_URL + 'loginuser';
+                let url = BASE_URL + 'currentuser';
                 return axios.get(url).then(response => {
                     this.loginuser = response.data;
                 }).catch(error => {

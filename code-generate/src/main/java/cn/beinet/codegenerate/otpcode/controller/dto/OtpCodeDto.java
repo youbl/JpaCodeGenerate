@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * 新类
@@ -26,12 +27,20 @@ public class OtpCodeDto {
     /**
      * 当前时间，生成的OtpCode
      */
-    private String code;
+    private Map<String, String> code;
 
     /**
      * 密钥，仅用于保存，不返回
      */
     private String secure;
+    /**
+     * 备注
+     */
+    private String memo;
+    /**
+     * 对应的网址
+     */
+    private String url;
 
     /**
      * 这个标题数据，保存时间

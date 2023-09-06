@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class ControllerLogFilter extends OncePerRequestFilter {
-    static Pattern patternRequest = Pattern.compile("(?i)^/(actuator|loginuser|logs)/?|" +
+    static Pattern patternRequest = Pattern.compile("(?i)^/(actuator|currentuser|logs)/?|" +
             "\\.(ico|jpg|png|bmp|txt|xml|html?|js|css|ttf|woff|map|svg)$");
 
     private final RequestLogService logService;

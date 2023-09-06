@@ -29,7 +29,7 @@ public class LoginController {
 
 
     // 返回当前登录用户
-    @GetMapping("loginuser")
+    @GetMapping("currentuser")
     public String getLoginUser(AuthDetails authDetails) {
         return authDetails.getAccount();
     }

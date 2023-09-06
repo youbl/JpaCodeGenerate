@@ -5,6 +5,8 @@ CREATE TABLE `otpcode` (
   `username` varchar(20) NOT NULL DEFAULT '' COMMENT '归属用户',
   `title` varchar(50) NOT NULL DEFAULT '' COMMENT '该code的说明',
   `secure` varchar(500) NOT NULL DEFAULT '' COMMENT 'AES加密后的OtpCode的密钥',
+  `url` varchar(500) NOT NULL DEFAULT '' COMMENT '网址',
+  `memo` varchar(3000) NOT NULL DEFAULT '' COMMENT '备注',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

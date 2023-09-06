@@ -56,6 +56,8 @@ public class OtpCodeController {
         Assert.notNull(dto, "信息不能为空");
         Assert.hasLength(dto.getTitle(), "标题不能为空");
         Assert.hasLength(dto.getSecure(), "密钥不能为空");
+        Assert.notNull(dto.getUrl(), "url不能为null");
+        Assert.notNull(dto.getMemo(), "备注不能为null");
 
         String username = loginInfo == null ? null : loginInfo.getAccount();
         Assert.notNull(username, "未登录");

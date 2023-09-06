@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OtpCode服务类，懒得引用ORM了
@@ -38,7 +39,7 @@ public class OtpCodeService {
         for (OtpCode item : codes) {
             // 解密密钥后，进行code计算生成
             String descryptedSecure = descrypt(item.getSecure());
-            String code = OtpCodeGeneratorTool.countCodeStr(descryptedSecure);
+            Map<String, String> code = OtpCodeGeneratorTool.countCodeStr(descryptedSecure, 5);
 
             OtpCodeDto dto = new OtpCodeDto()
                     .setId(item.getId())
@@ -46,6 +47,8 @@ public class OtpCodeService {
                     .setCreateTime(item.getCreate_time())
                     .setTitle(item.getTitle())
                     .setUsername(item.getUsername())
+                    .setUrl(item.getUrl())
+                    .setMemo(item.getMemo())
                     .setSecure(""); // 密钥默认不返回
             ret.add(dto);
         }
@@ -61,11 +64,13 @@ public class OtpCodeService {
     public int saveOtpCode(OtpCodeDto dto) {
         String encryptedPwd = encrypt(dto.getSecure());
 
-        String insertSql = "INSERT INTO otpcode (username,title,secure)VALUES(?,?,?)";
+        String insertSql = "INSERT INTO otpcode (username,title,secure,url,memo)VALUES(?,?,?,?,?)";
         return jdbcTemplate.update(insertSql, new Object[]{
                 dto.getUsername(),
                 dto.getTitle(),
                 encryptedPwd,
+                dto.getUrl(),
+                dto.getMemo(),
         });
     }
 

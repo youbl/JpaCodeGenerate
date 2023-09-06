@@ -16,5 +16,7 @@ public class OtpCode {
     private String username;
     private String title;
     private String secure;
+    private String memo;
+    private String url;
     private LocalDateTime create_time;
 }

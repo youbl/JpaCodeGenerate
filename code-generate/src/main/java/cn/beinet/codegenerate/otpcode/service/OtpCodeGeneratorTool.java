@@ -6,6 +6,12 @@ import org.springframework.util.StringUtils;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OtpCodeGeneratorTool {
     static long second_per_size = 30L;// 每次时间长度，默认30秒
@@ -34,27 +40,43 @@ public class OtpCodeGeneratorTool {
     /**
      * 获取指定密钥的otpcode
      *
-     * @param secret 用户绑定的secretKey
-     * @return 生成的当前时间的code
+     * @param secret  用户绑定的secretKey
+     * @param codeNum 生成几个code返回
+     * @return 生成的与时间关联的code
      */
-    public static String countCodeStr(String secret) {
-        int code = countCode(secret);
-        return addZero(code, 6);
+    public static Map<String, String> countCodeStr(String secret, int codeNum) {
+        Map<String, String> ret = new HashMap<>();
+        int winSize = codeNum / 2;
+        long timeSecond = System.currentTimeMillis() / 1000L;
+        for (int i = -winSize; i <= winSize; ++i) {
+            long countTime = timeSecond + (i * second_per_size);
+            int code = countCode(secret, countTime);
+            String strCode = addZero(code, 6);
+            ret.put(String.valueOf(countTime), strCode);
+        }
+        return ret;
+    }
+
+    private static String tsToDateStr(long timeSecond) {
+        Instant instant = Instant.ofEpochSecond(timeSecond);
+        ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+        LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     /**
      * 获取指定密钥的otpcode
      *
-     * @param secret 用户绑定的secretKey
+     * @param secret     用户绑定的secretKey
+     * @param timeSecond 秒级时间戳
      * @return 生成的当前时间的code
      */
-    public static int countCode(String secret) {
+    public static int countCode(String secret, long timeSecond) {
         Base32 codec = new Base32();
         byte[] decodedKey = codec.decode(secret);
         // convert unix msec time into a 30 second "window"
         // this is per the TOTP spec (see the RFC for details)
-        long timeMsec = System.currentTimeMillis();
-        long t = (timeMsec / 1000L) / second_per_size;
+        long t = timeSecond / second_per_size;
         return verifyCode(decodedKey, t);
     }
 
