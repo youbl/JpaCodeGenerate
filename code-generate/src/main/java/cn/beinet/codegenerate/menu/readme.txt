@@ -4,6 +4,7 @@
 /* 菜单分组表，区分不同的大组，如内部站点、外部站点 */
 CREATE TABLE `admin_menu_group` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+  `saasId` VARCHAR(20) NOT NULL DEFAULT '' COMMENT 'SaaS应用ID',
   `title` varchar(100) NOT NULL DEFAULT '' COMMENT '标题',
   `url` varchar(1000) NOT NULL DEFAULT '' COMMENT '链接',
   `openMode` varchar(20) NOT NULL DEFAULT '_blank' COMMENT '打开方式',
@@ -12,17 +13,19 @@ CREATE TABLE `admin_menu_group` (
   `createDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updateDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unq_title` (`title`)
+  UNIQUE KEY `unq_title_saas` (`title`,`saasId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单分组表';
 
-insert  into `admin_menu_group`(`title`,`url`,`openMode`,`show`,`sort`) values
-('内部系统导航','','_blank',1,97),
-('运维系统导航','','_blank',1,98),
-('外部站点','','_blank',1,99);
+insert  into `admin_menu_group`(`saasId`,`title`,`url`,`openMode`,`show`,`sort`) values
+('hub','内部系统导航','','_blank',1,97),
+('hub','发布对比相关','','_blank',1,98),
+('hub','日志排障相关','','_blank',1,99),
+('hub','外部站点','','_blank',1,99);
 
 /* 主菜单表，区分不同的平台，如git站点（每个项目在子菜单表）、语雀站点、K8S站点等 */
 CREATE TABLE `admin_menus` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+  `saasId` VARCHAR(20) NOT NULL DEFAULT '' COMMENT 'SaaS应用ID',
   `groupId` int(11) NOT NULL DEFAULT '0' COMMENT '分组ID',
   `img` varchar(200) NOT NULL DEFAULT '' COMMENT 'icon图片地址',
   `url` varchar(1000) NOT NULL DEFAULT '' COMMENT '链接',
@@ -36,12 +39,13 @@ CREATE TABLE `admin_menus` (
   `createDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updateDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unq_title` (`title`)
+  UNIQUE KEY `unq_title_saas` (`title`,`saasId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='主菜单表';
 
-/* 子菜单表，每个平台下的细站点，如A项目在git站的地址，B项目在语雀站的地址 */
+/* 子菜单表，每个平台下的细站点，如A项目在git站的地址，B项目在语雀站的地址，在主菜单上浮层弹窗显示 */
 CREATE TABLE `admin_submenus` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+  `saasId` VARCHAR(20) NOT NULL DEFAULT '' COMMENT 'SaaS应用ID',
   `menuId` int(11) NOT NULL DEFAULT '0' COMMENT '所属主菜单ID-admin_menus表主键',
   `url` varchar(1000) NOT NULL DEFAULT '' COMMENT '链接',
   `title` varchar(100) NOT NULL DEFAULT '' COMMENT '标题',

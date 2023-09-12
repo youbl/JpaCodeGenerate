@@ -29,25 +29,26 @@ public class MenuService {
      *
      * @return 菜单列表
      */
-    public List<MenuGroupDto> selectGroupWithMenus() {
-        String sql = "SELECT * FROM admin_menu_group a WHERE a.show=1 ORDER BY a.sort, a.id";
-        List<MenuGroupDto> ret = jdbcTemplate.query(sql, new Object[0], new BeanPropertyRowMapper<>(MenuGroupDto.class));
+    public List<MenuGroupDto> selectGroupWithMenus(String saasId) {
+        String sql = "SELECT * FROM admin_menu_group a WHERE a.show=1 AND a.saasId=? ORDER BY a.sort, a.id";
+        List<MenuGroupDto> ret = jdbcTemplate.query(sql, new Object[]{saasId},
+                new BeanPropertyRowMapper<>(MenuGroupDto.class));
         if (ret == null)
             return new ArrayList<>();
 
-        fillMainMenus(ret);
+        fillMainMenus(saasId, ret);
         return ret;
     }
 
     // 填充主菜单
-    private void fillMainMenus(List<MenuGroupDto> data) {
+    private void fillMainMenus(String saasId, List<MenuGroupDto> data) {
         // 先按id进行分组，方便后面查找
         Map<Integer, MenuGroupDto> map = new HashMap<>();
         for (MenuGroupDto item : data) {
             map.put(item.getId(), item);
         }
 
-        List<MenusDto> submenus = selectMainMenuWithSubMenus();
+        List<MenusDto> submenus = selectMainMenuWithSubMenus(saasId);
         for (MenusDto item : submenus) {
             MenuGroupDto parent = map.get(item.getGroupId());
             if (parent == null)
@@ -60,25 +61,26 @@ public class MenuService {
         }
     }
 
-    private List<MenusDto> selectMainMenuWithSubMenus() {
-        String sql = "SELECT * FROM admin_menus a WHERE a.show=1 ORDER BY a.groupId,a.sort,a.id";
-        List<MenusDto> ret = jdbcTemplate.query(sql, new Object[0], new BeanPropertyRowMapper<>(MenusDto.class));
+    private List<MenusDto> selectMainMenuWithSubMenus(String saasId) {
+        String sql = "SELECT * FROM admin_menus a WHERE a.show=1 AND a.saasId=? ORDER BY a.groupId,a.sort,a.id";
+        List<MenusDto> ret = jdbcTemplate.query(sql, new Object[]{saasId},
+                new BeanPropertyRowMapper<>(MenusDto.class));
         if (ret == null)
             return new ArrayList<>();
 
-        fillSubMenus(ret);
+        fillSubMenus(saasId, ret);
         return ret;
     }
 
     // 填充子菜单
-    private void fillSubMenus(List<MenusDto> data) {
+    private void fillSubMenus(String saasId, List<MenusDto> data) {
         // 先按id进行分组，方便后面查找
         Map<Integer, MenusDto> map = new HashMap<>();
         for (MenusDto item : data) {
             map.put(item.getId(), item);
         }
 
-        List<SubmenusDto> submenus = selectSubMenus();
+        List<SubmenusDto> submenus = selectSubMenus(saasId);
         for (SubmenusDto item : submenus) {
             MenusDto parent = map.get(item.getMenuId());
             if (parent == null)
@@ -91,9 +93,10 @@ public class MenuService {
         }
     }
 
-    private List<SubmenusDto> selectSubMenus() {
-        String sql = "SELECT * FROM admin_submenus a WHERE a.show=1 ORDER BY a.menuId,a.sort,a.id";
-        List<SubmenusDto> ret = jdbcTemplate.query(sql, new Object[0], new BeanPropertyRowMapper<>(SubmenusDto.class));
+    private List<SubmenusDto> selectSubMenus(String saasId) {
+        String sql = "SELECT * FROM admin_submenus a WHERE a.show=1 AND a.saasId=? ORDER BY a.menuId,a.sort,a.id";
+        List<SubmenusDto> ret = jdbcTemplate.query(sql, new Object[]{saasId},
+                new BeanPropertyRowMapper<>(SubmenusDto.class));
         if (ret == null)
             return new ArrayList<>();
         return ret;
