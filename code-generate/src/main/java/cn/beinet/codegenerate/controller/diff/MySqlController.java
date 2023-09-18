@@ -61,6 +61,23 @@ public class MySqlController {
         return ret;
     }
 
+
+    /**
+     * 返回所有字段信息
+     *
+     * @return 字段信息
+     */
+    @GetMapping("mysql/columns")
+    public List<ColumnDto> GetMySqlTableColumns(SqlDto dto) {
+        List<ColumnDto> ret = new ArrayList<>();
+        String[] arrTables = dto.getTableName().split(",");
+        ColumnRepository columnRepository = linkInfoService.getRepository(dto);
+        for (String item : arrTables) {
+            ret.addAll(columnRepository.findColumnByTable(dto.getDb(), item));
+        }
+        return ret;
+    }
+
     /**
      * 返回值第一个Map的Key是表名，子Map的key是索引名,Value是建索引语句
      *

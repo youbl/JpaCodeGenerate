@@ -5,8 +5,6 @@
     <title>代码生成器</title>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
-    <script src="../static/unpkg/vue-multiselect.min.js"></script>
-    <link rel="stylesheet" href="../static/unpkg/vue-multiselect.min.css">
     <script src="../static/rowColor.js"></script>
     <script src="../static/qs.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
@@ -44,40 +42,55 @@
     <div class="tab-content">
         <div>
             <div style="float: left;">
-                <div style="margin-top: 15px;">
-                    <span style="display: inline-block;width:150px; text-align: right">数据库IP：</span>
-                    <div style="width: 250px; display: inline-block;">
-                        <el-input v-model="dbCond.dbIp" placeholder="为空使用系统连接串"/>
-                    </div>
-                    <span style="display: inline-block;width:60px; text-align: right">账号：</span>
-                    <div style="width: 200px; display: inline-block;">
-                        <el-input v-model="dbCond.dbUser"/>
-                    </div>
-                    <span style="display: inline-block;width:60px; text-align: right">密码：</span>
-                    <div style="width: 200px; display: inline-block;">
-                        <el-input v-model="dbCond.dbPwd" show-password/>
-                    </div>
-                    <div style="display: inline-block;">
-                        <el-button type="primary" @click="loadDatabases" size="medium">加载数据库
-                        </el-button>
-                    </div>
-                </div>
+                <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+                         style="text-align: left">
+                    <el-form-item label="数据库连接信息" style="font-weight: bold;">
+                        <el-select v-model="selectDbName" filterable placeholder="请选择环境" @change="dbSelected">
+                            <el-option
+                                    v-for="item in sqlConns"
+                                    :key="item.configName"
+                                    :label="item.configName"
+                                    :value="item.configName">
+                            </el-option>
+                        </el-select>
+                        <el-form-item label="IP">
+                            <input type="text" v-model="searchCond.dbTestIp" style="width:240px" :readonly="!isCustom"/>
+                        </el-form-item>
+                        <el-form-item label="用户名">
+                            <input type="text" v-model="searchCond.dbTestUser" style="width:60px"
+                                   :readonly="!isCustom"/>
+                        </el-form-item>
+                        <el-form-item label="密码">
+                            <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"
+                                   :readonly="!isCustom"/>
+                        </el-form-item>
+                    </el-form-item>
+                </el-form>
                 <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:150px; text-align: right">选数据库：</span>
-                    <div style="width: 680px; display: inline-block;">
-                        <multiselect placeholder="请选择数据库" @input="databaseChange" v-model="dbCond.database"
-                                     :options="databaseArr"
-                                     :multiple="false" :taggable="false" :searchable="true"
-                                     :allow-empty="true"></multiselect>
-                    </div>
+                    <span style="display: inline-block;width:150px; text-align: right">数据库：</span>
+                    <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库"
+                               @change="dbChange">
+                        <el-option
+                                v-for="item in dbsTest"
+                                :key="item"
+                                :label="item"
+                                :value="item">
+                        </el-option>
+                    </el-select>
+                    <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
                 </div>
                 <div style="margin-top: 10px;">
                     <span style="display: inline-block;width:150px; text-align: right">表(多选)：</span>
                     <div style="width: 680px; display: inline-block;">
-                        <multiselect placeholder="请选择表" @input="tableChange" v-model="dbCond.tables"
-                                     :options="tableArr"
-                                     :multiple="true" :taggable="false" :searchable="true"
-                                     :allow-empty="true"></multiselect>
+                        <el-select v-model="searchCond.tables" filterable placeholder="请选择表" multiple
+                                   @change="tableChange">
+                            <el-option
+                                    v-for="item in tableList"
+                                    :key="item"
+                                    :label="item"
+                                    :value="item">
+                            </el-option>
+                        </el-select>
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
@@ -122,8 +135,8 @@
         <hr>
         <el-tabs v-model="activeTabName" type="border-card" @tab-click="handleClick">
             <el-tab-pane label="表字段预览" name="fieldsView">
-                <div v-if="dbCond.tables.length && codeCond.columnArr.length">
-                    共{{dbCond.tables.length}}张表，{{codeCond.columnArr.length}}个字段
+                <div v-if="searchCond.tables.length && codeCond.columnArr.length">
+                    共{{searchCond.tables.length}}张表，{{codeCond.columnArr.length}}个字段
                 </div>
                 <el-table
                         :data="codeCond.columnArr"
@@ -150,20 +163,31 @@
     const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
-        components: {
-            Multiselect: window.VueMultiselect.default
-        },
         data: {
             activeTabName: 'fieldsView',
+            selectDbName: '', // 默认选中的数据库实例
+            sqlConns: [
+                // {  // 要求数据结构如下
+                //     configName: '生产-1',
+                //     dbTestIp: '10.0.0.1',
+                //     dbTestUser: 'readonly',
+                //     dbTestPwd: '123456',
+                //     dbTestName: '',
+                // }
+            ],
 
-            dbCond: {
-                dbIp: '',
-                dbPort: '3306',
-                dbUser: '',
-                dbPwd: '',
-                database: '',
+            searchCond: {
+                configName: '',
+                dbTestIp: '',
+                dbTestUser: '',
+                dbTestPwd: '',
+                dbTestName: '',
+                sql: '',
                 tables: [],
             },
+            dbsTest: {},
+            tableList: [],
+
             codeCond: {
                 packageName: '',
                 removePrefix: 't_cb_',
@@ -179,50 +203,112 @@
             codeGenerateTime: '',
             codeDesc: '',
         },
+        computed: {
+            isCustom: function () {
+                return this.selectDbName === '' || this.selectDbName === '自定义';
+            }
+        },
         created: function () {
-            this.loadDatabases();
+            this.loadConnections().then(() => {
+                this.dbSelected();
+            });
         },
         methods: {
             handleClick: function (tab, event) {
                 console.log(tab, event);
             },
-            combineDbPara: function () {
-                return 'ip=' + this.dbCond.dbIp +
-                    '&port=' + this.dbCond.dbPort +
-                    '&user=' + encodeURIComponent(this.dbCond.dbUser) +
-                    '&pwd=' + encodeURIComponent(this.dbCond.dbPwd) +
-                    '&database=' + this.dbCond.database;
-            },
-            loadDatabases: function () {
-                this.dbCond.database = '';
-                this.tableArr = [];
-                let url = BASE_URL + 'codeDb/databases?' + this.combineDbPara();
-                axios.get(url).then((response) => {
-                    if (!response.data || response.data.length <= 0) {
-                        alert('未找到数据库');
-                        return;
+            loadConnections: function () {
+                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('出错:' + response.data.errMsg);
                     }
-                    this.databaseArr = response.data;
-                }).catch(function (error) {
+                    for (let i = 0, j = response.data.length; i < j; i++) {
+                        let item = response.data[i];
+                        this.sqlConns.push({
+                            configName: item.name,
+                            dbTestIp: item.address,
+                            dbTestUser: item.account,
+                            dbTestPwd: '123456',
+                            dbTestName: '',
+                        });
+                    }
+                    this.sqlConns.push({
+                        configName: '自定义',
+                        dbTestIp: '',
+                        dbTestUser: '',
+                        dbTestPwd: '',
+                        dbTestName: '',
+                    });
+                }).catch(error => {
                     this.ajaxError(error);
                 });
             },
+            dbSelected: function () {
+                if (!this.selectDbName && this.sqlConns.length) {
+                    this.selectDbName = this.sqlConns[0].configName;
+                }
+                for (let i = 0, j = this.sqlConns.length; i < j; i++) {
+                    if (this.sqlConns[i].configName === this.selectDbName) {
+                        this.copyAtts(this.sqlConns[i]);
+                        if (this.searchCond.configName === '自定义')
+                            return;
+                        this.loadDbs();
+                        break;
+                    }
+                }
+            },
+            copyAtts: function (sqlConn) {
+                // 修复sql无法设置或只读的bug
+                for (const prop in sqlConn) {
+                    Vue.set(this.searchCond, prop, sqlConn[prop]);
+                }
+            },
+            dbChange: function () {
+                this.loadTables();
+            },
+            loadDbs: function () {
+                this.dbsTest = {};
+                let currentIp = this.searchCond.dbTestIp;
+                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara();
+                return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert(currentIp + '出错:\n' + response.data.errMsg);
+                    }
+                    this.dbsTest = response.data;
+                    if (this.dbsTest.length > 1) {
+                        this.searchCond.dbTestName = this.dbsTest[0];
+                        this.loadTables();
+                    }
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+
+            combineDbPara: function () {
+                if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
+                    alert('请输入数据库IP/用户/密码');
+                    throw new Error('请输入数据库IP/用户/密码');
+                }
+                return 'ip=' + this.searchCond.dbTestIp +
+                    '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd) +
+                    '&name=' + encodeURIComponent(this.searchCond.configName) +
+                    '&db=' + encodeURIComponent(this.searchCond.dbTestName);
+            },
+
             databaseChange: function () {
                 this.tableArr = [];
                 this.loadTables();
             },
             loadTables: function () {
-                this.tableArr = [];
-                this.codeCond.columnArr = [];
-
-                let url = BASE_URL + 'codeDb/tables?' + this.combineDbPara();
-                axios.get(url).then((response) => {
-                    if (!response.data || response.data.length <= 0) {
-                        alert(para.database + '数据库，没有找到表.');
-                        return;
-                    }
-                    this.tableArr = response.data;
-                }).catch(function (error) {
+                if (!this.searchCond.dbTestName)
+                    return;
+                this.tableList = [];
+                let url = BASE_URL + 'mysql/tableNames?' + this.combineDbPara();
+                return axios.get(url).then(response => {
+                    this.tableList = response.data;
+                }).catch(error => {
                     this.ajaxError(error);
                 });
             },
@@ -230,12 +316,13 @@
                 this.loadColumns();
             },
             loadColumns: function () {
+                this.codeFiles = [];
                 this.codeCond.columnArr = [];
-                let url = BASE_URL + 'codeDb/columns?' + this.combineDbPara();
-                url += '&tables=' + this.dbCond.tables.join(',');
+                let url = BASE_URL + 'mysql/columns?' + this.combineDbPara();
+                url += '&tableName=' + this.searchCond.tables.join(',');
                 axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
-                        alert(para.database + '数据库，没有找到字段.');
+                        alert('该数据库，没有找到字段.');
                         return;
                     }
                     this.codeCond.columnArr = response.data;
