@@ -377,6 +377,11 @@
                 return ret;
             },
             loadDbs: function (isProd) {
+                if (isProd) {
+                    this.dbsProd = {};
+                } else {
+                    this.dbsTest = {};
+                }
                 let para = this.combineDbPara(isProd);
                 let url = BASE_URL + 'mysql/databases?' + para;
                 return axios.get(url).then(response => {

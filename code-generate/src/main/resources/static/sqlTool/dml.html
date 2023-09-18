@@ -156,6 +156,7 @@
                     '&name=' + encodeURIComponent(this.searchCond.configName);
             },
             loadDbs: function () {
+                this.dbsTest = {};
                 let currentIp = this.searchCond.dbTestIp;
                 let url = BASE_URL + 'mysql/databases?' + this.combineDbPara();
                 return axios.get(url).then(response => {

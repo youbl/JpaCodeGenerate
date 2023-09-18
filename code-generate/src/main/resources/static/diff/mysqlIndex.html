@@ -353,6 +353,11 @@
 
             // 加载数据库列表
             loadDbs: function (isProd) {
+                if (isProd) {
+                    this.dbsProd = {};
+                } else {
+                    this.dbsTest = {};
+                }
                 let url = BASE_URL + 'mysql/databases?' + this.combineDbPara(isProd);
                 return axios.get(url).then(response => {
                     if (isProd) {
