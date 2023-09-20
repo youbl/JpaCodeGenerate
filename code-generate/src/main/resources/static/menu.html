@@ -6,6 +6,7 @@
     <script type="text/javascript" src="./static/unpkg/vue.min.js"></script>
     <script type="text/javascript" src="./static/unpkg/elemeIndex.js"></script>
     <script type="text/javascript" src="./static/unpkg/axios.min.js"></script>
+    <script type="text/javascript" src="./static/common.js"></script>
 
     <link rel="stylesheet" href="./res/unpkg/elemeIndex.css">
     <style>
@@ -127,7 +128,8 @@
         <div class="container-header">{{menuGroup.title}}</div>
         <div class="container-body">
             <div class="item-block" v-for="mainMenu in menuGroup.menus">
-                <a :href="mainMenu.url?mainMenu.url:'javascript:void(0)'" :target="mainMenu.url?'_blank':'_self'" v-popover="'popover' + mainMenu.id">
+                <a :href="mainMenu.url?mainMenu.url:'javascript:void(0)'" :target="mainMenu.url?'_blank':'_self'"
+                   v-popover="'popover' + mainMenu.id">
                     <div class="item-top">
                         <div class="item-logo"><img v-if="mainMenu.img" :src="mainMenu.img"></div>
                         <div class="item-body">
@@ -162,12 +164,15 @@
             }
         },
         mounted: function () {
-            this.loadMenus();
+            let saasId = getQueryString('id');
+            this.loadMenus(saasId);
         },
         computed: {},
         methods: {
-            loadMenus: function () {
+            loadMenus: function (saasId) {
                 let url = BASE_URL + 'menuGroup';
+                if (saasId)
+                    url += '?saasId=' + saasId;
                 axios.get(url).then(response => {
                     this.menuGroupList = response.data;
                 }).catch(error => this.ajaxError(error));

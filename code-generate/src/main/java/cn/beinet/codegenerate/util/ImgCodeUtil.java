@@ -106,7 +106,7 @@ public class ImgCodeUtil {
             fillImage(graphic);     // 填充随机底色
             drawTxt(graphic, text);
             drawLine(graphic, 5, 10); // 画随机线
-            drawPoint(graphic, 100, 200); // 画随机点
+            drawPoint(graphic, 20, 100); // 画随机点
             return image;
         } finally {
             if (graphic != null)
