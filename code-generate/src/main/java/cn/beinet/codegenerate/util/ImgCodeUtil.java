@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class ImgCodeUtil {
 
-    private int width = 100;           //验证码图片的长和宽
+    private int width = 120;           //验证码图片的长和宽
     private int height = 40;
     //private String[] fontNames = {"宋体", "华文楷体", "黑体", "微软雅黑", "楷体_GB2312"};   //字体数组
     //字体数组
@@ -127,10 +127,12 @@ public class ImgCodeUtil {
             graphic.setFont(randomFont());           //设置随机字体
             graphic.setColor(randomColor());         //设置随机颜色
 
-            float x = i * 1.0F * width / 4;   //定义字符的x坐标
+            // rndX用于定义随机起始位置差值
+            int rndX = i > 0 ? getRnd().nextInt(-3, 4) : 3;
+            int x = (int) (i * 1.0F * width / 4) + rndX;   //定义字符的x坐标
             // y坐标，定义为随机高度
-            int y = height - getRnd().nextInt(3, 20);
-
+            int y = height - getRnd().nextInt(8, 20);
+            // System.out.println(x + "---" + y);
             {
                 // 用于倾斜绘制的对象
                 AffineTransform transform = new AffineTransform();
