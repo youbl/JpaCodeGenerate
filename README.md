@@ -1,7 +1,11 @@
 # 快速开始
-- 用IDEA打开pom.xml，然后构建项目
-- 把target\code-generate-0.0.1-SNAPSHOT.jar 和 target\lib目录，复制到服务器上，假设是`/data/app/`
-- 在服务器上启动，命令参考：`/usr/java/jdk1.8.0_261/bin/java -Dserver.port=8808 -Dspring.profiles.active=prod -Dloader.path=/data/app/lib -jar /data/app/code-generate-0.0.1-SNAPSHOT.jar`
+- 创建MySQL数据库，在新数据库里建表，使用`ops.sql`
+- 用IDEA打开pom.xml，修改application.yml里的数据库连接信息、LDAP认证服务器信息  
+注：如没有LDAP服务，可以修改代码`LdapLoginFilter.validateFromLDAP`,在那边添加你的认证逻辑
+- 然后点IDEA界面右侧：`Maven->Lifecycle->package`构建项目
+- 把target目录下 code-generate-0.0.1-SNAPSHOT.jar 和 lib，复制到服务器上，假设复制到这个目录下`/data/app/`
+- 在服务器上启动，命令参考：  
+`/usr/java/jdk-11/bin/java -Dserver.port=8808 -Dspring.profiles.active=prod -Dloader.path=/data/app/lib -jar /data/app/code-generate-0.0.1-SNAPSHOT.jar`
 - 启动成功后，访问：`http://服务器IP:8808/index.html` 即可
 
 
@@ -16,12 +20,16 @@
 - dto
 - entity与dto互转的mapstruct-mapper转换类
 - 基于VUE2.0的前端html页面  
+- 注意：**表主键请使用int或long类型的id**
 
 生成说明：
 - 点击页面的`下载文件`, 并解压
 - 解压的文件，除html，其它文件复制到你的SpringBoot项目对应的java目录下
 - html复制到你的SpringBoot项目的`resources\static`目录下
 - 复制项目根目录下的`res.zip`，就是html页面依赖的js、css、字体等文件，解压到`resources\static`目录下
+- 在你的项目pom.xml里添加mapstruct的如下2个引用，并进行maven构建：
+  * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
+  * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct-processor</artifactId></dependency>
 - OK，可以启动你的项目，访问生成的html验证了
 
 操作界面：
@@ -64,3 +72,19 @@ todo: 未完成
 
 演示界面：
 ![image](https://github.com/youbl/JpaCodeGenerate/blob/master/demo.jpg?raw=true)
+
+## Redis查询工具
+在线的Redis连接查询工具。  
+用于一些无法开放端口的Redis查询，只能输入key键名，进行查询，不支持info之外的其它命令操作。  
+注：输入key后，该工具会自动判断key的类型，是String还是Hash、Set，并自动按对应的结构进行展示。
+
+演示界面：
+![image](https://github.com/youbl/JpaCodeGenerate/blob/master/demo_redis.png?raw=true)
+
+## OTP-Code保存和生成工具
+基于安全，现在很多平台或应用，都会在输入账号密码后，要求进行二次认证，就是使用OTP-Code,  
+这个工具，可以帮你保存生成二次认证code的密钥，并与登录用户关联，加密后入库。  
+注：界面上每次会生成5个code，理论上都是可以用的，因为一般平台在验证时，通常会对比最近的多个验证码。
+
+演示界面：
+![image](https://github.com/youbl/JpaCodeGenerate/blob/master/demo_otp.png?raw=true)
