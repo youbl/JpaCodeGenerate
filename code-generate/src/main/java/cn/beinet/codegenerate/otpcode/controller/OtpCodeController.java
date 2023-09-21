@@ -34,14 +34,29 @@ public class OtpCodeController {
     /**
      * 返回当前登录用户的所有实时otpcode
      *
+     * @param codeNum   要生成的验证码个数,默认3
      * @param loginInfo 登录用户
      * @return 列表
      */
     @GetMapping("list")
-    public List<OtpCodeDto> getCode(AuthDetails loginInfo) {
+    public List<OtpCodeDto> getCode(@RequestParam(required = false) int codeNum, AuthDetails loginInfo) {
         String username = loginInfo == null ? null : loginInfo.getAccount();
         Assert.hasLength(username, "未登录");
-        return otpCodeService.getOtpCodesByUser(username);
+        return otpCodeService.getOtpCodesByUser(codeNum, username);
+    }
+
+    /**
+     * 返回指定记录的实时otpcode
+     *
+     * @param codeNum   要生成的验证码个数,默认3
+     * @param loginInfo 登录用户
+     * @return 列表
+     */
+    @GetMapping("list/{id}")
+    public Map<String, String> refreshCode(@RequestParam(required = false) int codeNum, @PathVariable int id, AuthDetails loginInfo) {
+        String username = loginInfo == null ? null : loginInfo.getAccount();
+        Assert.hasLength(username, "未登录");
+        return otpCodeService.getOtpCodesById(id, codeNum, username);
     }
 
     /**

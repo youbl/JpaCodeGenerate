@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,16 +31,27 @@ public class OtpCodeService {
      * @param username 用户
      * @return code清单
      */
-    public List<OtpCodeDto> getOtpCodesByUser(String username) {
+    public Map<String, String> getOtpCodesById(int id, int codeNum, String username) {
+        OtpCode code = getRecordById(id);
+        if (code == null || !username.equals(code.getUsername()))
+            return new HashMap<>();
+        return countCode(code.getSecure(), codeNum);
+    }
+
+    /**
+     * 根据用户名，读取并生成otpcode清单
+     *
+     * @param username 用户
+     * @return code清单
+     */
+    public List<OtpCodeDto> getOtpCodesByUser(int codeNum, String username) {
         List<OtpCode> codes = getSavedRecord(username);
         if (codes == null || codes.size() <= 0)
             return new ArrayList<>();
 
         List<OtpCodeDto> ret = new ArrayList<>(codes.size());
         for (OtpCode item : codes) {
-            // 解密密钥后，进行code计算生成
-            String descryptedSecure = descrypt(item.getSecure());
-            Map<String, String> code = OtpCodeGeneratorTool.countCodeStr(descryptedSecure, 5);
+            Map<String, String> code = countCode(item.getSecure(), codeNum);
 
             OtpCodeDto dto = new OtpCodeDto()
                     .setId(item.getId())
@@ -101,6 +113,12 @@ public class OtpCodeService {
 
         String secure = descrypt(codeObj.getSecure());
         return OtpCodeGeneratorTool.getQRBarcode(codeObj.getTitle(), username, secure);
+    }
+
+    private Map<String, String> countCode(String secure, int codeNum) {
+        // 解密密钥后，进行code计算生成
+        String descryptedSecure = descrypt(secure);
+        return OtpCodeGeneratorTool.countCodeStr(descryptedSecure, codeNum);
     }
 
     /**

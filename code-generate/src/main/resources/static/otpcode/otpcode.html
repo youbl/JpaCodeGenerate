@@ -28,11 +28,12 @@
 <div id="divApp">
     <el-form ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
-        当前登录用户: {{loginuser}}
-        <el-button type="primary" icon="el-icon-save" @click="savedSecureShow=true">添加密钥</el-button>
+        当前登录用户: <span style="color: red; font-weight: bold">{{loginuser}}</span> |
+        生成code数:<input type="text" v-model="codeNum" style="width: 30px"/>
         <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
         <span style="padding-left:20px;"
               v-show="resultData.length">请求耗时: {{costTime}}ms, 已存密钥数: {{resultData.length}}</span>
+        <el-button type="primary" icon="el-icon-save" @click="savedSecureShow=true">添加密钥</el-button>
     </el-form>
     <br>
 
@@ -45,7 +46,7 @@
               :data="resultData"
               :header-row-class-name="'tableHeader'">
         <el-table-column align="center" label="序号" type="index" width="80"></el-table-column>
-        <el-table-column label="归属用户" sortable property="username" width="120"></el-table-column>
+        <el-table-column label="归属" sortable property="username" width="120"></el-table-column>
         <el-table-column label="网址"
                          sortable
                          sort-by="url">
@@ -53,7 +54,7 @@
                 <a :href="scope.row['url']" target="_blank">{{scope.row['url']}}</a>
             </template>
         </el-table-column>
-        <el-table-column label="说明" sortable property="title" width="120"></el-table-column>
+        <el-table-column label="说明" sortable property="title" width="150"></el-table-column>
         <el-table-column label="时间戳: Code" width="360">
             <template slot-scope="scope">
                 <div v-for="(value, key, index) in scope.row['code']">{{key}}({{getStrFromTimestamp(key)}}):
@@ -62,11 +63,13 @@
             </template>
         </el-table-column>
         <el-table-column label="备注" sortable property="memo" width="200"></el-table-column>
-        <el-table-column label="入库时间" sortable property="createTime" width="110"></el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="入库" sortable property="createTime" width="100"></el-table-column>
+        <el-table-column label="操作" width="120">
             <template slot-scope="scope">
-                <el-button type="primary" @click="showQRCode(scope.row)">导出</el-button>
-                <el-button @click="deleteSecure(scope.row)">删除</el-button>
+                <el-link type="primary" @click="getItemSecure(scope.row)">刷新</el-link>
+
+                <el-link type="warning" @click="showQRCode(scope.row)">导出</el-link>
+                <el-link type="danger" @click="deleteSecure(scope.row)">删除</el-link>
             </template>
         </el-table-column>
     </el-table>
@@ -125,6 +128,7 @@
             loginuser: '',
             loading: false,
 
+            codeNum: 3,
             savedSecureShow: false,
             saveData: {
                 title: '',
@@ -156,12 +160,23 @@
                 });
             },
             getMySecure: function () {
-                let url = BASE_URL + 'otpcode/list';
+                let url = BASE_URL + 'otpcode/list?codeNum=' + this.codeNum;
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
                     }
                     this.resultData = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            getItemSecure: function (row) {
+                let url = BASE_URL + 'otpcode/list/' + row.id + '?codeNum=' + this.codeNum;
+                return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert('出错:\n' + response.data.errMsg);
+                    }
+                    row.code = response.data;
                 }).catch(error => {
                     this.ajaxError(error);
                 });
