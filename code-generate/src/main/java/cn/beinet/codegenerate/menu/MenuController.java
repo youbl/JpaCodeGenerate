@@ -24,13 +24,13 @@ public class MenuController {
     /**
      * 获取指定SaaS ID下，所有的菜单树返回
      *
-     * @param saasId SaaS ID，默认值hub
+     * @param saasId SaaS ID，默认值ml
      * @return 菜单树
      */
     @GetMapping("/menuGroup")
     public List<MenuGroupDto> findAllForShow(@RequestParam(required = false) String saasId) {
         if (!StringUtils.hasLength(saasId)) {
-            saasId = "hub";
+            saasId = "ml";
         }
         return menuService.selectGroupWithMenus(saasId);
     }

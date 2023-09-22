@@ -17,10 +17,10 @@ CREATE TABLE `admin_menu_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单分组表';
 
 insert  into `admin_menu_group`(`saasId`,`title`,`url`,`openMode`,`show`,`sort`) values
-('hub','内部系统导航','','_blank',1,97),
-('hub','发布对比相关','','_blank',1,98),
-('hub','日志排障相关','','_blank',1,99),
-('hub','外部站点','','_blank',1,99);
+('ml','内部系统导航','','_blank',1,97),
+('ml','发布对比相关','','_blank',1,98),
+('ml','日志排障相关','','_blank',1,99),
+('ml','外部站点','','_blank',1,99);
 
 /* 主菜单表，区分不同的平台，如git站点（每个项目在子菜单表）、语雀站点、K8S站点等 */
 CREATE TABLE `admin_menus` (
