@@ -55,7 +55,7 @@ public class SpringUtil implements ApplicationContextAware {
     /**
      * get bean
      *
-     * @param name bean名
+     * @param name  bean名
      * @param clazz bean类型
      * @param <T>   bean类型
      * @return bean
@@ -75,4 +75,13 @@ public class SpringUtil implements ApplicationContextAware {
         return springApplicationContext.getBeansOfType(clazz);
     }
 
+    /**
+     * 读取配置值
+     *
+     * @param key 配置的key
+     * @return 值
+     */
+    public static String getProperty(String key) {
+        return springApplicationContext.getEnvironment().getProperty(key);
+    }
 }

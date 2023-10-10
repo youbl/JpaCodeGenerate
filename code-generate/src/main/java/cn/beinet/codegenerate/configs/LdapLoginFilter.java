@@ -4,7 +4,7 @@ import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.logins.Validator;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
-import cn.beinet.codegenerate.util.StringHelper;
+import cn.beinet.codegenerate.util.TokenHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,8 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -46,13 +44,9 @@ public class LdapLoginFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_INFO = "loginUser";
 
-    // token校验md5的盐值
-    private static final String TOKEN_SALT = "beinet.cn";
-
     // token cookie名
-    private static final String TOKEN_COOKIE_NAME = "beinetUser";
-    // token不同信息的分隔符
-    private static final String TOKEN_SPLIT = ":";
+    @Value("${token.cookie-name:beinetUser}")
+    private String TOKEN_COOKIE_NAME;
 
     // 登录用户名使用的字段名
     private static final String USER_PARA = "beinetUser";
@@ -63,8 +57,6 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     public static final String loginPage = "/login.html";
     // 登录认证地址
     private static final String loginActionPage = "/login";
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final List<Validator> validatorList;
     private final ImgCodeService codeService;
@@ -92,7 +84,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         // 判断cookie是否有效
         String token = RequestHelper.getCookie(TOKEN_COOKIE_NAME, request);
         log.debug("url:{} token: {}", url, token);
-        String loginUser = getLoginUserFromToken(token);
+        String loginUser = TokenHelper.getLoginUserFromToken(token);
         if (!StringUtils.hasLength(loginUser)) {
             log.debug("token无效: {}", token);
             addToken("", response);
@@ -183,61 +175,16 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      * @param response 响应上下文
      */
     private void addToken(String username, HttpServletResponse response) {
-        String now = LocalDateTime.now().format(FORMATTER);
-
         Cookie loginCookie = new Cookie(TOKEN_COOKIE_NAME, "");
         loginCookie.setPath("/");
         if (username.isEmpty()) {
             loginCookie.setMaxAge(0);
         } else {
             loginCookie.setMaxAge(7 * 24 * 3600);
-            String token = buildToken(username, now);
+            String token = TokenHelper.buildToken(username);
             loginCookie.setValue(token);
         }
         response.addCookie(loginCookie);
-    }
-
-    /**
-     * 校验token格式和md5是否正确
-     *
-     * @param token token
-     * @return 是否正确token
-     */
-    private String getLoginUserFromToken(String token) {
-        if (StringUtils.isEmpty(token)) {
-            return null;
-        }
-        // 0为用户名，1为时间，2为md5
-        String[] arr = token.split(TOKEN_SPLIT);
-        if (arr.length != 3 || arr[0].isEmpty() || arr[1].isEmpty() || arr[2].isEmpty()) {
-            return null;
-        }
-        long loginTime = Long.parseLong(arr[1]);
-        long now = Long.parseLong(LocalDateTime.now().format(FORMATTER));
-        long diff = now - loginTime;
-        // 1000000为1天，要求每天登录
-        if (diff < 0 || diff > 1000000) {
-            return null;
-        }
-
-        String countToken = buildToken(arr[0], arr[1]);
-        if (countToken.equalsIgnoreCase(token)) {
-            return arr[0];
-        }
-        return null;
-    }
-
-    /**
-     * 根据用户名和登录时间，计算md5，并拼接token返回
-     *
-     * @param username 用户名
-     * @param date     登录时间
-     * @return token
-     */
-    private String buildToken(String username, String date) {
-        String ret = username + TOKEN_SPLIT + date + TOKEN_SPLIT;
-        String md5 = StringHelper.md5(ret, TOKEN_SALT, username);
-        return ret + md5;
     }
 
     /**
