@@ -25,4 +25,17 @@ public final class RequestHelper {
         }
         return "";
     }
+
+    /**
+     * 从请求上下文中提取二级域名，如
+     * www.baidu.com 返回 baidu.com
+     * abc.def.ghi.xxx返回ghi.xxx
+     *
+     * @param request 请求上下文
+     * @return 二级域名
+     */
+    public static String getBaseDomain(HttpServletRequest request) {
+        String domain = request.getServerName();
+        return domain.replaceAll(".*\\.(?=.*\\.)", "");
+    }
 }

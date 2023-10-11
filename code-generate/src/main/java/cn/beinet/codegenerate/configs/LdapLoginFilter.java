@@ -87,7 +87,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         String loginUser = TokenHelper.getLoginUserFromToken(token);
         if (!StringUtils.hasLength(loginUser)) {
             log.debug("token无效: {}", token);
-            addToken("", response);
+            addToken("", request, response);
             if (StringUtils.isEmpty(token)) {
                 endResponse(request, response, "未登录");
             } else {
@@ -125,7 +125,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      */
     private void processLoginRequest(HttpServletRequest request, HttpServletResponse response) {
         if (!validateCode(request)) {
-            addToken("", response);
+            addToken("", request, response);
             endResponse(request, response, "验证码错误");
             return;
         }
@@ -136,13 +136,13 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         if (!validateUser(username, pwd)) {
             log.debug("用户名: {}, 账号或密码错误", username);
             //throw new RuntimeException("账号或密码错误");
-            addToken("", response);
+            addToken("", request, response);
             endResponse(request, response, "账号或密码错误");
             return;
         }
 
         log.debug("用户名: {}, ldap认证成功", username);
-        addToken(username, response);
+        addToken(username, request, response);
         redirect(response, "index.html");
     }
 
@@ -174,7 +174,7 @@ public class LdapLoginFilter extends OncePerRequestFilter {
      * @param username 用户名，为空表示删除token
      * @param response 响应上下文
      */
-    private void addToken(String username, HttpServletResponse response) {
+    private void addToken(String username, HttpServletRequest request, HttpServletResponse response) {
         Cookie loginCookie = new Cookie(TOKEN_COOKIE_NAME, "");
         loginCookie.setPath("/");
         if (username.isEmpty()) {
@@ -182,8 +182,11 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         } else {
             loginCookie.setMaxAge(7 * 24 * 3600);
             String token = TokenHelper.buildToken(username);
+            log.debug("登录成功:{}", token);
             loginCookie.setValue(token);
         }
+        // 设置为二级域名用，便于跨域统一登录
+        loginCookie.setDomain(RequestHelper.getBaseDomain(request));
         response.addCookie(loginCookie);
     }
 
