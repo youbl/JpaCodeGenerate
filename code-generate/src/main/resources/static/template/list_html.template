@@ -60,7 +60,7 @@
     <!-- 编辑窗口 -->
     <el-dialog :visible.sync="statusEditDialog" :title="(editRow.id?'编辑界面':'新增界面')">
         <el-form size="mini" :model="editRow" ref="editRowForm" style="width:700px">
-            <el-form-item v-for="(val,key,idx) in editRow" :label="key" label-width="150px">
+            <el-form-item v-for="(val,key,idx) in editRow" :label="key" label-width="150px" v-if="isEditKey(key)">
                 <el-input placeholder="请输入" v-model.trim="editRow[key]"></el-input>
             </el-form-item>
         </el-form>
@@ -147,6 +147,16 @@
                 return true;
             },
 {{start-modify_content}}
+            isEditKey: function (key) {
+                if (key === 'id' ||
+                    key === 'createDate' ||
+                    key === 'updateDate'||
+                    key === 'create_date' ||
+                    key === 'update_date'
+                ) // 在这里配置：编辑窗口里不需要显示的列名
+                    return false;
+                return true;
+            },
             confirmDel: function (row) {
                 if (!confirm('确认要删除吗?')) {
                     return;
@@ -162,13 +172,14 @@
                 if (row) {
                     if (isClone) {
                         this.editRow = {...row};
-                        this.editRow.id = null;
-                    } else
+                        Vue.set(this.editRow, 'id', '');
+                    } else {
                         this.editRow = row;
+                    }
                 } else {
                     this.editRow = {};
                     for (let i = 0, j = this.tableFields.length; i < j; i++) {
-                        this.editRow[this.tableFields[i]] = '';
+                        Vue.set(this.editRow, this.tableFields[i], '');
                     }
                 }
                 this.statusEditDialog = true;
