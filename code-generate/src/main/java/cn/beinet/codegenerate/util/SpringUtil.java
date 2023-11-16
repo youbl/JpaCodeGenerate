@@ -3,6 +3,7 @@ package cn.beinet.codegenerate.util;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -18,15 +19,21 @@ import java.util.Map;
 public class SpringUtil implements ApplicationContextAware {
 
     private static ApplicationContext springApplicationContext;
+    private static Environment springEnvironment;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         springApplicationContext = applicationContext;
+        springEnvironment = springApplicationContext.getEnvironment();
     }
 
 
     public static ApplicationContext getApplicationContext() {
         return springApplicationContext;
+    }
+
+    public static Environment getEnv() {
+        return springEnvironment;
     }
 
 

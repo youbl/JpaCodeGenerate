@@ -62,6 +62,8 @@ public class ImgCodeService {
     public boolean validImgCode(String sn, String code) {
         Assert.isTrue(StringUtils.hasLength(code) && StringUtils.hasLength(sn),
                 "输入的sn或code为空");
+        code = code.trim();
+        sn = sn.trim();
 
         // 删除sn与code的映射关系，不让重复使用
         String value = codeSnMap.remove(sn);

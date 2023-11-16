@@ -36,6 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Order(-999) // 需要设置登录信息，所以filter的顺序要高一些
 public class LdapLoginFilter extends OncePerRequestFilter {
+
     @Value("${server.servlet.context-path}")
     private String prefix;
 
@@ -70,7 +71,12 @@ public class LdapLoginFilter extends OncePerRequestFilter {
 
         // 验证用户名密码
         if (url.endsWith(loginActionPage)) {
-            processLoginRequest(request, response);
+            try {
+                processLoginRequest(request, response);
+            } catch (Exception exp) {
+                log.error("登录出错:" + exp.getMessage());
+                endResponse(request, response, "认证出错，请与管理员联系");
+            }
             return;
         }
 
@@ -201,6 +207,13 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         if (!StringUtils.hasLength(username) || !StringUtils.hasLength(pwd)) {
             return false;
         }
+        username = username.trim();
+        pwd = pwd.trim();
+        if (username.equalsIgnoreCase(Consts.getSdkAppKey()) &&
+                pwd.equals(Consts.getSdkSecurityKey())) {
+            log.debug("使用SDK直接登录");
+            return true;
+        }
 
         log.debug("用户名: {}, 去ldap认证", username);
         return validateFromLDAP(username, pwd);
@@ -210,14 +223,9 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         if (username.indexOf("@") < 0 && StringUtils.hasLength(emailDomain)) {
             username += "@" + emailDomain;
         }
-        try {
-            Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);
-            log.info(context.toString());
-            return true;
-        } catch (Exception exp) {
-            log.error(exp.getMessage());
-            return false;
-        }
+        Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);
+        log.info(context.toString());
+        return true;
     }
 
     /**

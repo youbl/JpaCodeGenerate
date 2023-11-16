@@ -93,6 +93,7 @@
                                    @change="imgSelected"/>
                         </div>
                         <div style="float: left;">
+                            <span>{{foundedData}}</span>
                             <!--img id="imgQrcode"/-->
                             <canvas id="canvas" style="width:200px;"></canvas>
                         </div>
@@ -141,7 +142,9 @@
             resultData: [],
 
             qrCodeShow: false,// 是否显示dialog对话框
-            qrCodeUrl: "",
+            qrCodeUrl: '',
+
+            foundedData: ''
         },
         created: function () {
             this.getLoginUser()
@@ -212,7 +215,8 @@
                     const imageData = context.getImageData(0, 0, img.width, img.height);
                     // jsQR识别
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    console.log("Found QR code", code);
+                    _vue.foundedData = JSON.stringify(code);
+                    console.log("Found QR code", _vue.foundedData);
                     _vue.parseSecretFromCode(code);
                 };
                 img.src = url;  // 给img标签设置src属性
