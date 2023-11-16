@@ -62,13 +62,13 @@ public class LinkInfoService {
     public ColumnRepository getRepository(SqlDto dto) {
         fillLinkInfo(dto);
         return ColumnRepository.getRepository(
-                dto.getIp(), 3306, dto.getUser(), dto.getPwd());
+                dto.getIp(), dto.getPort(), dto.getUser(), dto.getPwd());
     }
 
     public MySqlExecuteRepository getExeRepository(SqlDto dto) {
         fillLinkInfo(dto);
         return new MySqlExecuteRepository(
-                dto.getIp(), 3306, dto.getUser(), dto.getPwd(), dto.getDb());
+                dto.getIp(), dto.getPort(), dto.getUser(), dto.getPwd(), dto.getDb());
     }
 
     private void fillLinkInfo(SqlDto dto) {
@@ -79,6 +79,7 @@ public class LinkInfoService {
         if (info == null)
             return;
         dto.setIp(info.getAddress())
+                .setPort(info.getPort())
                 .setUser(info.getAccount())
                 .setPwd(descrypt(info.getPwd()));
     }

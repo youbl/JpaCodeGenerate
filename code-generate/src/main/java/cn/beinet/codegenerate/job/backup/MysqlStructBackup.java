@@ -52,7 +52,7 @@ public class MysqlStructBackup implements Backup {
 
             try {
                 ColumnRepository repository = ColumnRepository.getRepository(
-                        item.getIp(), 3306, item.getUsername(), item.getPassword());
+                        item.getIp(), item.getPort(), item.getUsername(), item.getPassword());
                 List<String> databases = repository.findDatabases();
                 for (String db : databases) {
                     backupDatabase(db, repository);

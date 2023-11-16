@@ -55,7 +55,7 @@ public class MysqlInfoBackup implements Backup {
 
             try {
                 ColumnRepository repository = ColumnRepository.getRepository(
-                        item.getIp(), 3306, item.getUsername(), item.getPassword());
+                        item.getIp(), item.getPort(), item.getUsername(), item.getPassword());
                 List<TableDto> tables = repository.getTableInfos();
                 // 格式化输出json
                 String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tables);

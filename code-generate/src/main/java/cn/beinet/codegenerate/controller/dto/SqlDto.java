@@ -20,6 +20,7 @@ public class SqlDto {
      * 数据库IP或域名
      */
     private String ip;
+    private int port;
     /**
      * 数据库账号
      */
