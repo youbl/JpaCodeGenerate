@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>阿里CDN刷新</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/rowColor.js"></script>
+    <script src="../static/qs.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" class="demo-form-inline"
+             style="text-align: left">
+        <div>
+            阿里云cdn缓存刷新：
+        </div>
+        <el-form-item label="区域" prop="region" label-width="200px">
+            <el-input v-model="searchCond.region" placeholder="请输入"></el-input>
+        </el-form-item>
+        <el-form-item label="对象类型" prop="objType" label-width="200px">
+            <el-select v-model="searchCond.objType" filterable placeholder="请选择">
+                <el-option
+                        v-for="item in typeArr"
+                        :key="item"
+                        :label="item"
+                        :value="item">
+                </el-option>
+            </el-select>
+            注：File是刷新单个文件url； Directory是刷新某个目录下的所有文件
+        </el-form-item>
+        <el-form-item label="对象路径" prop="objUrl" label-width="200px">
+            <el-input v-model="searchCond.objUrl" placeholder="请输入"></el-input>
+        </el-form-item>
+
+        <div>
+            <el-button icon="el-icon-success" type="primary" @click="refreshCdn">刷新缓存</el-button>
+        </div>
+        <el-input
+                type="textarea"
+                :autosize="{ minRows: 2, maxRows: 40}"
+                v-model="result">
+        </el-input>
+    </el-form>
+
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            searchCond: {
+                region: 'ap-southeast-1',
+                objType: 'File',
+                objUrl: '',
+            },
+            typeArr: ['File', 'Directory'],
+
+            result: '',
+        },
+        computed: {
+            isCustom: function () {
+                return false;
+            }
+        },
+        created: function () {
+        },
+        methods: {
+            refreshCdn: function () {
+                let url = BASE_URL + 'cdn/ali?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                return axios.get(url).then(response => {
+                    this.result = (response.data);
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            ajaxError: function (error) {
+                if (error.response && error.response.data) {
+                    let msg = error.response.data['Msg'];
+                    if (msg === 'Unauthorized') {
+                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
+                        return;
+                    }
+                    console.log(JSON.stringify(error.response.data));
+                    alert(msg);
+                } else {
+                    console.log(JSON.stringify(error));
+                    alert('未知错误');
+                }
+            },
+        },
+    });
+</script>
+</body>
+</html>

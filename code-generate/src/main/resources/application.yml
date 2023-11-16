@@ -32,9 +32,17 @@ logging:
   level:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
 
+# api调用使用的认证 ak/sk
 sdk:
   app-key: sdk
   secure-key: 123456
+
+cloud:
+  # 用于阿里云cdn操作的ak/sk
+  ali-cdn:
+    ak: 11
+    sk: 22
+    exe-path: D:\\aaa\\aliyun.exe
 
 backup:
   enable: false
