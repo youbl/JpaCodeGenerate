@@ -4,6 +4,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.util.regex.Pattern;
 
 /**
  * Description:
@@ -36,6 +37,9 @@ public final class RequestHelper {
      */
     public static String getBaseDomain(HttpServletRequest request) {
         String domain = request.getServerName();
+        // IP直接返回
+        if (Pattern.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", domain))
+            return domain;
         return domain.replaceAll(".*\\.(?=.*\\.)", "");
     }
 }
