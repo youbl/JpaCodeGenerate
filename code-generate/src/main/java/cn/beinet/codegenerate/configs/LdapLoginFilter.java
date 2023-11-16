@@ -191,8 +191,12 @@ public class LdapLoginFilter extends OncePerRequestFilter {
             log.debug("登录成功:{}", token);
             loginCookie.setValue(token);
         }
+
+        // 需要注意的是，在nginx里转发，要配置 proxy_set_header Host $host;
+        // 否则这里拿到的只会是 localhost
+        String baseDomain = RequestHelper.getBaseDomain(request);
         // 设置为二级域名用，便于跨域统一登录
-        loginCookie.setDomain(RequestHelper.getBaseDomain(request));
+        loginCookie.setDomain(baseDomain);
         response.addCookie(loginCookie);
     }
 
