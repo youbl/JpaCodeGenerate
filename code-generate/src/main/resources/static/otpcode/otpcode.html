@@ -21,6 +21,22 @@
         .tableHeader {
             font-size: 20px;
         }
+
+        .item-body {
+            flex-direction: column;
+            height: 60px;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            padding-bottom: 10px;
+        }
+
+        .notice {
+            font-size: 12px;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -36,43 +52,69 @@
         <el-button type="primary" icon="el-icon-save" @click="savedSecureShow=true">添加密钥</el-button>
     </el-form>
     <br>
-
-    <el-table v-loading="loading"
-              element-loading-text="拼命加载中"
-              element-loading-spinner="el-icon-loading"
-              element-loading-background="rgba(0, 0, 0, 0.8)"
-              border
-              height="1200"
-              :data="resultData"
-              :header-row-class-name="'tableHeader'">
-        <el-table-column align="center" label="序号" type="index" width="80"></el-table-column>
-        <el-table-column label="归属" sortable property="username" width="120"></el-table-column>
-        <el-table-column label="网址"
-                         sortable
-                         sort-by="url">
-            <template slot-scope="scope" width="200">
-                <a :href="scope.row['url']" target="_blank">{{scope.row['url']}}</a>
-            </template>
-        </el-table-column>
-        <el-table-column label="说明" sortable property="title" width="150"></el-table-column>
-        <el-table-column label="时间戳: Code" width="360">
-            <template slot-scope="scope">
-                <div v-for="(value, key, index) in scope.row['code']">{{key}}({{getStrFromTimestamp(key)}}):
-                    <span style="font-weight: bold;color: crimson">{{value}}</span>
+    <el-tabs :tab-position="'left'">
+        <el-tab-pane label="九宫格">
+            <div>
+                <div style="float: left; border: black solid 1px; width: 300px; height: 180px; padding: 1px 5px 1px 5px; margin: 8px 8px 8px 8px;"
+                     v-for="(val,key,idx) in resultData">
+                    <div>
+                        <el-link type="primary" @click="getItemSecure(val)">刷新</el-link>
+                        <el-link type="warning" @click="showQRCode(val)">导出</el-link>
+                        <el-link type="danger" @click="deleteSecure(val)">删除</el-link>
+                    </div>
+                    <div class="item-body">
+                        <div class="title">
+                            <a v-if="val['url']" :href="val['url']" target="_blank">{{val.title}}</a>
+                            <span v-if="!val['url']">{{val.title}}</span>
+                        </div>
+                        <div class="notice">{{val.memo}}</div>
+                    </div>
+                    <div v-for="(code, ts, index) in val['code']">{{getStrFromTimestamp(ts)}}:
+                        <span style="font-weight: bold;color: crimson">{{code}}</span>
+                    </div>
                 </div>
-            </template>
-        </el-table-column>
-        <el-table-column label="备注" sortable property="memo" width="200"></el-table-column>
-        <el-table-column label="入库" sortable property="createTime" width="100"></el-table-column>
-        <el-table-column label="操作" width="120">
-            <template slot-scope="scope">
-                <el-link type="primary" @click="getItemSecure(scope.row)">刷新</el-link>
+                <div style="clear: both;"></div>
+            </div>
+        </el-tab-pane>
+        <el-tab-pane label="Table展示">
+            <el-table v-loading="loading"
+                      element-loading-text="拼命加载中"
+                      element-loading-spinner="el-icon-loading"
+                      element-loading-background="rgba(0, 0, 0, 0.8)"
+                      border
+                      height="1200"
+                      :data="resultData"
+                      :header-row-class-name="'tableHeader'">
+                <el-table-column align="center" label="序号" type="index" width="80"></el-table-column>
+                <el-table-column label="归属" sortable property="username" width="120"></el-table-column>
+                <el-table-column label="网址"
+                                 sortable
+                                 sort-by="url">
+                    <template slot-scope="scope" width="200">
+                        <a :href="scope.row['url']" target="_blank">{{scope.row['url']}}</a>
+                    </template>
+                </el-table-column>
+                <el-table-column label="说明" sortable property="title" width="150"></el-table-column>
+                <el-table-column label="时间戳: Code" width="360">
+                    <template slot-scope="scope">
+                        <div v-for="(value, key, index) in scope.row['code']">{{key}}({{getStrFromTimestamp(key)}}):
+                            <span style="font-weight: bold;color: crimson">{{value}}</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column label="备注" sortable property="memo" width="200"></el-table-column>
+                <el-table-column label="入库" sortable property="createTime" width="100"></el-table-column>
+                <el-table-column label="操作" width="120">
+                    <template slot-scope="scope">
+                        <el-link type="primary" @click="getItemSecure(scope.row)">刷新</el-link>
 
-                <el-link type="warning" @click="showQRCode(scope.row)">导出</el-link>
-                <el-link type="danger" @click="deleteSecure(scope.row)">删除</el-link>
-            </template>
-        </el-table-column>
-    </el-table>
+                        <el-link type="warning" @click="showQRCode(scope.row)">导出</el-link>
+                        <el-link type="danger" @click="deleteSecure(scope.row)">删除</el-link>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-tab-pane>
+    </el-tabs>
 
     <el-dialog title="保存OtpCode密钥" :visible.sync="savedSecureShow" :close-on-press-escape="true"
                :close-on-click-modal="false">
