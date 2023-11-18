@@ -1,8 +1,9 @@
 package cn.beinet.codegenerate.util;
 
 
+import lombok.Data;
 import lombok.SneakyThrows;
-import org.springframework.stereotype.Component;
+import lombok.experimental.Accessors;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -18,8 +19,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author youbl
  * @since 2023/9/2 11:26
  */
-@Component
 public class ImgCodeUtil {
+    public static final ImgCodeUtil INSTANCE = new ImgCodeUtil();
 
     private final int img_width = 136;            // 验证码图片的长
     private final int blank_width = 8;        // 有时字符会超出范围，这个用于留白的宽度
@@ -38,6 +39,26 @@ public class ImgCodeUtil {
 
     private ThreadLocalRandom getRnd() {
         return ThreadLocalRandom.current();
+    }
+
+    /**
+     * 生成一个序号和一个验证码，并转换为图片返回.
+     * 注：使用方需要保存序号与验证码的关系，
+     * 在验证用户输入时，需要根据序号找到对应的验证码，再与用户输入的验证码比较
+     *
+     * @return 验证码信息
+     */
+    public static ImgCode getCode() {
+        String code = INSTANCE.getRndTxt(4);
+        // 序号也用随机数，有重复的可能，导致用户不能用，这里忽略，因为概率低
+        String sn = INSTANCE.getRndNum(6);
+
+        String base64 = INSTANCE.getImageBase64(code);
+
+        return new ImgCode()
+                .setCode(code)
+                .setSn(sn)
+                .setCodeImg(base64);
     }
 
     /**
@@ -239,4 +260,20 @@ public class ImgCodeUtil {
         graphics.fillRect(0, 0, img_width, img_height);
     }
 
+    @Data
+    @Accessors(chain = true)
+    public static class ImgCode {
+        /**
+         * 验证码序号
+         */
+        private String sn;
+        /**
+         * 验证码
+         */
+        private String code;
+        /**
+         * 验证码对应的图片base64
+         */
+        private String codeImg;
+    }
 }

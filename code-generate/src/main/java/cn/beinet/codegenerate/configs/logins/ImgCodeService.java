@@ -2,7 +2,6 @@ package cn.beinet.codegenerate.configs.logins;
 
 import cn.beinet.codegenerate.util.ImgCodeUtil;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,9 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class ImgCodeService {
-    private final ImgCodeUtil codeUtil;
 
     private Map<String, String> codeSnMap = new ConcurrentHashMap<>();
 
@@ -32,31 +29,20 @@ public class ImgCodeService {
      * @return
      */
     public ImgCodeDto getImgCode() {
-        String code = codeUtil.getRndTxt(4);
-        // 这里生成sn，并把sn和code的关联关系存入redis或数据库
-        // todo: 如果未使用过的code，需要在10分钟内过期，这里没做
-        String sn = getSn(code);
+        ImgCodeUtil.ImgCode code = ImgCodeUtil.getCode();
 
-        String base64 = codeUtil.getImageBase64(code);
+        // todo: 如果未使用过的code，需要在10分钟内过期，这里没做
+        // 把生成的sn和code的关联关系保存
+        saveCode(code.getSn(), code.getCode());
+
+        // 注意不能把code返回，否则就搞笑了
         return new ImgCodeDto()
-                .setCodeSn(sn)
-                .setCodeBase64(base64);
+                .setCodeSn(code.getSn())
+                .setCodeBase64(code.getCodeImg());
     }
 
-    private String getSn(String code) {
-        int tryTime = 5;
-
-        String sn = codeUtil.getRndNum(6);
-        // putIfAbsent 不存在时加入kv，并返回null；存在时不加入，并返回现有的值
-        // 这个while确保找到一个未使用的code，避免覆盖以前的值
-        while (codeSnMap.putIfAbsent(sn, code) != null && tryTime > 0) {
-            sn = codeUtil.getRndNum(6);
-            // 避免程序bug，导致死循环，最多重试10次
-            tryTime--;
-        }
-        // 简单处理，不抛异常，人工验证时删除它
-        //Assert.isTrue(tryTime > 0, "获取sn连续5次重复");
-        return sn;
+    private void saveCode(String sn, String code) {
+        codeSnMap.putIfAbsent(sn, code);
     }
 
     public boolean validImgCode(String sn, String code) {
