@@ -21,15 +21,19 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class ImgCodeUtil {
 
-    private int width = 120;           //验证码图片的长和宽
-    private int height = 40;
+    private final int img_width = 136;            // 验证码图片的长
+    private final int blank_width = 8;        // 有时字符会超出范围，这个用于留白的宽度
+    private final int img_height = 46;            // 验证码图片的宽
+    private final int blank_height = 3;       // 有时字符会超出范围，这个用于留白的高度
+
+
     //private String[] fontNames = {"宋体", "华文楷体", "黑体", "微软雅黑", "楷体_GB2312"};   //字体数组
     //字体数组
     //private String[] fontNames = {"Arial"};// {"Georgia"}; Georgia默认Centos上没有，会报异常：sun.awt.fontconfiguration.getversion nullpointerexception
-    private String[] fontNames = {"DejaVu Sans"};  // 很多linux也没有Arial字体，换这个试试
+    private final String[] fontNames = {"DejaVu Sans"};  // 很多linux也没有Arial字体，换这个试试
 
-    private char[] RND_STR_SOURCE = "abcdefghjkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
-    private char[] RND_NUM_SOURCE = "0123456789".toCharArray();
+    private final char[] RND_STR_SOURCE = "abcdefghjkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
+    private final char[] RND_NUM_SOURCE = "0123456789".toCharArray();
 
 
     private ThreadLocalRandom getRnd() {
@@ -39,8 +43,8 @@ public class ImgCodeUtil {
     /**
      * 生成指定长度的随机数字串
      *
-     * @param len
-     * @return
+     * @param len 生成字符串的长度
+     * @return 随机数字串
      */
     public String getRndNum(int len) {
         StringBuilder sb = new StringBuilder();
@@ -49,16 +53,14 @@ public class ImgCodeUtil {
             int idx = getRnd().nextInt(RND_NUM_SOURCE.length);
             sb.append(RND_NUM_SOURCE[idx]);
         }
-        String ret = sb.toString();
-        //System.out.println(ret);
-        return ret;
+        return sb.toString();
     }
 
     /**
      * 生成指定长度的随机字符串
      *
-     * @param len
-     * @return
+     * @param len 生成字符串的长度
+     * @return 随机字符串
      */
     public String getRndTxt(int len) {
         StringBuilder sb = new StringBuilder();
@@ -99,7 +101,7 @@ public class ImgCodeUtil {
      */
     private BufferedImage getImage(String text) {
         //创建图片缓冲区
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(img_width, img_height, BufferedImage.TYPE_INT_RGB);
         //获取画笔
         Graphics2D graphic = (Graphics2D) image.getGraphics(); //获取画笔
 
@@ -128,11 +130,9 @@ public class ImgCodeUtil {
             graphic.setFont(randomFont());           //设置随机字体
             graphic.setColor(randomColor());         //设置随机颜色
 
-            // rndX用于定义随机起始位置差值
-            int rndX = i > 0 ? getRnd().nextInt(-3, 4) : 3;
-            int x = (int) (i * 1.0F * width / 4) + rndX;   //定义字符的x坐标
-            // y坐标，定义为随机高度
-            int y = height - getRnd().nextInt(8, 20);
+            //定义字符的x,y坐标
+            int x = countX(i, text.length());
+            int y = countY(i, text.length());
             // System.out.println(x + "---" + y);
             {
                 // 用于倾斜绘制的对象
@@ -146,6 +146,23 @@ public class ImgCodeUtil {
 
             graphic.drawString(chr, x, y);
         }
+    }
+
+    // 计算第n个字符，在画布上的x坐标
+    private int countX(int chIdx, int txtLen) {
+        int realWidth = img_width - blank_width * 2;
+        // rndX用于定义随机起始位置差值
+        int rndX = chIdx > 0 ? getRnd().nextInt(-3, 4) : 3;
+        int x = (int) (chIdx * 1.0F * realWidth / txtLen) + rndX;   //定义字符的x坐标
+        return x + blank_width;
+    }
+
+    // 计算第n个字符，在画布上的y坐标
+    private int countY(int chIdx, int txtLen) {
+        int realHeight = img_height - blank_height * 2;
+        // y坐标，定义为随机高度
+        int y = realHeight - getRnd().nextInt(4, realHeight / 2);
+        return y + blank_height;
     }
 
     /**
@@ -183,10 +200,10 @@ public class ImgCodeUtil {
     private void drawLine(Graphics2D graphic, int minNum, int maxNum) {
         int num = getRnd().nextInt(minNum, maxNum); //定义干扰线的数量
         for (int i = 0; i < num; i++) {
-            int x1 = getRnd().nextInt(width / 2);
-            int y1 = getRnd().nextInt(height);
-            int x2 = getRnd().nextInt(width / 2, width);
-            int y2 = getRnd().nextInt(height);
+            int x1 = getRnd().nextInt(img_width / 2);
+            int y1 = getRnd().nextInt(img_height);
+            int x2 = getRnd().nextInt(img_width / 2, img_width);
+            int y2 = getRnd().nextInt(img_height);
             graphic.setColor(randomColor());
             graphic.drawLine(x1, y1, x2, y2);
         }
@@ -203,10 +220,11 @@ public class ImgCodeUtil {
     private void drawPoint(Graphics2D graphic, int minNum, int maxNum) {
         int num = getRnd().nextInt(minNum, maxNum); //随机数量
         for (int i = 0; i < num; i++) {
-            int x1 = getRnd().nextInt(width);
-            int y1 = getRnd().nextInt(height);
+            int x1 = getRnd().nextInt(img_width);
+            int y1 = getRnd().nextInt(img_height);
             graphic.setColor(randomColor());
-            graphic.fillOval(x1, y1, 2, 2);
+            int width = i % 2 + 1;
+            graphic.fillOval(x1, y1, width, width);
         }
     }
 
@@ -218,7 +236,7 @@ public class ImgCodeUtil {
     private void fillImage(Graphics2D graphics) {
         //设置背景色随机
         graphics.setColor(new Color(255, 255, getRnd().nextInt(245) + 10));
-        graphics.fillRect(0, 0, width, height);
+        graphics.fillRect(0, 0, img_width, img_height);
     }
 
 }
