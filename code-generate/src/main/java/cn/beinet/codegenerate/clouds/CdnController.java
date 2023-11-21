@@ -38,14 +38,14 @@ public class CdnController {
             dto.setObjUrl(dto.getObjUrl() + "/");
         }
         String command = aliCdnExePath +
-                " --access-key-id \"" + aliCdnAk + "\"" +
-                " --access-key-secret \"" + aliCdnSk + "\"" +
-                " --region \"" + dto.getRegion() + "\"" +
+                " --access-key-id " + aliCdnAk +
+                " --access-key-secret " + aliCdnSk +
+                " --region " + dto.getRegion() +
                 " cdn RefreshObjectCaches" +
-                " --ObjectPath \"" + dto.getObjUrl() + "\"" +
-                " --ObjectType \"" + dto.getObjType() + "\"";
+                " --ObjectPath " + dto.getObjUrl() +
+                " --ObjectType " + dto.getObjType();
+        System.out.println(command);
         return executeCommand(command);
-
     }
 
     @SneakyThrows
