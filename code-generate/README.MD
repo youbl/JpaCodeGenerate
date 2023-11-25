@@ -1,12 +1,42 @@
-# 快速开始
+# 功能清单
+- Mybatis-plus代码生成工具，带vue的前端页面和后端CRUD代码
+- MySql数据库表结构对比工具，用于发布前的测试环境和生产环境 表结构比对
+- MySql数据库索引对比工具
+- Nacos配置对比工具，用于发布前的测试环境和生产环境 配置比对
+- MySql数据库查询工具，只读支持
+- Redis查询工具，只读支持
+- MFA(OTP-Code)保存和生成工具
+- 阿里云CDN缓存清理功能，要先去[这里](https://help.aliyun.com/document_detail/121541.html)下载安装工具
+- 操作日志，以上操作的日志记录
+
+# 快速部署和启动
 - 创建MySQL数据库，在新数据库里建表，使用`ops.sql`
 - 用IDEA打开pom.xml，修改application.yml里的数据库连接信息、LDAP认证服务器信息  
-注：如没有LDAP服务，可以修改代码`LdapLoginFilter.validateFromLDAP`,在那边添加你的认证逻辑
+注：如没有LDAP服务，可以修改代码`LdapLoginFilter.validateFromLDAP`,在那边添加你的自定义认证逻辑
 - 然后点IDEA界面右侧：`Maven->Lifecycle->package`构建项目
 - 把target目录下 code-generate-0.0.1-SNAPSHOT.jar 和 lib，复制到服务器上，假设复制到这个目录下`/data/app/`
 - 在服务器上启动，命令参考：  
 `/usr/java/jdk-11/bin/java -Dserver.port=8808 -Dspring.profiles.active=prod -Dloader.path=/data/app/lib -jar /data/app/code-generate-0.0.1-SNAPSHOT.jar`
-- 启动成功后，访问：`http://服务器IP:8808/index.html` 即可
+- 启动成功后，访问：`http://服务器IP:8808/sql/index.html` 即可
+- 注：建议前端增加nginx转发，nginx配置参考：
+```
+server {
+    listen       80;
+    server_name  _;
+    location /ip {
+      default_type text/plain;
+      return 200 "$remote_addr";
+    }
+    location /sql-cb/ {
+      proxy_pass http://localhost:8808;  # 8808后无斜杠，表示转发url带有sql这一截字符串
+      proxy_set_header Host $host; 
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;  
+      proxy_connect_timeout 300; #单位秒
+      proxy_send_timeout 300; #单位秒
+      proxy_read_timeout 300; #单位秒
+    }
+```
 
 
 # 功能介绍
