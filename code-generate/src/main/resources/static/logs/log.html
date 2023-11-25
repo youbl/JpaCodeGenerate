@@ -56,15 +56,16 @@
 
 
     <el-dialog :title="'详情:' + selectedField + '（按ESC关窗）'" :visible.sync="fieldValueShow">
-        <el-input
-                type="textarea"
-                :rows="20"
-                v-model="selectedFieldValue">
-        </el-input>
-        <br>
-        <template>
+        <div>
             <el-button type="primary" @click="formatJson">JSON格式化</el-button>
-        </template>
+        </div>
+        <div>
+            <el-input
+                    type="textarea"
+                    :rows="20"
+                    v-model="selectedFieldValue">
+            </el-input>
+        </div>
     </el-dialog>
 </div>
 <script>

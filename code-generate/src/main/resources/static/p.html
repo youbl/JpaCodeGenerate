@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>定位</title>
+    <script src="./static/unpkg/vue.min.js"></script>
+    <script src="./static/unpkg/elemeIndex.js"></script>
+    <link rel="stylesheet" href="./static/unpkg/elemeIndex.css">
+</head>
+<body>
+
+<div id="divApp">
+    <textarea style="width:95%; height: 400px;">{{pos}}</textarea>
+</div>
+<script>
+    const VERSION = '2';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            pos: '',
+        },
+        created: function () {
+            this.getPosition();
+        },
+        methods: {
+            getPosition: function (tab, event) {
+                // 请求获取位置信息
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // 处理位置信息
+                        const latitude = position.coords.latitude; // 纬度
+                        const longitude = position.coords.longitude;// 经度
+                        let distance = this.countDistance(latitude, longitude);
+                        this.pos = distance;
+                    },
+                    (error) => {
+                        // 处理错误信息
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                this.pos = ("用户拒绝共享位置信息");
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                this.pos = ("设备无法获取位置信息");
+                                break;
+                            case error.TIMEOUT:
+                                this.pos = ("获取位置信息超时");
+                                break;
+                            default:
+                                this.pos = ("获取位置信息失败");
+                        }
+                    }
+                );
+            },
+            countDistance: function (realLat, realLon) {
+                let latLxf = 26.090288;
+                let lonLxf = 119.305985;
+                let distance = this.calculateDistance(realLat, realLon, latLxf, lonLxf);
+
+                return ('当前经度/纬度:' + realLat + ',' + realLon + ' 与经度/纬度:' + latLxf + ',' + lonLxf + ' 的距离:' + distance + '米');
+            },
+            // 计算2个经度纬度之间的距离
+            calculateDistance: function (lat1, lon1, lat2, lon2) {
+                const earthRadius = 6371; // 地球半径，单位为公里
+
+                // 将经纬度转换为弧度
+                const latRad1 = this.toRadians(lat1);
+                const lonRad1 = this.toRadians(lon1);
+                const latRad2 = this.toRadians(lat2);
+                const lonRad2 = this.toRadians(lon2);
+
+                // 使用 Haversine 公式计算距离
+                const deltaLat = latRad2 - latRad1;
+                const deltaLon = lonRad2 - lonRad1;
+                const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                    Math.cos(latRad1) * Math.cos(latRad2) *
+                    Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const distance = earthRadius * c * 1000; // 将公里转换为米
+
+                return distance;
+            },
+            toRadians: function (degrees) {
+                return degrees * (Math.PI / 180);
+            },
+        },
+    });
+</script>
+</body>
+</html>

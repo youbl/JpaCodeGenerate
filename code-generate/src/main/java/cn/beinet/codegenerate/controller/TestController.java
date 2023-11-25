@@ -1,6 +1,5 @@
 package cn.beinet.codegenerate.controller;
 
-import cn.beinet.codegenerate.util.RequestHelper;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,21 +17,17 @@ public class TestController {
     @GetMapping(value = "test", produces = {"text/plain"})
     public String test(HttpServletRequest request) {
         StringBuilder sb = new StringBuilder();
-        sb.append("base domain:")
-                .append(RequestHelper.getBaseDomain(request))
-                .append("\r\n\n");
-
         sb.append(request.getMethod())
                 .append(" ")
                 .append(request.getRequestURL())
                 .append("\r\n\n");
-        sb.append("IP-addr: ")
+        sb.append("IP-addr:")
                 .append(request.getRemoteAddr())
-                .append(" ")
+                .append(" Host:")
                 .append(request.getRemoteHost())
-                .append(" ")
+                .append(" Port:")
                 .append(request.getRemotePort())
-                .append(" ")
+                .append(" User:")
                 .append(request.getRemoteUser())
                 .append("\r\n\n");
 

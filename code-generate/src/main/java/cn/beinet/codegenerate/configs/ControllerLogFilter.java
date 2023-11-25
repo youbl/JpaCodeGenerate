@@ -28,14 +28,38 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class ControllerLogFilter extends OncePerRequestFilter {
-    static Pattern patternRequest = Pattern.compile("(?i)^/(actuator|currentuser|logs)/?|" +
-            "\\.(ico|jpg|png|bmp|txt|xml|html?|js|css|ttf|woff|map|svg)$");
+    // 请求地址，符合个正则的，不记录操作日志
+    static Pattern patternRequest = Pattern.compile(
+            "(?i)^/(actuator|currentuser|logs)/?|" +
+                    "\\.(ico|jpg|png|bmp|txt|xml|html?|js|css|ttf|woff|map|svg)$");
 
     private final RequestLogService logService;
 
+    // 不需要记录日志的判断方法
+    private boolean noNeedLog(HttpServletRequest request) {
+        if (!log.isDebugEnabled())
+            return true;
+        if (isNotApiRequest(request))
+            return true;
+        if ("GET".equals(request.getMethod())) {
+            String url = request.getServletPath();
+            if (url.startsWith("/mysql/databases"))
+                return true;
+            if (url.startsWith("/mysql/tableNames"))
+                return true;
+            if (url.startsWith("/login/imgcode"))
+                return true;
+            if (url.startsWith("/menuGroup"))
+                return true;
+            if (url.startsWith("/test"))
+                return true;
+        }
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (!log.isDebugEnabled() || isNotApiRequest(request)) {
+        if (noNeedLog(request)) {
             filterChain.doFilter(request, response);
             return;
         }
