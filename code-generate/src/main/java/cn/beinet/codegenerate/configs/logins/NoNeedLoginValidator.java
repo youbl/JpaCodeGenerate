@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.configs.logins;
 
-import cn.beinet.codegenerate.configs.LdapLoginFilter;
+import cn.beinet.codegenerate.configs.BaseFilter;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +32,7 @@ public class NoNeedLoginValidator implements Validator {
         //request.getRequestURI() 带有ContextPath，所以不用
         String url = request.getServletPath();
         // 登录页跳过
-        if (url.endsWith(LdapLoginFilter.loginPage))
+        if (url.endsWith(BaseFilter.loginPage))
             return true;
 
         Matcher matcher = patternRequest.matcher(url);

@@ -13,7 +13,6 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -22,7 +21,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -35,10 +33,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Order(-999) // 需要设置登录信息，所以filter的顺序要高一些
-public class LdapLoginFilter extends OncePerRequestFilter {
-
-    @Value("${server.servlet.context-path}")
-    private String prefix;
+public class LdapLoginFilter extends BaseFilter {
 
     @Value("${spring.ldap.email-domain}")
     private String emailDomain;
@@ -54,8 +49,6 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     // 登录密码使用的字段名
     private static final String PWD_PARA = "beinetPwd";
 
-    // 登录输入页地址
-    public static final String loginPage = "/login.html";
     // 登录认证地址
     private static final String loginActionPage = "/login";
 
@@ -94,10 +87,10 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         if (!StringUtils.hasLength(loginUser)) {
             log.debug("token无效: {}", token);
             addToken("", request, response);
-            if (StringUtils.isEmpty(token)) {
-                endResponse(request, response, "未登录");
-            } else {
+            if (StringUtils.hasLength(token)) {
                 endResponse(request, response, "token无效");
+            } else {
+                endResponse(request, response, "未登录");
             }
             return;
         }
@@ -159,22 +152,6 @@ public class LdapLoginFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 重定向到index首页
-     *
-     * @param response 响应上下文
-     * @param url      跳转地址
-     */
-    private void redirect(HttpServletResponse response, String url) {
-        if (StringUtils.isEmpty(url)) {
-            url = "/index.html";
-        } else if (!url.startsWith("/")) {
-            url = "/" + url;
-        }
-        response.setStatus(302);
-        response.setHeader("Location", prefix + url);//设置新请求的URL
-    }
-
-    /**
      * 为响应添加登录cookie
      *
      * @param username 用户名，为空表示删除token
@@ -230,40 +207,5 @@ public class LdapLoginFilter extends OncePerRequestFilter {
         Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);
         log.info(context.toString());
         return true;
-    }
-
-    /**
-     * 判断是否ajax请求
-     *
-     * @param request 当前请求上下文
-     * @return 是否
-     */
-    private static boolean isAjax(HttpServletRequest request) {
-        String header = request.getHeader("accept");
-        if (header != null && header.contains("application/json"))
-            return true;
-        header = request.getHeader("x-requested-with");
-        return header != null && header.equalsIgnoreCase("XMLHttpRequest");
-    }
-
-    /**
-     * 终止响应，并返回错误信息
-     *
-     * @param request  请求上下文
-     * @param response 响应上下文
-     * @param msg      错误信息
-     */
-    private void endResponse(HttpServletRequest request, HttpServletResponse response, String msg) {
-        if (!isAjax(request)) {
-            redirect(response, loginPage);
-            return;
-        }
-        response.setContentType("application/json; charset=UTF-8");
-        try {
-            String ret = "{\"ret\":500, \"msg\":\"" + msg.replaceAll("[\"']", "") + "\"}";
-            response.getOutputStream().write(ret.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

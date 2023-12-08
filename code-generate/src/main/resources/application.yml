@@ -32,6 +32,17 @@ logging:
   level:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
 
+ip-filter:
+  white-ip: # 客户端IP，以这些IP为前缀时，才允许访问
+    - 127.
+    - 10.
+    - 192.168.
+    - 0:0:0:0:0:0:0:1
+    - 8.217.76.130
+  exclude-url: # 这些url前缀，不进行IP过滤
+    - /test
+    - /test2
+
 # api调用使用的认证 ak/sk
 sdk:
   app-key: sdk
