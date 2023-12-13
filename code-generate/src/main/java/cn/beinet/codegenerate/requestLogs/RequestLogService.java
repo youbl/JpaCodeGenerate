@@ -1,11 +1,13 @@
 package cn.beinet.codegenerate.requestLogs;
 
+import cn.beinet.codegenerate.requestLogs.dto.SearchLogDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,17 +22,45 @@ import java.util.Map;
 public class RequestLogService {
     private final JdbcTemplate jdbcTemplate;
 
-    public List<RequestLog> getNewLogs(String user) {
+    public List<String> getDistinctField(String fieldName) {
+        String sql = "select distinct " + fieldName +
+                " from admin_log where " + fieldName +
+                "<>'' order by " + fieldName;
+        return jdbcTemplate.query(sql, (resultSet, i) -> resultSet.getString(fieldName));
+    }
+
+    public List<RequestLog> getNewLogs(SearchLogDto dto) {
         String sql = "select * from admin_log ";
-        Object[] args;
-        if (StringUtils.hasLength(user)) {
-            args = new Object[]{user};
-            sql += "where loginUser=? ";
-        } else {
-            args = new Object[0];
+
+        List<Object> args = new ArrayList<>();
+        sql += combineWhere(dto, args);
+
+        if (dto.getLimit() == null || dto.getLimit() < 1)
+            dto.setLimit(1000);
+        sql += "order by id desc limit " + dto.getLimit();
+
+        return jdbcTemplate.query(sql, args.toArray(), new BeanPropertyRowMapper<>(RequestLog.class));
+    }
+
+    private String combineWhere(SearchLogDto dto, List<Object> args) {
+        String sqlWhere = " where 1=1 ";
+        if (StringUtils.hasLength(dto.getLoginUser())) {
+            args.add(dto.getLoginUser());
+            sqlWhere += "and loginUser=? ";
         }
-        sql += "order by id desc limit 1000";
-        return jdbcTemplate.query(sql, args, new BeanPropertyRowMapper<>(RequestLog.class));
+        if (StringUtils.hasLength(dto.getUrl())) {
+            args.add(dto.getUrl());
+            sqlWhere += "and url=? ";
+        }
+        if (StringUtils.hasLength(dto.getReportTimeBegin())) {
+            args.add(dto.getReportTimeBegin());
+            sqlWhere += "and createDate>=? ";
+        }
+        if (StringUtils.hasLength(dto.getReportTimeEnd())) {
+            args.add(dto.getReportTimeEnd());
+            sqlWhere += "and createDate<=? ";
+        }
+        return sqlWhere;
     }
 
     public void saveToDB(RequestLog logRec) {

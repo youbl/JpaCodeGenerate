@@ -7,6 +7,7 @@
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/sql-formatter.min.js"></script>
+    <script src="../static/qs.min.js"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -27,8 +28,48 @@
 <div id="divApp">
     <el-form ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
+        <el-form-item label="操作人" prop="loginUser">
+            <el-select
+                    filterable
+                    allow-create
+                    default-first-option
+                    placeholder="请选择"
+                    v-model="searchCond.loginUser">
+                <el-option label="全部" value=""></el-option>
+                <el-option v-for="(val, key, idx) in condUsers"
+                           :label="val" :value="val"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="url" prop="url">
+            <el-select
+                    filterable
+                    allow-create
+                    default-first-option
+                    placeholder="请选择"
+                    v-model="searchCond.url">
+                <el-option label="全部" value=""></el-option>
+                <el-option v-for="(val, key, idx) in condUrls"
+                           :label="val" :value="val"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="查询时间(UTC)">
+            <el-date-picker
+                    size="mini"
+                    v-model="searchDates"
+                    @change="changeDate"
+                    format="yyyy-MM-dd HH:mm:ss"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    type="datetimerange"
+                    range-separator="至"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期">
+            </el-date-picker>
+        </el-form-item>
+        <br>
+        <el-button @click="getLogs" icon="el-icon-search" type="primary" size="mini">查询</el-button>
+
         当前登录用户: {{loginuser}}
-        <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+        <el-button icon="el-icon-refresh" @click="location.reload()" size="mini">刷新</el-button>
         <span style="padding-left:20px;"
               v-show="resultData.length">请求耗时: {{costTime}}ms, 数据条数: {{resultData.length}}</span>
     </el-form>
@@ -76,6 +117,18 @@
             loginuser: '',
             loading: false,
 
+            condUsers: [],
+            condUrls: [],
+
+            searchDates: [],
+            searchCond: {
+                reportTimeBegin: '',
+                reportTimeEnd: '',
+                loginUser: '',
+                url: '',
+                limit: 1000,
+            },
+
             costTime: 0,
             resultData: [],
 
@@ -84,12 +137,28 @@
             selectedFieldValue: '',
         },
         created: function () {
-            this.getLoginUser()
-                .then(this.getLogs);
+            this.getLoginUser();
+            this.getConditions();
+            this.getLogs();
         },
         computed: {},
         methods: {
             handleTabClick: function (tab, event) {
+            },
+            getConditions: function () {
+                let url = BASE_URL + 'logs/conditions';
+                return axios.get(url).then(response => {
+                    if (!response.data || response.data.length < 2)
+                        return;
+                    this.condUsers = response.data[0];
+                    this.condUrls = response.data[1];
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            changeDate: function (val) {
+                this.searchCond.reportTimeBegin = val[0];
+                this.searchCond.reportTimeEnd = val[1];
             },
             getLoginUser: function () {
                 let url = BASE_URL + 'currentuser';
@@ -100,7 +169,7 @@
                 });
             },
             getLogs: function () {
-                let url = BASE_URL + 'logs';
+                let url = BASE_URL + 'logs?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
