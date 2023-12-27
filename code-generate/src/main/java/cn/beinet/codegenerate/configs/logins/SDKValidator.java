@@ -22,20 +22,22 @@ public class SDKValidator implements Validator {
     }
 
     @Override
-    public boolean validated(HttpServletRequest request, HttpServletResponse response) {
+    public Result validated(HttpServletRequest request, HttpServletResponse response) {
         String appKey = Consts.getSdkAppKey();
         String securityKey = Consts.getSdkSecurityKey();
         if (!StringUtils.hasLength(appKey))
-            return false;
+            return Result.fail();
         if (!StringUtils.hasLength(securityKey))
-            return false;
+            return Result.fail();
         String authKey = appKey + ":" + securityKey;
 
         String header = request.getHeader(Consts.SDK_HEADER_NAME);
         if (!StringUtils.hasLength(header))
-            return false;
+            return Result.fail();
 
-        return header.equals(authKey);
+        if(header.equals(authKey))
+            return Result.ok(appKey);
+        return Result.fail();
     }
 
 }

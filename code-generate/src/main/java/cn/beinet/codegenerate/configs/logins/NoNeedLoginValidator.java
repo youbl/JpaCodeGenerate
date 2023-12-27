@@ -27,16 +27,18 @@ public class NoNeedLoginValidator implements Validator {
     }
 
     @Override
-    public boolean validated(HttpServletRequest request, HttpServletResponse response) {
+    public Result validated(HttpServletRequest request, HttpServletResponse response) {
         //request.getRequestURL() 带有域名，所以不用
         //request.getRequestURI() 带有ContextPath，所以不用
         String url = request.getServletPath();
         // 登录页跳过
         if (url.endsWith(BaseFilter.loginPage))
-            return true;
+            return Result.ok("匿名");
 
         Matcher matcher = patternRequest.matcher(url);
-        return matcher.find();
+        if (matcher.find())
+            return Result.ok("匿名");
+        return Result.fail();
     }
 
 }

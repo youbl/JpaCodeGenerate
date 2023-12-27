@@ -18,12 +18,25 @@ public final class TokenHelper {
     // token校验md5的盐值
     private static String TOKEN_SALT = "beinet.cn.";
 
+    // token cookie名
+    private static String TOKEN_COOKIE_NAME = null;
+
     // token不同信息的分隔符
     private static final String TOKEN_SPLIT = ":";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
-    static {
-        setTokenSalt(SpringUtil.getProperty("token.salt"));
+    private static void init() {
+        if (TOKEN_COOKIE_NAME == null) {
+            setTokenSalt(SpringUtil.getProperty("token.salt"));
+            TOKEN_COOKIE_NAME = SpringUtil.getProperty("token.cookie-name");
+            if (!StringUtils.hasLength(TOKEN_COOKIE_NAME))
+                TOKEN_COOKIE_NAME = "beinetUser";
+        }
+    }
+
+    public static String getTokenCookieName() {
+        init();
+        return TOKEN_COOKIE_NAME;
     }
 
     /**
@@ -42,6 +55,7 @@ public final class TokenHelper {
      * @return 是否正确token
      */
     public static String getLoginUserFromToken(String token) {
+        init();
         if (!StringUtils.hasLength(token)) {
             return null;
         }
@@ -85,6 +99,7 @@ public final class TokenHelper {
      * @return token
      */
     public static String buildToken(String username, String date) {
+        init();
         if (date == null) {
             date = LocalDateTime.now().format(FORMATTER);
         }

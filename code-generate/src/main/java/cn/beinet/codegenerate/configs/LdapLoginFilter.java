@@ -40,10 +40,6 @@ public class LdapLoginFilter extends BaseFilter {
 
     private static final String LOGIN_INFO = "loginUser";
 
-    // token cookie名
-    @Value("${token.cookie-name:beinetUser}")
-    private String TOKEN_COOKIE_NAME;
-
     // 登录用户名使用的字段名
     private static final String USER_PARA = "beinetUser";
     // 登录密码使用的字段名
@@ -60,7 +56,7 @@ public class LdapLoginFilter extends BaseFilter {
         //request.getRequestURL() 带有域名，所以不用
         //request.getRequestURI() 带有ContextPath，所以不用
         String url = request.getServletPath();
-        log.debug("收到请求: {}", url);
+        //log.debug("收到请求: {}", url);
 
         // 验证用户名密码
         if (url.endsWith(loginActionPage)) {
@@ -74,32 +70,17 @@ public class LdapLoginFilter extends BaseFilter {
         }
 
         for (Validator item : validatorList) {
-            if (item.validated(request, response)) {
+            Validator.Result result = item.validated(request, response);
+            if (result.isPassed()) {
+                // 添加登录后的信息
+                request.setAttribute(LOGIN_INFO, result.getAccount());
                 filterChain.doFilter(request, response);
                 return;
             }
         }
 
-        // 判断cookie是否有效
-        String token = RequestHelper.getCookie(TOKEN_COOKIE_NAME, request);
-        log.debug("url:{} token: {}", url, token);
-        String loginUser = TokenHelper.getLoginUserFromToken(token);
-        if (!StringUtils.hasLength(loginUser)) {
-            log.debug("token无效: {}", token);
-            addToken("", request, response);
-            if (StringUtils.hasLength(token)) {
-                endResponse(request, response, "token无效");
-            } else {
-                endResponse(request, response, "未登录");
-            }
-            return;
-        }
-
-        // 添加登录后的信息
-        request.setAttribute(LOGIN_INFO, loginUser);
-
-        log.debug("token校验成功: {}", token);
-        filterChain.doFilter(request, response);
+        addToken("", request, response);
+        endResponse(request, response, "请重新登录");
     }
 
     public static String getLoginInfo(WebRequest request) {
@@ -158,7 +139,7 @@ public class LdapLoginFilter extends BaseFilter {
      * @param response 响应上下文
      */
     private void addToken(String username, HttpServletRequest request, HttpServletResponse response) {
-        Cookie loginCookie = new Cookie(TOKEN_COOKIE_NAME, "");
+        Cookie loginCookie = new Cookie(TokenHelper.getTokenCookieName(), "");
         loginCookie.setPath("/");
         if (username.isEmpty()) {
             loginCookie.setMaxAge(0);
