@@ -27,7 +27,8 @@ public class ThirdLoginService {
 
     /**
      * 拼接返回第三方登录的url
-     * 这里的格式是钉钉的
+     * 这里的格式是钉钉的，
+     * 注：钉钉登录对接官方文档： https://open.dingtalk.com/document/orgapp/tutorial-obtaining-user-personal-information
      *
      * @param request 当前请求上下文，用于提取域名，拼接回调地址
      * @return 钉钉登录url
