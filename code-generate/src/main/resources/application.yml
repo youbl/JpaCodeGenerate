@@ -48,6 +48,17 @@ sdk:
   app-key: sdk
   secure-key: 123456
 
+third-login-info:
+  # 未登录时，要跳转到哪里去登录
+  login-url: https://login.dingtalk.com/oauth2/auth?response_type=code&client_id=${ird-login-info.app-key}&scope=openid
+  # 登录成功时，跳回到哪个地址？通常是本服务的域名+接收token的地址
+  callback-url: /authCallback
+  # 跟随url传递到登录方，再通过回调传递回来的参数，业务方自用
+  callback-para: xxxxxxxxx
+  app-key: aaa
+  app-secret: bbb
+
+
 cloud:
   # 用于阿里云cdn操作的ak/sk
   ali-cdn:

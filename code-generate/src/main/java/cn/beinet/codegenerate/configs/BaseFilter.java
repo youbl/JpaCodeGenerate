@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.configs;
 
-import org.springframework.beans.factory.annotation.Value;
+import cn.beinet.codegenerate.util.SpringUtil;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,8 +20,7 @@ public abstract class BaseFilter extends OncePerRequestFilter {
     // 登录输入页地址
     public static final String loginPage = "/login.html";
 
-    @Value("${server.servlet.context-path:}")
-    private String prefix;
+    private static String prefix;
 
     /**
      * 终止响应，并返回错误信息
@@ -53,13 +52,17 @@ public abstract class BaseFilter extends OncePerRequestFilter {
      * @param response 响应上下文
      * @param url      跳转地址
      */
-    protected void redirect(HttpServletResponse response, String url) {
+    public static void redirect(HttpServletResponse response, String url) {
         if (!StringUtils.hasLength(url)) {
             url = "/index.html";
         }
         if (!url.startsWith("http")) {
             if (!url.startsWith("/"))
                 url = "/" + url;
+
+            if (prefix == null) {
+                prefix = SpringUtil.getProperty("server.servlet.context-path");
+            }
             url = prefix + url;
         }
         response.setStatus(302);

@@ -89,6 +89,7 @@ public class SpringUtil implements ApplicationContextAware {
      * @return 值
      */
     public static String getProperty(String key) {
-        return springApplicationContext.getEnvironment().getProperty(key);
+        String ret = springApplicationContext.getEnvironment().getProperty(key);
+        return (ret == null) ? "" : ret;
     }
 }

@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.configs;
 
 import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.logins.Validator;
+import cn.beinet.codegenerate.configs.thirdLogin.ThirdLoginService;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.TokenHelper;
@@ -47,9 +48,13 @@ public class LdapLoginFilter extends BaseFilter {
 
     // 登录认证地址
     private static final String loginActionPage = "/login";
+    // 第三方认证回调地址
+    private static final String loginCallbackPage = "/authCallback";
 
     private final List<Validator> validatorList;
     private final ImgCodeService codeService;
+
+    private final ThirdLoginService thirdLoginInfo;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -58,13 +63,13 @@ public class LdapLoginFilter extends BaseFilter {
         String url = request.getServletPath();
         //log.debug("收到请求: {}", url);
 
-        // 验证用户名密码
         if (url.endsWith(loginActionPage)) {
+            // 验证LDAP的用户名密码
             try {
                 processLoginRequest(request, response);
             } catch (Exception exp) {
                 log.error("登录出错:" + exp.getMessage());
-                endResponse(request, response, "认证出错，请与管理员联系", loginPage);
+                endResponse(request, response, "认证出错，请与管理员联系", thirdLoginInfo.combineLoginUrl(request));
             }
             return;
         }
@@ -81,7 +86,7 @@ public class LdapLoginFilter extends BaseFilter {
 
         // 所有校验均失败，清空登录cookie
         addToken("", request, response);
-        endResponse(request, response, "请重新登录", loginPage);
+        endResponse(request, response, "请重新登录", thirdLoginInfo.combineLoginUrl(request));
     }
 
     public static String getLoginInfo(WebRequest request) {
@@ -107,7 +112,7 @@ public class LdapLoginFilter extends BaseFilter {
     private void processLoginRequest(HttpServletRequest request, HttpServletResponse response) {
         if (!validateCode(request)) {
             addToken("", request, response);
-            endResponse(request, response, "验证码错误", loginPage);
+            endResponse(request, response, "验证码错误", thirdLoginInfo.combineLoginUrl(request));
             return;
         }
 
@@ -118,7 +123,7 @@ public class LdapLoginFilter extends BaseFilter {
             log.debug("用户名: {}, 账号或密码错误", username);
             //throw new RuntimeException("账号或密码错误");
             addToken("", request, response);
-            endResponse(request, response, "账号或密码错误", loginPage);
+            endResponse(request, response, "账号或密码错误", thirdLoginInfo.combineLoginUrl(request));
             return;
         }
 
@@ -139,7 +144,7 @@ public class LdapLoginFilter extends BaseFilter {
      * @param username 用户名，为空表示删除token
      * @param response 响应上下文
      */
-    private void addToken(String username, HttpServletRequest request, HttpServletResponse response) {
+    public static void addToken(String username, HttpServletRequest request, HttpServletResponse response) {
         Cookie loginCookie = new Cookie(TokenHelper.getTokenCookieName(), "");
         loginCookie.setPath("/");
         if (username.isEmpty()) {
