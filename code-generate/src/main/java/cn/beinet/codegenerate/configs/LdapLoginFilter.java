@@ -64,7 +64,7 @@ public class LdapLoginFilter extends BaseFilter {
                 processLoginRequest(request, response);
             } catch (Exception exp) {
                 log.error("登录出错:" + exp.getMessage());
-                endResponse(request, response, "认证出错，请与管理员联系");
+                endResponse(request, response, "认证出错，请与管理员联系", loginPage);
             }
             return;
         }
@@ -79,8 +79,9 @@ public class LdapLoginFilter extends BaseFilter {
             }
         }
 
+        // 所有校验均失败，清空登录cookie
         addToken("", request, response);
-        endResponse(request, response, "请重新登录");
+        endResponse(request, response, "请重新登录", loginPage);
     }
 
     public static String getLoginInfo(WebRequest request) {
@@ -106,7 +107,7 @@ public class LdapLoginFilter extends BaseFilter {
     private void processLoginRequest(HttpServletRequest request, HttpServletResponse response) {
         if (!validateCode(request)) {
             addToken("", request, response);
-            endResponse(request, response, "验证码错误");
+            endResponse(request, response, "验证码错误", loginPage);
             return;
         }
 
@@ -117,7 +118,7 @@ public class LdapLoginFilter extends BaseFilter {
             log.debug("用户名: {}, 账号或密码错误", username);
             //throw new RuntimeException("账号或密码错误");
             addToken("", request, response);
-            endResponse(request, response, "账号或密码错误");
+            endResponse(request, response, "账号或密码错误", loginPage);
             return;
         }
 

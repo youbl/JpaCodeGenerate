@@ -20,7 +20,7 @@ public abstract class BaseFilter extends OncePerRequestFilter {
     // 登录输入页地址
     public static final String loginPage = "/login.html";
 
-    @Value("${server.servlet.context-path}")
+    @Value("${server.servlet.context-path:}")
     private String prefix;
 
     /**
@@ -30,14 +30,16 @@ public abstract class BaseFilter extends OncePerRequestFilter {
      * @param response 响应上下文
      * @param msg      错误信息
      */
-    protected void endResponse(HttpServletRequest request, HttpServletResponse response, String msg) {
+    protected void endResponse(HttpServletRequest request, HttpServletResponse response, String msg, String loginUrl) {
         if (!isAjax(request)) {
-            redirect(response, loginPage);
+            redirect(response, loginUrl);
             return;
         }
         response.setContentType("application/json; charset=UTF-8");
         try {
-            String ret = "{\"ret\":500, \"msg\":\"" + msg.replaceAll("[\"']", "") + "\"}";
+            msg = msg.replaceAll("[\"']", "");
+            loginUrl = loginUrl.replaceAll("[\"']", "");
+            String ret = "{\"ret\":500, \"msg\":\"" + msg + "\", \"loginUrl\":\"" + loginUrl + "\"}";
             response.getOutputStream().write(ret.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,11 +56,14 @@ public abstract class BaseFilter extends OncePerRequestFilter {
     protected void redirect(HttpServletResponse response, String url) {
         if (!StringUtils.hasLength(url)) {
             url = "/index.html";
-        } else if (!url.startsWith("/")) {
-            url = "/" + url;
+        }
+        if (!url.startsWith("http")) {
+            if (!url.startsWith("/"))
+                url = "/" + url;
+            url = prefix + url;
         }
         response.setStatus(302);
-        response.setHeader("Location", prefix + url);//设置新请求的URL
+        response.setHeader("Location", url);//设置新请求的URL
     }
 
     /**
