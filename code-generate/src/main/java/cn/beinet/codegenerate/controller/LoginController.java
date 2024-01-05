@@ -74,12 +74,15 @@ public class LoginController {
             return "未成功获取用户邮箱";
 
         String email = userInfo2.getResult().getOrg_email();
-        if (email.indexOf(emailDomain) > 0) {
-            LdapLoginFilter.addToken(email, request, response);
-            LdapLoginFilter.redirect(response, "index.html");
-            return "ok";
+        int idx = email.indexOf(emailDomain);
+        if (idx < 0) {
+            return email + "域名不匹配: " + emailDomain;
         }
 
-        return email + "域名不匹配: " + emailDomain;
+        // cookie里不要放域名
+        String username = email.substring(0, idx);
+        LdapLoginFilter.addToken(username, request, response);
+        LdapLoginFilter.redirect(response, "index.html");
+        return "ok";
     }
 }
