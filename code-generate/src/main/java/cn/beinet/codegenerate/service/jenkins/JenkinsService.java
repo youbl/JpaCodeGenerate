@@ -1,6 +1,6 @@
-package cn.beinet.codegenerate.job.backup.services;
+package cn.beinet.codegenerate.service.jenkins;
 
-import cn.beinet.codegenerate.job.backup.services.dto.JenkinsJob;
+import cn.beinet.codegenerate.service.jenkins.dto.JenkinsJob;
 import cn.beinet.codegenerate.util.HttpHelper;
 import org.springframework.util.StringUtils;
 

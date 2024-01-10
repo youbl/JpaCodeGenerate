@@ -1,6 +1,7 @@
-package cn.beinet.codegenerate.job.backup;
+package cn.beinet.codegenerate.job.backup.impl;
 
-import cn.beinet.codegenerate.job.config.BackupConfigs;
+import cn.beinet.codegenerate.job.backup.Backup;
+import cn.beinet.codegenerate.job.backup.BackupConfigs;
 import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.util.FileHelper;
 import lombok.extern.slf4j.Slf4j;

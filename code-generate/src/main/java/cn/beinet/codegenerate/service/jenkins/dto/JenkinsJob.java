@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.job.backup.services.dto;
+package cn.beinet.codegenerate.service.jenkins.dto;
 
 import lombok.Data;
 

@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.util;
 
-import cn.beinet.codegenerate.job.config.BackupConfigs;
+import cn.beinet.codegenerate.job.backup.BackupConfigs;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

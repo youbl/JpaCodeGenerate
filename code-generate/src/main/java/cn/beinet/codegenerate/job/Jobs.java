@@ -1,14 +1,11 @@
 package cn.beinet.codegenerate.job;
 
-import cn.beinet.codegenerate.job.backup.Backup;
-import cn.beinet.codegenerate.util.GitHelper;
+import cn.beinet.codegenerate.job.backup.BackupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * Description:
@@ -21,8 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "spring.profiles.active", havingValue = "prod", matchIfMissing = false)
 public class Jobs {
-    private final List<Backup> backupList;
-    private final GitHelper gitHelper;
+    private final BackupService backupService;
     private static boolean isOk;
 
     /**
@@ -31,25 +27,9 @@ public class Jobs {
     @Scheduled(cron = "0 30 * * * *")
     //@Scheduled(cron = "* * * * * *")
     public void backupOperations() {
-        if (!gitHelper.enabled())
-            return;
-
 //        if (isOk)
 //            return;
 //        isOk = true;
-        log.info("backupOperations 启动...");
-        for (Backup item : backupList) {
-            try {
-                if (item.enabled()) {
-                    item.operate();
-                }
-            } catch (Exception exp) {
-                log.error("backupOperations error:{0} {1}", item.getClass().getName(), exp.getMessage());
-            }
-        }
-        log.info("文件写入完成，开始操作git...");
-        gitHelper.pull();
-        gitHelper.commit("备份");
-        log.info("backupOperations 结束.");
+        backupService.run();
     }
 }

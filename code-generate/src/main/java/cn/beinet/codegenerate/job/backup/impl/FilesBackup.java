@@ -1,6 +1,7 @@
-package cn.beinet.codegenerate.job.backup;
+package cn.beinet.codegenerate.job.backup.impl;
 
-import cn.beinet.codegenerate.job.config.BackupConfigs;
+import cn.beinet.codegenerate.job.backup.Backup;
+import cn.beinet.codegenerate.job.backup.BackupConfigs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;

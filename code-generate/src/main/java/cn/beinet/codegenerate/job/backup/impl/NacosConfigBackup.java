@@ -1,7 +1,8 @@
-package cn.beinet.codegenerate.job.backup;
+package cn.beinet.codegenerate.job.backup.impl;
 
 import cn.beinet.codegenerate.controller.dto.NacosDto;
-import cn.beinet.codegenerate.job.config.BackupConfigs;
+import cn.beinet.codegenerate.job.backup.Backup;
+import cn.beinet.codegenerate.job.backup.BackupConfigs;
 import cn.beinet.codegenerate.service.NacosService;
 import cn.beinet.codegenerate.util.FileHelper;
 import lombok.extern.slf4j.Slf4j;
