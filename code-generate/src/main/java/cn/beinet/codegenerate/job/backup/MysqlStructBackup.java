@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Description:
- * 遍历Mysql实例的所有DB，并备份结构到本地文件
+ * 遍历指定Mysql实例的所有DB，把这些DB的表结构 进行备份
  *
  * @author : youbl
  * @create: 2022/4/11 10:57

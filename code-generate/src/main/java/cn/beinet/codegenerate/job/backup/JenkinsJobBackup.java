@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Description:
- * 遍历Jenkins所有Job配置并备份到本地文件
+ * 遍历指定的Jenkins的Job，把所有Job配置进行备份
  *
  * @author : youbl
  * @create: 2022/11/11 10:57

@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Description:
- * 遍历Mysql实例的所有DB，并备份数据增长情况到本地文件
+ * 遍历指定Mysql实例的所有DB，把这些DB的数据增长情况进行备份（行数、占用空间大小等）
  *
  * @author : youbl
  * @create: 2022/4/11 10:57

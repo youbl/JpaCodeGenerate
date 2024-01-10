@@ -11,7 +11,7 @@ import java.io.IOException;
 
 /**
  * Description:
- * 备份指定的目录或文件
+ * 备份指定的目录 或 指定的文件
  *
  * @author : youbl
  * @create: 2022/11/17 10:57

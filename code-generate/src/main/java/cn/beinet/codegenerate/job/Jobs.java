@@ -26,7 +26,7 @@ public class Jobs {
     private static boolean isOk;
 
     /**
-     * 每小时跑一次，启动Backup接口实现类里的备份功能
+     * 每小时跑一次，启动Backup接口实现类里的数据备份功能
      */
     @Scheduled(cron = "0 30 * * * *")
     //@Scheduled(cron = "* * * * * *")
