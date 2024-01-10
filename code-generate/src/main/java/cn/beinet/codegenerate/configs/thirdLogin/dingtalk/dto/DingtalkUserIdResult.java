@@ -17,7 +17,7 @@ public class DingtalkUserIdResult {
 
     @Data
     public static class UserId {
-        private String userId;
+        private String userid;
         private String[] exclusive_account_userid_list;
     }
 }

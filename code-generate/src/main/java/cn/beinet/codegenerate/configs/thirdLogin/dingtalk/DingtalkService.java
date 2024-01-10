@@ -57,7 +57,7 @@ public class DingtalkService {
         DingtalkUserIdResult ret = dingtalkOApiFeign.getUserId(oapiToken.getAccess_token(), dto);
         System.out.println(ret);
         Assert.notNull(ret.getResult(), "根据手机号，未找到钉钉userId");
-        String userId = ret.getResult().getUserId();
+        String userId = ret.getResult().getUserid();
 
         DingtalkUserInfoDto infoDto = new DingtalkUserInfoDto()
                 .setLanguage("zh_CN")
