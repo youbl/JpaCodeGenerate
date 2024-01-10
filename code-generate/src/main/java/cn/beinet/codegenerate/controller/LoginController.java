@@ -74,6 +74,9 @@ public class LoginController {
             return "未成功获取用户邮箱";
 
         String email = userInfo2.getResult().getOrg_email();
+        if (!emailDomain.startsWith("@")) {
+            emailDomain = "@" + emailDomain;
+        }
         int idx = email.indexOf(emailDomain);
         if (idx < 0) {
             return email + "域名不匹配: " + emailDomain;
