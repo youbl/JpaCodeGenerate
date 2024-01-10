@@ -69,14 +69,16 @@
                         </div>
                         <div class="notice">{{val.memo}}</div>
                     </div>
-                    <div v-for="(code, ts, index) in val['code']">{{getStrFromTimestamp(ts)}}:
+                    <div v-for="(code, ts, index) in val['code']" style="padding-top:4px;">
+                        {{getStrFromTimestamp(ts)}}:
                         <span style="font-weight: bold;color: crimson">{{code}}</span>
+                        <el-button size="mini" @click="copyCode(code)">复制</el-button>
                     </div>
                 </div>
                 <div style="clear: both;"></div>
             </div>
         </el-tab-pane>
-        <el-tab-pane label="Table展示">
+        <el-tab-pane label="表格">
             <el-table v-loading="loading"
                       element-loading-text="拼命加载中"
                       element-loading-spinner="el-icon-loading"
@@ -95,16 +97,17 @@
                     </template>
                 </el-table-column>
                 <el-table-column label="说明" sortable property="title" width="150"></el-table-column>
-                <el-table-column label="时间戳: Code" width="360">
+                <el-table-column label="时间戳: Code" width="380">
                     <template slot-scope="scope">
                         <div v-for="(value, key, index) in scope.row['code']">{{key}}({{getStrFromTimestamp(key)}}):
                             <span style="font-weight: bold;color: crimson">{{value}}</span>
+                            <el-button size="mini" @click="copyCode(value)">复制</el-button>
                         </div>
                     </template>
                 </el-table-column>
                 <el-table-column label="备注" sortable property="memo" width="200"></el-table-column>
                 <el-table-column label="入库" sortable property="createTime" width="100"></el-table-column>
-                <el-table-column label="操作" width="120">
+                <el-table-column label="操作" width="50">
                     <template slot-scope="scope">
                         <el-link type="primary" @click="getItemSecure(scope.row)">刷新</el-link>
 
@@ -203,6 +206,10 @@
                 }).catch(error => {
                     this.ajaxError(error);
                 });
+            },
+            copyCode: function (code) {
+                copyStr(code);
+                return alert('已复制: ' + code);
             },
             getMySecure: function () {
                 let url = BASE_URL + 'otpcode/list?codeNum=' + this.codeNum;
