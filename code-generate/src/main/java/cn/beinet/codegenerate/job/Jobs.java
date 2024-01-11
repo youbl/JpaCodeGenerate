@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.job;
 
 import cn.beinet.codegenerate.job.backup.BackupService;
+import cn.beinet.codegenerate.job.dataClean.CleanupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value = "spring.profiles.active", havingValue = "prod", matchIfMissing = false)
 public class Jobs {
     private final BackupService backupService;
+    private final CleanupService cleanupService;
     private static boolean isOk;
 
     /**
@@ -31,5 +33,18 @@ public class Jobs {
 //            return;
 //        isOk = true;
         backupService.run();
+    }
+
+
+    /**
+     * 每小时跑一次，启动Cleanup接口实现类里的数据清理功能
+     */
+    @Scheduled(cron = "0 10 * * * *")
+    //@Scheduled(cron = "* * * * * *")
+    public void cleanupOperations() {
+//        if (isOk)
+//            return;
+//        isOk = true;
+        cleanupService.run();
     }
 }

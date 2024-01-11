@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class MySqlService {
     }
 
     @Async
+    @SneakyThrows
     public void executeDmlAsync(SqlDto sql) {
         if (sql.getTime() < 0) {
             log.warn("执行次数不能小于0");
@@ -60,18 +62,11 @@ public class MySqlService {
             long costTime = System.currentTimeMillis() - startTime;
             totalRows += result;
             log.info("总影响行数：{} 总耗时：{}ms", totalRows, costTime);
-            sleep(10);
+            Thread.sleep(10);
         }
     }
 
     private String[] splitSql(String sql) {
         return sql.split(";");
-    }
-
-    private void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (Exception exp) {
-        }
     }
 }
