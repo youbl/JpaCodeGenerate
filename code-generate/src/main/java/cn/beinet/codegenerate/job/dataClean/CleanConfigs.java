@@ -18,6 +18,11 @@ public class CleanConfigs {
      * 是否允许数据清理
      */
     private Boolean enable;
+
+    public boolean getEnable() {
+        return enable != null && enable;
+    }
+
     /**
      * 要清理的MySQL数据库配置列表
      */
@@ -29,6 +34,11 @@ public class CleanConfigs {
          * 是否允许当前实例进行数据清理
          */
         private Boolean enable;
+
+        public boolean getEnable() {
+            return enable != null && enable;
+        }
+
         /**
          * 数据库IP
          */
@@ -67,6 +77,11 @@ public class CleanConfigs {
          * 是否允许当前表进行数据清理
          */
         private Boolean enable;
+
+        public boolean getEnable() {
+            return enable != null && enable;
+        }
+
         /**
          * 要清理的表名
          */
@@ -75,10 +90,26 @@ public class CleanConfigs {
          * true表示先备份再删除，false表示不备份直接删除
          */
         private Boolean needBackup;
+
+        public boolean getNeedBackup() {
+            return needBackup != null && needBackup;
+        }
+
         /**
          * 主键字段名，只支持自增字段 或 雪花算法这种递增值，只支持单个key
          */
         private String keyField;
+        /**
+         * 表的分区数量，设置该值，可以更高效的对分区表进行清理，会对每个分区单独清理，非分区表请填写0或1，或置空
+         */
+        private Integer partitionNum;
+
+        public int getPartitionNum() {
+            if (partitionNum == null || partitionNum < 1)
+                return 1;
+            return partitionNum;
+        }
+
         /**
          * 可空，有时mysql会不使用索引，有此配置表示强制使用该索引进行查询。
          * 注：索引不存在会报错
@@ -106,5 +137,8 @@ public class CleanConfigs {
          * 执行清理的小时范围，[0,4-10,15-23] 表示0点，4点到10点，15到23点; 为空表示0-23
          */
         private String cleanHours;
+
+        // 内部用，备份到哪个表
+        private String backToTableName;
     }
 }

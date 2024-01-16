@@ -26,7 +26,7 @@ public class MysqlCleanup implements Cleanup {
 
     @Override
     public boolean enabled() {
-        if (cleanConfigs == null || cleanConfigs.getEnable() == null || !cleanConfigs.getEnable())
+        if (cleanConfigs == null || !cleanConfigs.getEnable())
             return false;
         return cleanConfigs.getMysql() != null && cleanConfigs.getMysql().length > 0;
     }
@@ -34,8 +34,7 @@ public class MysqlCleanup implements Cleanup {
     @Override
     public void clean() {
         for (CleanConfigs.MysqlInstance mysql : cleanConfigs.getMysql()) {
-            if (mysql.getEnable() == null ||
-                    !mysql.getEnable() ||
+            if (!mysql.getEnable() ||
                     mysql.getTables() == null)
                 continue;
 
@@ -49,8 +48,7 @@ public class MysqlCleanup implements Cleanup {
             String backToDb = StringUtils.hasLength(mysql.getBackToDb()) ?
                     mysql.getBackToDb() : mysql.getDatabase();
             for (CleanConfigs.MysqlTable table : mysql.getTables()) {
-                if (table.getEnable() == null ||
-                        !table.getEnable())
+                if (!table.getEnable())
                     continue;
                 if (!StringUtils.hasLength(table.getBackToDb())) {
                     table.setBackToDb(backToDb);

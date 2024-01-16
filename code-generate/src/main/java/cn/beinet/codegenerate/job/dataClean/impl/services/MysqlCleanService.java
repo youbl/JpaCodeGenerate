@@ -35,23 +35,25 @@ public class MysqlCleanService {
     public void cleanTable(CleanConfigs.MysqlTable table,
                            MySqlExecuteRepository repository) {
         String key = repository.getIp() + ":" + repository.getDb() + ":" + table.getTableName();
-        if (!isRunningHour(table.getCleanHours())) {
-            log.warn("当前时段不允许执行: {} {},当前线程数: {}", table.getCleanHours(), key, count.get());
-            return;
-        }
-
-        Integer existVal = map.putIfAbsent(key, 1);
-        if (existVal != null) {
-            log.warn("前次执行未完成: {},当前线程数: {}", key, count.get());
-            return;
-        }
-        log.info("{} 启动,当前线程数: {}", key, count.incrementAndGet());
-
         try {
+            if (!isRunningHour(table.getCleanHours())) {
+                log.warn("当前时段不允许执行: {} {},当前线程数: {}", table.getCleanHours(), key, count.get());
+                return;
+            }
+
+            Integer existVal = map.putIfAbsent(key, 1);
+            if (existVal != null) {
+                log.warn("前次执行未完成: {},当前线程数: {}", key, count.get());
+                return;
+            }
+            log.info("{} 启动,当前线程数: {}", key, count.incrementAndGet());
+
             doCleanTable(table, repository);
+            log.info("{} 完成，剩余线程数: {}", key, count.decrementAndGet());
+        } catch (Exception exp) {
+            log.error("{} 异常，剩余线程数: {}", key, count.decrementAndGet(), exp);
         } finally {
             map.remove(key);// 移除该表
-            log.info("{} 完成，剩余线程数: {}", key, count.decrementAndGet());
         }
     }
 
@@ -74,41 +76,64 @@ public class MysqlCleanService {
             return;
         }
 
-        long backupedRows = 0;
-        if (table.getNeedBackup() != null && table.getNeedBackup()) {
-            // 先备份数据
+        if (table.getNeedBackup()) {
+            // 先创建备份用的表
             String backupTbName = createBackupTable(table, moveMaxTime, repository);
-            backupedRows = backupOldRecords(table, maxId, backupTbName, repository);
+            table.setBackToTableName(backupTbName);
         }
-        // 清理数据
-        long deletedRows = deleteOldRecords(table, maxId, repository);
 
-        log.info("{} 操作结束 备份{}行/删除{}行", table.getTableName(), backupedRows, deletedRows);
+        int partition = table.getPartitionNum();
+        if (partition <= 1) {
+            process(table, maxId, -1, repository);
+        } else {
+            for (int currentPart = 0; currentPart < partition; currentPart++) {
+                process(table, maxId, currentPart, repository);
+            }
+        }
+    }
+
+    protected void process(CleanConfigs.MysqlTable table,
+                           long maxId,
+                           int partition,
+                           MySqlExecuteRepository repository) {
+        String partTxt = partition < 0 ? "" : "-分区" + partition;
+        long startTime = System.currentTimeMillis();
+
+        // 备份数据
+        long backupedRows = backupOldRecords(table, maxId, partition, repository);
+        long backEndTime = System.currentTimeMillis();
+        long costTime = backEndTime - startTime;
+        log.info("{}{} 已备份:{}行 耗时:{}ms", table.getTableName(), backupedRows, costTime);
+
+        // 清理数据
+        long deletedRows = deleteOldRecords(table, maxId, partition, repository);
+        costTime = System.currentTimeMillis() - backEndTime;
+        log.info("{}{} 操作结束 备份{}行/删除{}行 耗时:{}ms", table.getTableName(), partTxt, backupedRows, deletedRows, costTime);
     }
 
     protected long backupOldRecords(CleanConfigs.MysqlTable table,
                                     long maxId,
-                                    String backupTbName,
+                                    int partition,
                                     MySqlExecuteRepository repository) {
-        String sql = getBackupSql(table, maxId, backupTbName, repository);
+        if (!table.getNeedBackup()) {
+            return 0;// 无需备份
+        }
+        String sql = getBackupSql(table, maxId, partition, repository);
         if (!StringUtils.hasLength(sql)) {
             log.warn("{} 迁移SQL为空: {}", table.getTableName(), sql);
             return 0L;
         }
 
         log.info("准备执行备份语句:{}", sql);
-        long startTime = System.currentTimeMillis();
-        int affectedRows = repository.executeDml(sql);
-        long costTime = System.currentTimeMillis() - startTime;
-        log.info("{} 已备份行数：{} 总耗时：{}ms", table.getTableName(), affectedRows, costTime);
-        return affectedRows;
+        return repository.executeDml(sql);
     }
 
     @SneakyThrows
     protected long deleteOldRecords(CleanConfigs.MysqlTable table,
                                     long maxId,
+                                    int partition,
                                     MySqlExecuteRepository repository) {
-        String sql = getDeleteSql(table, maxId);
+        String sql = getDeleteSql(table, maxId, partition);
         if (!StringUtils.hasLength(sql)) {
             log.warn("{} 删除SQL为空: {}", table.getTableName(), sql);
             return 0L;
@@ -163,7 +188,7 @@ public class MysqlCleanService {
         // 备份表不存在时，创建它
         String createSql = getCreateSql(table.getBackToDb(), backTb, originTb, repository);
         repository.executeDml(createSql);
-        log.info("备份表创建成功:{} {}", table.getBackToDb(), backTb);
+        log.info("{}库备份表创建成功:{}", table.getBackToDb(), backTb);
         return backTb;
     }
 
@@ -223,14 +248,14 @@ public class MysqlCleanService {
     /**
      * 获取备份用的sql，在当前基类里，用jdbcTemplate执行
      *
-     * @param maxId       最大主键
-     * @param targetTable 要备份到的目标表
+     * @param maxId 最大主键
      * @return sql
      */
     protected String getBackupSql(CleanConfigs.MysqlTable table,
                                   long maxId,
-                                  String targetTable,
+                                  int partition,
                                   MySqlExecuteRepository repository) {
+        String targetTable = table.getBackToTableName();
         List<String> columns = repository.findColumnByTable(table.getBackToDb(), targetTable);
         StringBuilder colSb = new StringBuilder();
         for (String col : columns) {
@@ -242,11 +267,26 @@ public class MysqlCleanService {
             }
             colSb.append('`').append(col).append('`');
         }
+        String tbName = getTableWithPartition(table.getTableName(), partition);
         String ret = "INSERT INTO `" + table.getBackToDb() + "`.`" + targetTable + "`(" + colSb + ")" +
-                " SELECT " + colSb + " FROM `" + table.getTableName() + "`" +
+                " SELECT " + colSb + " FROM " + tbName +
                 " WHERE `" + table.getKeyField() + "`<=" + maxId;
 
         return ret + getOtherCondition(table.getOtherCondition());
+    }
+
+    /**
+     * 拼接表名，如果有分区号，增加指定分区号
+     *
+     * @param tableName 表名
+     * @param partition 要查询的分区号，小于0表示无分区
+     * @return 带指定分区的表名
+     */
+    private String getTableWithPartition(String tableName, int partition) {
+        String ret = "`" + tableName + "`";
+        if (partition >= 0)
+            ret += " PARTITION(p" + partition + ")";
+        return ret;
     }
 
     /**
@@ -256,8 +296,9 @@ public class MysqlCleanService {
      * @param maxId 最大主键
      * @return sql
      */
-    protected String getDeleteSql(CleanConfigs.MysqlTable table, long maxId) {
-        String ret = "DELETE FROM `" + table.getTableName() + "` WHERE `" + table.getKeyField() + "`<=" + maxId;
+    protected String getDeleteSql(CleanConfigs.MysqlTable table, long maxId, int partition) {
+        String tbName = getTableWithPartition(table.getTableName(), partition);
+        String ret = "DELETE FROM " + tbName + " WHERE `" + table.getKeyField() + "`<=" + maxId;
         return ret + getOtherCondition(table.getOtherCondition());
     }
 
