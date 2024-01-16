@@ -59,20 +59,21 @@ public class MysqlCleanService {
 
     protected void doCleanTable(CleanTable table,
                                 MySqlExecuteRepository repository) {
+        String tbnameForLog = getTableWithPartition(repository.getDb(), table.getTableName(), -1);
         int keepDays = table.getKeepDays();
         if (keepDays < 1) {
-            log.error("{} 数据保留天数不能小于1: {}", table.getTableName(), keepDays);
+            log.error("{} 数据保留天数不能小于1: {}", tbnameForLog, keepDays);
             return;
         }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime moveMaxTime = now.minusDays(keepDays);
-        log.info("{} 开始操作{}前的数据", table.getTableName(), moveMaxTime);
+        log.info("{} 开始操作{}前的数据", tbnameForLog, moveMaxTime);
 
         // 获取要删除记录的最大主键，后续用主键操作，效率高
         // 注：不兼容没有自增主键的表
         Long maxId = getCleanupMaxId(table, moveMaxTime, repository);
         if (maxId == null || maxId <= 0) {
-            log.warn("{} 未获取到要删除记录的最大id: {}", table.getTableName(), maxId);
+            log.warn("{} 未获取到要删除记录的最大id: {}", tbnameForLog, maxId);
             return;
         }
 
@@ -96,19 +97,20 @@ public class MysqlCleanService {
                            long maxId,
                            int partition,
                            MySqlExecuteRepository repository) {
-        String partTxt = partition < 0 ? "" : "-分区" + partition;
+        String tbnameForLog = getTableWithPartition(repository.getDb(), table.getTableName(), partition);
+
         long startTime = System.currentTimeMillis();
 
         // 备份数据
         long backupedRows = backupOldRecords(table, maxId, partition, repository);
         long backEndTime = System.currentTimeMillis();
         long costTime = backEndTime - startTime;
-        log.info("{}{} 已备份:{}行 耗时:{}ms", table.getTableName(), partTxt, backupedRows, costTime);
+        log.info("{} 已备份:{}行 耗时:{}ms", tbnameForLog, backupedRows, costTime);
 
         // 清理数据
         long deletedRows = deleteOldRecords(table, maxId, partition, repository);
         costTime = System.currentTimeMillis() - backEndTime;
-        log.info("{}{} 操作结束 备份{}行/删除{}行 耗时:{}ms", table.getTableName(), partTxt, backupedRows, deletedRows, costTime);
+        log.info("{} 操作结束 备份{}行/删除{}行 耗时:{}ms", tbnameForLog, backupedRows, deletedRows, costTime);
     }
 
     protected long backupOldRecords(CleanTable table,
@@ -133,9 +135,11 @@ public class MysqlCleanService {
                                     long maxId,
                                     int partition,
                                     MySqlExecuteRepository repository) {
-        String sql = getDeleteSql(table, maxId, partition);
+        String tbname = getTableWithPartition(repository.getDb(), table.getTableName(), partition);
+
+        String sql = getDeleteSql(table, repository.getDb(), maxId, partition);
         if (!StringUtils.hasLength(sql)) {
-            log.warn("{} 删除SQL为空: {}", table.getTableName(), sql);
+            log.warn("{} 删除SQL为空: {}", tbname, sql);
             return 0L;
         }
 
@@ -164,7 +168,7 @@ public class MysqlCleanService {
             startTime = endTime;
 
             totalRows += affectedRows;
-            log.info("{} 已删:{}行 耗时:{}ms/{}ms", table.getTableName(), totalRows, costTime, totalTime);
+            log.info("{} 已删:{}行 耗时:{}ms/{}ms", tbname, totalRows, costTime, totalTime);
             Thread.sleep(10);
         }
         return totalRows;
@@ -267,7 +271,7 @@ public class MysqlCleanService {
             }
             colSb.append('`').append(col).append('`');
         }
-        String tbName = getTableWithPartition(table.getTableName(), partition);
+        String tbName = getTableWithPartition(repository.getDb(), table.getTableName(), partition);
         String ret = "INSERT INTO `" + table.getBackDb() + "`.`" + targetTable + "`(" + colSb + ")" +
                 " SELECT " + colSb + " FROM " + tbName +
                 " WHERE `" + table.getKeyField() + "`<=" + maxId;
@@ -278,12 +282,16 @@ public class MysqlCleanService {
     /**
      * 拼接表名，如果有分区号，增加指定分区号
      *
+     * @param dbName    库名
      * @param tableName 表名
      * @param partition 要查询的分区号，小于0表示无分区
      * @return 带指定分区的表名
      */
-    private String getTableWithPartition(String tableName, int partition) {
+    private String getTableWithPartition(String dbName, String tableName, int partition) {
         String ret = "`" + tableName + "`";
+        if (StringUtils.hasLength(dbName)) {
+            ret = "`" + dbName + "`." + ret;
+        }
         if (partition >= 0)
             ret += " PARTITION(p" + partition + ")";
         return ret;
@@ -296,8 +304,8 @@ public class MysqlCleanService {
      * @param maxId 最大主键
      * @return sql
      */
-    protected String getDeleteSql(CleanTable table, long maxId, int partition) {
-        String tbName = getTableWithPartition(table.getTableName(), partition);
+    protected String getDeleteSql(CleanTable table, String dbName, long maxId, int partition) {
+        String tbName = getTableWithPartition(dbName, table.getTableName(), partition);
         String ret = "DELETE FROM " + tbName + " WHERE `" + table.getKeyField() + "`<=" + maxId;
         return ret + getOtherCondition(table.getOtherCondition());
     }
