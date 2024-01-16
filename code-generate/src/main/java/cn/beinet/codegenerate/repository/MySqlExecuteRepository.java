@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.repository;
 
+import cn.beinet.codegenerate.linkinfo.service.entity.LinkInfo;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -26,9 +27,15 @@ public class MySqlExecuteRepository {
         initField();
     }
 
+    public MySqlExecuteRepository(LinkInfo info, String dbName) {
+        this(info.getAddress(), info.getPort(), info.getAccount(), info.getPwd(), dbName);
+    }
+
     public MySqlExecuteRepository(String ip, int port, String userName, String pwd, String dbName) {
+        if (port <= 0)
+            port = 3306;
         this.url = "jdbc:mysql://" + ip + ":" + port +
-                "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=1000&connectTimeout=1000";
+                "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=5000&connectTimeout=5000";
         this.userName = userName;
         this.pwd = pwd;
 

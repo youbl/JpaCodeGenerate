@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.job.dataClean.impl.services;
 
-import cn.beinet.codegenerate.job.dataClean.CleanConfigs;
+import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanTable;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -28,16 +28,16 @@ public class MysqlCleanService {
     // 备份表使用的主键
     private final String BACKUP_TABLE_KEY = "backup_id";
 
-    ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap();
+    ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
     private final AtomicInteger count = new AtomicInteger(0);
 
     @Async
-    public void cleanTable(CleanConfigs.MysqlTable table,
+    public void cleanTable(CleanTable table,
                            MySqlExecuteRepository repository) {
         String key = repository.getIp() + ":" + repository.getDb() + ":" + table.getTableName();
         try {
-            if (!isRunningHour(table.getCleanHours())) {
-                log.warn("当前时段不允许执行: {} {},当前线程数: {}", table.getCleanHours(), key, count.get());
+            if (!isRunningHour(table.getRunHours())) {
+                log.warn("当前时段不允许执行: {} {},当前线程数: {}", table.getRunHours(), key, count.get());
                 return;
             }
 
@@ -57,7 +57,7 @@ public class MysqlCleanService {
         }
     }
 
-    protected void doCleanTable(CleanConfigs.MysqlTable table,
+    protected void doCleanTable(CleanTable table,
                                 MySqlExecuteRepository repository) {
         int keepDays = table.getKeepDays();
         if (keepDays < 1) {
@@ -92,7 +92,7 @@ public class MysqlCleanService {
         }
     }
 
-    protected void process(CleanConfigs.MysqlTable table,
+    protected void process(CleanTable table,
                            long maxId,
                            int partition,
                            MySqlExecuteRepository repository) {
@@ -103,7 +103,7 @@ public class MysqlCleanService {
         long backupedRows = backupOldRecords(table, maxId, partition, repository);
         long backEndTime = System.currentTimeMillis();
         long costTime = backEndTime - startTime;
-        log.info("{}{} 已备份:{}行 耗时:{}ms", table.getTableName(), backupedRows, costTime);
+        log.info("{}{} 已备份:{}行 耗时:{}ms", table.getTableName(), partTxt, backupedRows, costTime);
 
         // 清理数据
         long deletedRows = deleteOldRecords(table, maxId, partition, repository);
@@ -111,7 +111,7 @@ public class MysqlCleanService {
         log.info("{}{} 操作结束 备份{}行/删除{}行 耗时:{}ms", table.getTableName(), partTxt, backupedRows, deletedRows, costTime);
     }
 
-    protected long backupOldRecords(CleanConfigs.MysqlTable table,
+    protected long backupOldRecords(CleanTable table,
                                     long maxId,
                                     int partition,
                                     MySqlExecuteRepository repository) {
@@ -129,7 +129,7 @@ public class MysqlCleanService {
     }
 
     @SneakyThrows
-    protected long deleteOldRecords(CleanConfigs.MysqlTable table,
+    protected long deleteOldRecords(CleanTable table,
                                     long maxId,
                                     int partition,
                                     MySqlExecuteRepository repository) {
@@ -175,20 +175,20 @@ public class MysqlCleanService {
      *
      * @return 表名
      */
-    protected String createBackupTable(CleanConfigs.MysqlTable table,
+    protected String createBackupTable(CleanTable table,
                                        LocalDateTime moveMaxTime,
                                        MySqlExecuteRepository repository) {
         String originTb = table.getTableName();
         // 默认按月备份
         String backTb = originTb + "_bak" + moveMaxTime.format(DateTimeFormatter.ofPattern("yyyyMM"));
 
-        if (repository.existTable(table.getBackToDb(), backTb)) {
+        if (repository.existTable(table.getBackDb(), backTb)) {
             return backTb;
         }
         // 备份表不存在时，创建它
-        String createSql = getCreateSql(table.getBackToDb(), backTb, originTb, repository);
+        String createSql = getCreateSql(table.getBackDb(), backTb, originTb, repository);
         repository.executeDml(createSql);
-        log.info("{}库备份表创建成功:{}", table.getBackToDb(), backTb);
+        log.info("{}库备份表创建成功:{}", table.getBackDb(), backTb);
         return backTb;
     }
 
@@ -229,7 +229,7 @@ public class MysqlCleanService {
      * @param moveMaxTime 时间
      * @return id
      */
-    protected Long getCleanupMaxId(CleanConfigs.MysqlTable table,
+    protected Long getCleanupMaxId(CleanTable table,
                                    LocalDateTime moveMaxTime, MySqlExecuteRepository repository) {
         String forceIndexSql = StringUtils.hasLength(table.getForceIndexName()) ?
                 "FORCE INDEX(`" + table.getForceIndexName() + "`)" : "";
@@ -251,12 +251,12 @@ public class MysqlCleanService {
      * @param maxId 最大主键
      * @return sql
      */
-    protected String getBackupSql(CleanConfigs.MysqlTable table,
+    protected String getBackupSql(CleanTable table,
                                   long maxId,
                                   int partition,
                                   MySqlExecuteRepository repository) {
         String targetTable = table.getBackToTableName();
-        List<String> columns = repository.findColumnByTable(table.getBackToDb(), targetTable);
+        List<String> columns = repository.findColumnByTable(table.getBackDb(), targetTable);
         StringBuilder colSb = new StringBuilder();
         for (String col : columns) {
             if (col.equals(BACKUP_TABLE_KEY)) {
@@ -268,7 +268,7 @@ public class MysqlCleanService {
             colSb.append('`').append(col).append('`');
         }
         String tbName = getTableWithPartition(table.getTableName(), partition);
-        String ret = "INSERT INTO `" + table.getBackToDb() + "`.`" + targetTable + "`(" + colSb + ")" +
+        String ret = "INSERT INTO `" + table.getBackDb() + "`.`" + targetTable + "`(" + colSb + ")" +
                 " SELECT " + colSb + " FROM " + tbName +
                 " WHERE `" + table.getKeyField() + "`<=" + maxId;
 
@@ -296,7 +296,7 @@ public class MysqlCleanService {
      * @param maxId 最大主键
      * @return sql
      */
-    protected String getDeleteSql(CleanConfigs.MysqlTable table, long maxId, int partition) {
+    protected String getDeleteSql(CleanTable table, long maxId, int partition) {
         String tbName = getTableWithPartition(table.getTableName(), partition);
         String ret = "DELETE FROM " + tbName + " WHERE `" + table.getKeyField() + "`<=" + maxId;
         return ret + getOtherCondition(table.getOtherCondition());

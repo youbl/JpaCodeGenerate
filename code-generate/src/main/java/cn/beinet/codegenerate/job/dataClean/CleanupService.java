@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.job.dataClean;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,10 +17,16 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class CleanupService {
+    @Value("${data-clean.enabled:false}")
+    private boolean enabled;
+
     // 清理实现类
     private final List<Cleanup> cleanupList;
 
     public void run() {
+        if (!enabled)
+            return;
+
         log.info("CleanupService 启动...");
         for (Cleanup item : cleanupList) {
             try {

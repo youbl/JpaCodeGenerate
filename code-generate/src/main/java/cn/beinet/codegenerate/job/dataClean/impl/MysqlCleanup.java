@@ -1,13 +1,16 @@
 package cn.beinet.codegenerate.job.dataClean.impl;
 
-import cn.beinet.codegenerate.job.dataClean.CleanConfigs;
 import cn.beinet.codegenerate.job.dataClean.Cleanup;
+import cn.beinet.codegenerate.job.dataClean.configDal.CleanConfigDal;
+import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanConfig;
+import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanTable;
 import cn.beinet.codegenerate.job.dataClean.impl.services.MysqlCleanService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * 新类
@@ -17,41 +20,37 @@ import org.springframework.util.StringUtils;
  */
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class MysqlCleanup implements Cleanup {
     // 清理的配置
-    private final CleanConfigs cleanConfigs;
-
+    private final List<CleanConfig> configList;
     private final MysqlCleanService cleanService;
+
+    public MysqlCleanup(MysqlCleanService cleanService, CleanConfigDal cleanConfigDal) {
+        this.cleanService = cleanService;
+        this.configList = cleanConfigDal.getAllConfig();
+    }
 
     @Override
     public boolean enabled() {
-        if (cleanConfigs == null || !cleanConfigs.getEnable())
-            return false;
-        return cleanConfigs.getMysql() != null && cleanConfigs.getMysql().length > 0;
+        return configList != null && configList.size() > 0;
     }
 
     @Override
     public void clean() {
-        for (CleanConfigs.MysqlInstance mysql : cleanConfigs.getMysql()) {
-            if (!mysql.getEnable() ||
-                    mysql.getTables() == null)
+        for (CleanConfig mysql : configList) {
+            if (!mysql.getEnabled() || mysql.getTableList() == null || mysql.getTableList().isEmpty())
                 continue;
 
-            MySqlExecuteRepository repository = new MySqlExecuteRepository(
-                    mysql.getIp(),
-                    mysql.getPort(),
-                    mysql.getUsername(),
-                    mysql.getPassword(),
-                    mysql.getDatabase());
+            // 判断备份到哪个数据库
+            String backToDb = StringUtils.hasLength(mysql.getBackDb()) ?
+                    mysql.getBackDb() : mysql.getDb();
 
-            String backToDb = StringUtils.hasLength(mysql.getBackToDb()) ?
-                    mysql.getBackToDb() : mysql.getDatabase();
-            for (CleanConfigs.MysqlTable table : mysql.getTables()) {
-                if (!table.getEnable() || !StringUtils.hasLength(table.getTableName()))
+            MySqlExecuteRepository repository = new MySqlExecuteRepository(mysql.getMysql(), mysql.getDb());
+            for (CleanTable table : mysql.getTableList()) {
+                if (!table.getEnabled() || !StringUtils.hasLength(table.getTableName()))
                     continue;
-                if (!StringUtils.hasLength(table.getBackToDb())) {
-                    table.setBackToDb(backToDb);
+                if (!StringUtils.hasLength(table.getBackDb())) {
+                    table.setBackDb(backToDb);
                 }
                 cleanService.cleanTable(table, repository);
             }

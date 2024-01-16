@@ -8,6 +8,8 @@
 - MFA(OTP-Code)保存和生成工具
 - 阿里云CDN缓存清理功能，要先去[这里](https://help.aliyun.com/document_detail/121541.html)下载安装工具
 - 操作日志，以上操作的日志记录
+- job：自动备份能力
+- job：自动mysql数据备份并删除的能力
 
 # 快速部署和启动
 - 创建MySQL数据库，在新数据库里建表，使用`ops.sql`

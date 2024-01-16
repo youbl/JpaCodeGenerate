@@ -30,31 +30,53 @@ public class LinkInfoService {
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * 获取连接信息清单
+     * 获取连接信息清单，不返回密码
      *
      * @param type 连接类型
      * @return 清单
      */
-    public List<LinkInfoDto> getLinkInfo(String type) {
-        String sql = "SELECT * FROM linkinfo a WHERE a.link_type=? ORDER BY name";
-        List<LinkInfo> infos = jdbcTemplate.query(sql, new Object[]{type}, new BeanPropertyRowMapper<>(LinkInfo.class));
-        if (infos == null || infos.size() <= 0)
-            return new ArrayList<>();
+    public List<LinkInfoDto> getLinkInfoDto(String type) {
+        List<LinkInfo> infos = getLinkInfo(type);
 
         List<LinkInfoDto> ret = new ArrayList<>(infos.size());
         for (LinkInfo item : infos) {
-            LinkInfoDto dto = new LinkInfoDto()
-                    .setAccount(item.getAccount())
-                    .setAddress(item.getAddress())
-                    .setCreate_time(item.getCreate_time())
-                    .setUpdate_time(item.getUpdate_time())
-                    .setId(item.getId())
-                    .setInfo(item.getInfo())
-                    .setLink_type(item.getLink_type())
-                    .setName(item.getName())
-                    .setPort(item.getPort())
-                    .setPwd(""); // 密码不返回
+            LinkInfoDto dto = convertToDto(item, false); // 密码不返回
             ret.add(dto);
+        }
+        return ret;
+    }
+
+    /**
+     * 获取连接信息清单，带密码 返回
+     *
+     * @param type 连接类型
+     * @return 清单
+     */
+    public List<LinkInfo> getLinkInfo(String type) {
+        String sql = "SELECT * FROM linkinfo a WHERE a.link_type=? ORDER BY name";
+        List<LinkInfo> infos = jdbcTemplate.query(sql, new Object[]{type}, new BeanPropertyRowMapper<>(LinkInfo.class));
+        if (infos == null)
+            return new ArrayList<>();
+        for (LinkInfo info : infos) {
+            info.setPwd(descrypt(info.getPwd()));
+        }
+        return infos;
+    }
+
+    private LinkInfoDto convertToDto(LinkInfo item, boolean fillPassword) {
+        LinkInfoDto ret = new LinkInfoDto()
+                .setAccount(item.getAccount())
+                .setAddress(item.getAddress())
+                .setCreate_time(item.getCreate_time())
+                .setUpdate_time(item.getUpdate_time())
+                .setId(item.getId())
+                .setInfo(item.getInfo())
+                .setLink_type(item.getLink_type())
+                .setName(item.getName())
+                .setPort(item.getPort())
+                .setPwd("");
+        if (fillPassword) {
+            ret.setPwd(item.getPwd());
         }
         return ret;
     }

@@ -27,7 +27,7 @@ public class LinkInfoController {
      */
     @GetMapping("list")
     public List<LinkInfoDto> getCode(@RequestParam String type) {
-        return linkInfoService.getLinkInfo(type);
+        return linkInfoService.getLinkInfoDto(type);
     }
 
     /**
