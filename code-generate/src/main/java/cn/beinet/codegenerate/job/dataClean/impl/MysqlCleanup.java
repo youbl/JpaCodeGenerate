@@ -6,6 +6,7 @@ import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanConfig;
 import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanTable;
 import cn.beinet.codegenerate.job.dataClean.impl.services.MysqlCleanService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,23 +21,23 @@ import java.util.List;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class MysqlCleanup implements Cleanup {
-    // 清理的配置
-    private final List<CleanConfig> configList;
     private final MysqlCleanService cleanService;
+    private final CleanConfigDal cleanConfigDal;
 
-    public MysqlCleanup(MysqlCleanService cleanService, CleanConfigDal cleanConfigDal) {
-        this.cleanService = cleanService;
-        this.configList = cleanConfigDal.getAllConfig();
-    }
 
     @Override
     public boolean enabled() {
-        return configList != null && configList.size() > 0;
+        return true;
     }
 
     @Override
     public void clean() {
+        List<CleanConfig> configList = cleanConfigDal.getAllConfig();
+        if (configList == null || configList.isEmpty())
+            return;
+
         for (CleanConfig mysql : configList) {
             if (!mysql.getEnabled() || mysql.getTableList() == null || mysql.getTableList().isEmpty())
                 continue;
