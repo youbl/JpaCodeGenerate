@@ -48,7 +48,7 @@ public class MysqlCleanup implements Cleanup {
             String backToDb = StringUtils.hasLength(mysql.getBackToDb()) ?
                     mysql.getBackToDb() : mysql.getDatabase();
             for (CleanConfigs.MysqlTable table : mysql.getTables()) {
-                if (!table.getEnable())
+                if (!table.getEnable() || !StringUtils.hasLength(table.getTableName()))
                     continue;
                 if (!StringUtils.hasLength(table.getBackToDb())) {
                     table.setBackToDb(backToDb);

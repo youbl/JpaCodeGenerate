@@ -3,6 +3,7 @@ package cn.beinet.codegenerate.job.dataClean;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
  * 数据清理的配置读取类
@@ -47,6 +48,13 @@ public class CleanConfigs {
          * 数据库端口
          */
         private Integer port;
+
+        public int getPort() {
+            if (port == null || port <= 0)
+                port = 3306;
+            return port;
+        }
+
         /**
          * 数据库登录账号
          */
@@ -86,6 +94,14 @@ public class CleanConfigs {
          * 要清理的表名
          */
         private String tableName;
+
+        public String getTableName() {
+            if (StringUtils.hasLength(tableName)) {
+                return tableName;
+            }
+            throw new IllegalArgumentException("表名配置 不能为空");
+        }
+
         /**
          * true表示先备份再删除，false表示不备份直接删除
          */
@@ -99,6 +115,19 @@ public class CleanConfigs {
          * 主键字段名，只支持自增字段 或 雪花算法这种递增值，只支持单个key
          */
         private String keyField;
+
+        public String getKeyField() {
+            if (keyField == null) {
+                keyField = "id";
+            } else {
+                keyField = keyField.trim();
+                if (keyField.length() == 0) {
+                    keyField = "id";
+                }
+            }
+            return keyField;
+        }
+
         /**
          * 表的分区数量，设置该值，可以更高效的对分区表进行清理，会对每个分区单独清理，非分区表请填写0或1，或置空
          */
@@ -123,11 +152,26 @@ public class CleanConfigs {
          * 用于时间筛选的字段名,通常为记录入库时间或更新时间
          */
         private String timeField;
+
+        public String getTimeField() {
+            if (StringUtils.hasLength(timeField)) {
+                return timeField;
+            }
+            throw new IllegalArgumentException(getTableName() + "的时间字段配置 不能为空");
+        }
+
         /**
          * 要保留的记录天数，超过该时长的数据，进行删除
          * 注：根据timeField计算
          */
-        private int keepDays;
+        private Integer keepDays;
+
+        public int getKeepDays() {
+            if (keepDays == null || keepDays <= 0)
+                keepDays = 90;
+            return keepDays;
+        }
+
         /**
          * 如果要备份，备份到哪个数据库名（同一IP实例下的另一个数据库）
          * 注：为空时，使用全局配置
