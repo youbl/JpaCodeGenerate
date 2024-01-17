@@ -1,7 +1,7 @@
 package cn.beinet.codegenerate.job;
 
 import cn.beinet.codegenerate.job.backup.BackupService;
-import cn.beinet.codegenerate.job.dataClean.CleanupService;
+import cn.beinet.codegenerate.dataClean.CleanupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

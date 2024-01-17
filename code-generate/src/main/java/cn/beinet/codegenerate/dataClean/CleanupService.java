@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.job.dataClean;
+package cn.beinet.codegenerate.dataClean;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

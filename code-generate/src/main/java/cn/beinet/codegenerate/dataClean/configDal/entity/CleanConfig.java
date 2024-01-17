@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.job.dataClean.configDal.entity;
+package cn.beinet.codegenerate.dataClean.configDal.entity;
 
 import cn.beinet.codegenerate.linkinfo.service.entity.LinkInfo;
 import lombok.Data;

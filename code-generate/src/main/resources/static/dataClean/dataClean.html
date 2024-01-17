@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>数据清理配置</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/common.js?v=1"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+</head>
+<body>
+
+<div id="divApp">
+    <el-form ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <el-button type="primary" icon="el-icon-save" @click="showEditDialog()">新增</el-button>
+        <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+        <span style="padding-left:20px;"
+              v-show="resultData.length">请求耗时: {{costTime}}ms, 记录数: {{resultData.length}}</span>
+    </el-form>
+    <br>
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              height="1200"
+              :data="resultData"
+              :header-row-class-name="'tableHeader'">
+        <!-- 序号列 -->
+        <!--        <el-table-column align="center" label="序号" type="index" width="80"></el-table-column>-->
+        <!-- 展开详情的列 -->
+        <!--        <el-table-column type="expand">-->
+        <!--            <template slot-scope="props">-->
+        <!--                {{props.row.tableList.length}}-->
+        <!--            </template>-->
+        <!--        </el-table-column>-->
+
+        <el-table-column label="ID" property="id" width="50"></el-table-column>
+        <el-table-column label="连接" sortable width="320">
+            <template slot-scope="scope">
+                <div v-html="getConnectionById(scope.row.linkinfoId)"></div>
+            </template>
+        </el-table-column>
+        <el-table-column label="数据库" width="250">
+            <template slot-scope="scope">
+                <div>待清理:{{scope.row.db}}</div>
+                <div>备份到:{{scope.row.backDb}}</div>
+            </template>
+        </el-table-column>
+        <el-table-column label="状态" width="80">
+            <template slot-scope="scope">
+                <div v-if="scope.row.enabled" style="color: red;">启用</div>
+                <div v-if="!scope.row.enabled">停止</div>
+            </template>
+        </el-table-column>
+        <el-table-column label="创建/更新时间" width="180">
+            <template slot-scope="scope">
+                <div>{{scope.row.createTime}}</div>
+                <div>{{scope.row.updateTime}}</div>
+            </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150">
+            <template slot-scope="scope">
+                <el-button @click="changeStatus(scope.row)" size="mini">{{scope.row.enabled?'停止':'启用'}}</el-button>
+                <el-button @click="showEditDialog(scope.row)" size="mini">编辑</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-dialog title="任务编辑" :visible.sync="editDialogShow" :close-on-press-escape="true"
+               :close-on-click-modal="false">
+        <div>
+            <el-form :model="editData" ref="editForm">
+                <el-form-item label="开关">
+                    <el-checkbox v-model="editData.enabled">启用</el-checkbox>
+                </el-form-item>
+                <el-form-item label="数据库实例">
+                    <el-select v-model="editData.linkinfoId" filterable placeholder="请选择">
+                        <el-option
+                                v-for="item in sqlConns"
+                                :key="item.id"
+                                :label="getConnectionStr(item)"
+                                :value="item.id">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="待清理数据库">
+                    <el-input v-model="editData.db" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item label="清理前备份到哪里">
+                    <el-input v-model="editData.backDb" placeholder="请输入"></el-input>
+                </el-form-item>
+            </el-form>
+        </div>
+        <div>
+            <el-button type="primary" @click="saveData('editForm')">保存</el-button>
+        </div>
+    </el-dialog>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loginuser: '',
+            loading: false,
+            sqlConns: [],
+
+            codeNum: 3,
+            editDialogShow: false,
+            editData: {},
+
+            costTime: 0,
+            resultData: [],
+        },
+        created: function () {
+            this.getLoginUser();
+            this.loadConnections().then(this.getDataList);
+        },
+        computed: {},
+        methods: {
+            handleTabClick: function (tab, event) {
+            },
+            getLoginUser: function () {
+                let url = BASE_URL + 'currentuser';
+                return axios.get(url).then(response => {
+                    this.loginuser = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            loadConnections: function () {
+                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('取连接出错:' + response.data.errMsg);
+                    }
+                    this.sqlConns = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            getDataList: function () {
+                let url = BASE_URL + 'dataClean';
+                return axios.get(url).then(response => {
+                    if (response.data.code && response.data.code === 500) {
+                        return alert('出错:\n' + response.data.errMsg);
+                    }
+                    this.resultData = response.data;
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            getConnectionById: function (linkId) {
+                let conn = null;
+                for (let i = 0, j = this.sqlConns.length; i < j; i++) {
+                    if (this.sqlConns[i].id === linkId) {
+                        conn = this.sqlConns[i];
+                        break;
+                    }
+                }
+                return this.getConnectionStr(conn);
+            },
+            getConnectionStr: function (conn) {
+                if (conn) {
+                    return conn.name + '【账号:' + conn.account + '】<br>' + conn.address + ':' + conn.port;
+                }
+                return '不存在';
+            },
+
+            showEditDialog: function (row) {
+                if (row) {
+                    this.editData = row;
+                } else {
+                    this.editData = {
+                        id: '',
+                        enabled: true,
+                        linkinfoId: '',
+                        db: '',
+                        backDb: '',
+                    };
+                }
+                this.editDialogShow = true;
+            },
+            hideEditDialog: function () {
+                this.editDialogShow = false;
+            },
+            saveData(form) {
+                this.$refs[form].validate(valid => {
+                    if (!valid)
+                        return false;
+                    let url = BASE_URL + 'dataClean';
+                    return axios.post(url, this.editData).then(response => {
+                        if (!response || !response.data || response.data.code > 0) {
+                            this.$message({
+                                message: '操作失败！' + response.data.msg,
+                                type: 'error'
+                            });
+                            return;
+                        }
+                        this.$message({
+                            message: '操作成功！',
+                            type: 'success'
+                        });
+                        this.hideEditDialog();
+                        this.getDataList();
+                    }).catch(error => this.ajaxError(error));
+                });
+            },
+            changeStatus: function (row) {
+                let txt = row.enabled ? '停止' : '启用';
+                if (!confirm('确认要' + txt + '该记录吗？'))
+                    return;
+
+                let url = BASE_URL + 'dataClean/status?id=' + row.id + '&status=' + (!row.enabled);
+                return axios.post(url).then(response => {
+                    if (typeof (response.data) === 'number') {
+                        alert('操作成功条数:' + response.data);
+                        this.getDataList();
+                        return;
+                    }
+                    alert(response.data.errMsg);
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            ajaxError: function (error) {
+                window.ajaxError(error, vueApp);
+            },
+        },
+    });
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.job.dataClean;
+package cn.beinet.codegenerate.dataClean;
 
 /**
  * 数据清理能力接口，

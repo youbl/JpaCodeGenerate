@@ -1,6 +1,6 @@
-package cn.beinet.codegenerate.job.dataClean.impl.services;
+package cn.beinet.codegenerate.dataClean.impl.services;
 
-import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanTable;
+import cn.beinet.codegenerate.dataClean.configDal.entity.CleanTable;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

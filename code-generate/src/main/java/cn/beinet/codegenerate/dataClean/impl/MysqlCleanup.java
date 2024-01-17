@@ -1,10 +1,10 @@
-package cn.beinet.codegenerate.job.dataClean.impl;
+package cn.beinet.codegenerate.dataClean.impl;
 
-import cn.beinet.codegenerate.job.dataClean.Cleanup;
-import cn.beinet.codegenerate.job.dataClean.configDal.CleanConfigDal;
-import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanConfig;
-import cn.beinet.codegenerate.job.dataClean.configDal.entity.CleanTable;
-import cn.beinet.codegenerate.job.dataClean.impl.services.MysqlCleanService;
+import cn.beinet.codegenerate.dataClean.Cleanup;
+import cn.beinet.codegenerate.dataClean.configDal.CleanConfigDal;
+import cn.beinet.codegenerate.dataClean.configDal.entity.CleanConfig;
+import cn.beinet.codegenerate.dataClean.configDal.entity.CleanTable;
+import cn.beinet.codegenerate.dataClean.impl.services.MysqlCleanService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class MysqlCleanup implements Cleanup {
 
     @Override
     public void clean() {
-        List<CleanConfig> configList = cleanConfigDal.getAllConfig();
+        List<CleanConfig> configList = cleanConfigDal.getAllConfig(true);
         if (configList == null || configList.isEmpty())
             return;
 

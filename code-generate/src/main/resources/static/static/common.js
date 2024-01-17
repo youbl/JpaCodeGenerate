@@ -504,10 +504,11 @@ function ajaxSuccessCheck(response, vueApp) {
         throw '未找到响应数据';
     }
     if (response.data.code && response.data.code !== 200) {
-        if (response.data.msg === '请重新登录') {
+        let msg = response.data['msg'];
+        if (msg === '请重新登录') {
             return goLoginPage();
         }
-        throw '后台返回code:' + response.data.code + ' ' + response.data.msg;
+        throw '后台返回code:' + response.data.code + ' ' + msg;
     }
 }
 

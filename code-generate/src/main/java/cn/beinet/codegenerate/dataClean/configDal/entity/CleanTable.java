@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.job.dataClean.configDal.entity;
+package cn.beinet.codegenerate.dataClean.configDal.entity;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
