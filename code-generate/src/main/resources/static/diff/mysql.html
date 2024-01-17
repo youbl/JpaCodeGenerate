@@ -6,6 +6,7 @@
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -739,61 +740,6 @@
             },
         },
     });
-
-    /**
-     * 判断对象有属性
-     * @param obj 对象
-     * @returns {boolean} 有或没有
-     */
-    function hasAnyProperty(obj) {
-        if (!obj)
-            return false;
-        for (let prop in obj) {
-            if (obj.hasOwnProperty(prop)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    /**
-     * 获取url里的变量值
-     * @param {string} name 变量名
-     * @return {string}
-     */
-    function getQueryString(name) {
-        if (typeof (name) !== 'string') {
-            return '';
-        }
-        name = name.trim();
-        if (name.length === 0) {
-            return '';
-        }
-        let localSearch = location.search.toLocaleLowerCase();
-        name = name.toLowerCase() + '=';
-        let tmpName = '?' + name;
-        let idx = localSearch.indexOf(tmpName);
-        if (idx < 0) {
-            tmpName = '&' + name;
-            idx = localSearch.indexOf(tmpName);
-            if (idx < 0) {
-                return '';
-            }
-        }
-        name = tmpName;
-        let tmp = location.search.substr(idx + name.length);
-        idx = tmp.indexOf('&');
-        if (idx === 0)
-            return '';
-        let ret;
-        if (idx < 0) {
-            ret = tmp;
-        } else {
-            ret = tmp.substr(0, idx);
-        }
-        return decodeURIComponent(ret.trim());
-    }
 </script>
 </body>
 </html>

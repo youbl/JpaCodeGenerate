@@ -1,3 +1,5 @@
+const $$BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+
 /**
  * 获取url里的变量值
  * @param {string} name 变量名
@@ -23,7 +25,7 @@ function getQueryString(name) {
         }
     }
     name = tmpName;
-    let tmp = location.search.substr(idx + name.length);
+    let tmp = location.search.substring(idx + name.length);
     idx = tmp.indexOf('&');
     if (idx === 0)
         return '';
@@ -31,9 +33,45 @@ function getQueryString(name) {
     if (idx < 0) {
         ret = tmp;
     } else {
-        ret = tmp.substr(0, idx);
+        ret = tmp.substring(0, idx);
     }
     return decodeURIComponent(ret.trim());
+}
+
+/**
+ * 获取指定时间对应的时间戳。
+ * 如果是字符串，进行转换；
+ * 如果不是字符串，也不是Date，取当前时间
+ * @param date Date或string类型
+ * @returns {number} 时间戳
+ */
+function getTimestamp(date) {
+    if (typeof date === "string") {
+        date = new Date(date);
+    }
+    if (!(date instanceof Date) || isNaN(date)) {
+        date = new Date();
+    }
+    return date.getTime();
+}
+
+/**
+ * 从时间戳转换为字符串格式的时间
+ * 不是时间戳时，取当前时间
+ * @param ts 时间戳,小于100000000000表示秒，否则为毫秒
+ * @returns {string} 字符串格式的时间
+ */
+function getStrTimeFromTimestamp(ts) {
+    if (typeof ts === 'string') {
+        ts = parseInt(ts, 10);
+    }
+    if (typeof ts !== 'number' || isNaN(ts)) {
+        return getStrTime();
+    }
+    if(ts < 100000000000) {
+        ts*=1000;
+    }
+    return getStrTime(new Date(ts));
 }
 
 /**
@@ -103,27 +141,6 @@ function getDateEnd(date) {
 function getStrTime(date) {
     if (!date)
         date = new Date();
-    return getYmd(date) + ' ' + getTime(date);
-}
-
-/**
- * 获取yyyy-MM-dd HH:mm:ss格式的日期字符串
- * @param ts 秒级时间戳，可为空，默认当前时间
- * @returns {string} yyyy-MM-dd HH:mm:ss
- */
-function getStrFromTimestamp(ts) {
-    if (ts === undefined || ts === null)
-        return getStrTime(ts);
-    let type = typeof (ts);
-    if (type === 'string') {
-        ts = parseInt(ts, 10);
-        if (isNaN(ts))
-            return getStrTime(undefined);
-        type = typeof (ts);
-    }
-    if (type !== 'number')
-        return getStrTime(undefined);
-    let date = new Date(ts * 1000);
     return getYmd(date) + ' ' + getTime(date);
 }
 
@@ -244,6 +261,47 @@ function secondDiff(dateStart, dateEnd) {
     return (dateEnd - dateStart) / 1000;
 }
 
+/**
+ * 是否只包含0~9的数字，不允许正负号，不允许小数点
+ *
+ * @param str
+ * @returns {boolean}
+ */
+function isOnlyNum(str) {
+    if (str === null || str === undefined)
+        return false;
+    str = str.toString();
+    return /^\d+$/.test(str);
+}
+
+/**
+ * 是否数字，允许正负号，允许小数点
+ *
+ * @param str
+ * @returns {boolean}
+ */
+function isNum(str) {
+    if (str === null || str === undefined || isNaN(str))
+        return false;
+    if (typeof (str) === 'number')
+        return true;
+
+    str = str.toString().trim();
+    return !isNaN(parseFloat(str)) && isFinite(str);
+}
+
+/**
+ * 指定的字符串是否为空
+ * @param str
+ * @returns {boolean}
+ */
+function isEmpty(str) {
+    if (str === null || str === undefined)
+        return true;
+    str = str.toString().trim();
+    return str.length === 0;
+}
+
 function exportDataToCsv(dataList) {
     if (!dataList || !dataList.length) {
         return alert('没有结果可导出');
@@ -271,7 +329,7 @@ function downloadDataToCsv(data) {
     let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(data);
     let downloadLink = document.createElement("a");
     downloadLink.href = uri;
-    downloadLink.download = "export-ziniao.csv";
+    downloadLink.download = "export.csv";
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
@@ -320,6 +378,23 @@ function cutstr(str, cutLen, sufix) {
     return ret;
 }
 
+
+/**
+ * 判断对象有属性
+ * @param obj 对象
+ * @returns {boolean} 有或没有
+ */
+function hasAnyProperty(obj) {
+    if (!obj)
+        return false;
+    for (let prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // 把指定的字符串复制到剪切板
 function copyStr(str) {
     const el = document.createElement('textarea');
@@ -336,6 +411,131 @@ function copyStr(str) {
         document.getSelection().removeAllRanges();
         document.getSelection().addRange(selected);
     }
+}
+
+
+/**
+ * 导出指定的数据
+ * @param dataList 对象数组，如 [{'aa':11, 'bb':22}, {'aa':33, 'bb':44}]
+ * @param downFilename 下载使用的文件名
+ * @param ignoreFieldArr 字符串数组，上面对象里哪些字段不需要导出，如 ['aa', 'cc']
+ * @param attToTitle 函数，用于转换字段为导出的列标题
+ */
+function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle) {
+    if (!dataList || !dataList.length) {
+        return alert('没有结果可导出');
+    }
+    if (attToTitle && typeof (attToTitle) !== 'function')
+        attToTitle = null;
+
+    let dataHeader = '';
+    let dataContent = '';
+    for (let i = 0, j = dataList.length; i < j; i++) {
+        let row = dataList[i];
+        if (i > 0) {
+            dataContent += '\r\n';
+        }
+        for (let att in row) {
+            // 过滤不导出的字段
+            if (ignoreFieldArr && ignoreFieldArr.indexOf(att) >= 0) {
+                continue;
+            }
+            if (i === 0) {
+                let attName = attToTitle ? attToTitle(att) : att;
+                dataHeader += '"' + attName + '",';
+            }
+            let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
+            dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
+        }
+    }
+    downloadCsv(dataHeader + '\r\n' + dataContent, 'errcodes.csv');
+}
+
+/**
+ * 导出指定的字符串为csv文件。
+ * 即弹出下载
+ *
+ * @param csvContent csv的文件内容
+ * @param downFilename 要下载的文件名
+ */
+function downloadCsv(csvContent, downFilename) {
+    if (!downFilename) downFilename = 'down.csv';
+
+    // “\ufeff” BOM头
+    let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(csvContent);
+    let downloadLink = document.createElement("a");
+    downloadLink.href = uri;
+    downloadLink.download = downFilename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+
+/**
+ * 导出指定的字符串为json文件。
+ * 即弹出下载
+ *
+ * @param jsonStr json文件内容
+ * @param downFilename 要下载的文件名
+ */
+function downloadJson(jsonStr, downFilename) {
+    if (!downFilename) downFilename = 'down.json';
+    let blob = new Blob([jsonStr]);
+    let downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = downFilename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+
+function ajaxSuccessCheck(response) {
+    // 外部业务，使用了loading作为ajax加载防重复逻辑
+    if (typeof (vueApp) !== undefined && vueApp.loading)
+        vueApp.loading = false;
+
+    // 响应的http状态不等于200
+    if (!response || !response.status || response.status !== 200) {
+        throw '响应http状态码不为200';
+    }
+    if (response.data === null || response.data === undefined) {
+        throw '未找到响应数据';
+    }
+    if (response.data.code && response.data.code !== 200) {
+        if (response.data.msg === '请重新登录') {
+            return goLoginPage();
+        }
+        throw '后台返回code:' + response.data.code + ' ' + response.data.msg;
+    }
+}
+
+/**
+ * 用于axios的error
+ * @param error 错误对象
+ */
+function ajaxError(error) {
+    // 外部业务，使用了loading作为ajax加载防重复逻辑
+    if (typeof (vueApp) !== undefined && vueApp.loading)
+        vueApp.loading = false;
+
+    if (error.response && error.response.data) {
+        console.log(JSON.stringify(error.response.data));
+        let msg = error.response.data['error'];
+        if (msg && msg === 'Unauthorized') {
+            goLoginPage();
+        } else {
+            alert(msg ? msg : '出错了');
+        }
+    } else if (error.message) {
+        alert('ajax错误:' + error.message);
+    } else {
+        console.log(JSON.stringify(error));
+        alert('未知错误');
+    }
+}
+
+function goLoginPage() {
+    top.location.href = $$BASE_URL + 'login.html?url=' + encodeURIComponent(location.href);
 }
 
 var globalPickOptions = {
