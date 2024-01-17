@@ -8,6 +8,7 @@
     <script src="../static/rowColor.js"></script>
     <script src="../static/qs.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .tabs { /* tab选项卡外围 */
@@ -445,18 +446,7 @@
                 return flexWidth + 'px';
             },
             ajaxError: function (error) {
-                if (error.response && error.response.data) {
-                    let msg = error.response.data['Msg'];
-                    if (msg === 'Unauthorized') {
-                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
-                        return;
-                    }
-                    console.log(JSON.stringify(error.response.data));
-                    alert(msg);
-                } else {
-                    console.log(JSON.stringify(error));
-                    alert('未知错误');
-                }
+                window.ajaxError(error, vueApp);
             },
         },
     });

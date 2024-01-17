@@ -839,22 +839,7 @@
                 this.loading = false;
             },
             ajaxError: function (error) {
-                if (error.response && error.response.data) {
-                    let msg = error.response.data['error'];
-                    if (msg === 'Unauthorized') {
-                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
-                        return;
-                    }
-                    console.log(JSON.stringify(error.response.data));
-                    if (msg === 'Internal Server Error') {
-                        alert('获取失败，可能是没权限');
-                    } else {
-                        alert(msg);
-                    }
-                } else {
-                    console.log(JSON.stringify(error));
-                    alert('未知错误');
-                }
+                window.ajaxError(error, vueApp);
             },
         },
     });

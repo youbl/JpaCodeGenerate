@@ -68,8 +68,8 @@ function getStrTimeFromTimestamp(ts) {
     if (typeof ts !== 'number' || isNaN(ts)) {
         return getStrTime();
     }
-    if(ts < 100000000000) {
-        ts*=1000;
+    if (ts < 100000000000) {
+        ts *= 1000;
     }
     return getStrTime(new Date(ts));
 }
@@ -489,7 +489,9 @@ function downloadJson(jsonStr, downFilename) {
     document.body.removeChild(downloadLink);
 }
 
-function ajaxSuccessCheck(response) {
+function ajaxSuccessCheck(response, vueApp) {
+    if (!vueApp)
+        vueApp = window.vueApp;
     // 外部业务，使用了loading作为ajax加载防重复逻辑
     if (typeof (vueApp) !== undefined && vueApp.loading)
         vueApp.loading = false;
@@ -513,7 +515,9 @@ function ajaxSuccessCheck(response) {
  * 用于axios的error
  * @param error 错误对象
  */
-function ajaxError(error) {
+function ajaxError(error, vueApp) {
+    if (!vueApp)
+        vueApp = window.vueApp;
     // 外部业务，使用了loading作为ajax加载防重复逻辑
     if (typeof (vueApp) !== undefined && vueApp.loading)
         vueApp.loading = false;
@@ -521,6 +525,10 @@ function ajaxError(error) {
     if (error.response && error.response.data) {
         console.log(JSON.stringify(error.response.data));
         let msg = error.response.data['error'];
+        if (!msg) msg = error.response.data['error'];
+        if (!msg) msg = error.response.data['errMsg'];
+        if (!msg) msg = error.response.data['msg'];
+        if (!msg) msg = error.response.data['Msg'];
         if (msg && msg === 'Unauthorized') {
             goLoginPage();
         } else {

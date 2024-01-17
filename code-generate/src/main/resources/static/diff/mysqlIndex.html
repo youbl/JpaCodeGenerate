@@ -584,18 +584,7 @@
                 return item1.key.localeCompare(item2.key);
             },
             ajaxError: function (error) {
-                if (error.response && error.response.data) {
-                    let msg = error.response.data['Msg'];
-                    if (msg === 'Unauthorized') {
-                        location.href = '/login?r=%2Fadmin%23%2FserverStatus.html';
-                        return;
-                    }
-                    console.log(JSON.stringify(error.response.data));
-                    alert(msg);
-                } else {
-                    console.log(JSON.stringify(error));
-                    alert('未知错误');
-                }
+                window.ajaxError(error, vueApp);
             },
         },
     });

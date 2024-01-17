@@ -113,16 +113,7 @@
             },
             ajaxError: function (error) {
                 this.getBeinetCode();
-                if (error.response && error.response.data) {
-                    console.log(JSON.stringify(error.response.data));
-                    let msg = error.response.data['msg'];
-                    if (!msg)
-                        msg = '出错了';
-                    alert(msg);
-                } else {
-                    console.log(JSON.stringify(error));
-                    alert('未知错误');
-                }
+                window.ajaxError(error, vueApp);
             },
         },
     });

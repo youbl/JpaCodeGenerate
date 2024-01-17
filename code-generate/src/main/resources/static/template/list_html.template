@@ -291,22 +291,7 @@
                 top.location.href = BASE_URL + 'login.html?url=' + encodeURIComponent(location.href);
             },
             ajaxError: function (error) {
-                this.loading = false;
-                let msg = this.getMsg(error.response);
-                if (msg && msg === 'Unauthorized') {
-                    this.goLogin();
-                } else {
-                    alert(msg ? msg : '出错了');
-                }
-            },
-            getMsg: function (response) {
-                if (!response || !response.data)
-                    return '';
-                console.log(JSON.stringify(response.data));
-                let msg = response.data['error'];
-                if (!msg)
-                    msg = response.data['msg'];
-                return msg ? msg : '';
+                window.ajaxError(error, vueApp);
             },
         },
     });
