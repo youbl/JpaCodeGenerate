@@ -19,7 +19,7 @@
 <div id="divApp">
     <el-form ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
-        <el-button type="primary" icon="el-icon-save" @click="showEditDialog()">新增</el-button>
+        <el-button type="primary" icon="el-icon-save" @click="showEditMainDialog()">新增实例</el-button>
         <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
         <span style="padding-left:20px;"
               v-show="resultData.length">请求耗时: {{costTime}}ms, 记录数: {{resultData.length}}</span>
@@ -32,7 +32,7 @@
               border
               height="1200"
               :data="resultData"
-              default-expand-all
+              :default-expand-all="false"
               :row-class-name="'mainTableRow'"
               :header-row-class-name="'tableHeader'">
         <!-- 序号列 -->
@@ -41,6 +41,7 @@
         <el-table-column type="expand">
             <template slot-scope="props">
                 <el-table border :data="props.row.tableList">
+                    <el-table-column label="说明" prop="title" width="210"></el-table-column>
                     <el-table-column label="表名" sortable width="180">
                         <template slot-scope="scope">
                             {{scope.row.tableName}}
@@ -48,22 +49,31 @@
                     </el-table-column>
                     <el-table-column label="状态" width="60">
                         <template slot-scope="scope">
-                            <div v-if="scope.row.enabled" style="color: red;">启用</div>
-                            <div v-if="!scope.row.enabled">停止</div>
+                            <div v-if="scope.row.enabled" style="color: green;font-weight:bold">启用</div>
+                            <div v-if="!scope.row.enabled" style="color: red;">停止</div>
                         </template>
                     </el-table-column>
-                    <el-table-column label="时间字段" prop="timeField" width="120"></el-table-column>
-                    <el-table-column label="强制索引" prop="forceIndexName" width="120"></el-table-column>
+                    <el-table-column label="时间字段" prop="timeField" width="100"></el-table-column>
+                    <el-table-column label="强制索引" prop="forceIndexName" width="100"></el-table-column>
                     <el-table-column label="主键" prop="keyField" width="50"></el-table-column>
                     <el-table-column label="其它条件" prop="otherCondition" width="120"></el-table-column>
-                    <el-table-column label="保留天" prop="keepDays" width="70"></el-table-column>
+                    <el-table-column label="保留天" prop="keepDays" width="65"></el-table-column>
                     <el-table-column label="运行时段" prop="runHours" width="100"></el-table-column>
                     <el-table-column label="备份" width="50">
                         <template slot-scope="scope">
                             {{scope.row.needBackup?'是':'否'}}
                         </template>
                     </el-table-column>
-                    <el-table-column label="分区数" prop="partitionNum" width="70"></el-table-column>
+                    <el-table-column label="分区数" prop="partitionNum" width="65"></el-table-column>
+                    <el-table-column label="创建时间" prop="createTime" width="175"></el-table-column>
+                    <el-table-column label="更新时间" prop="updateTime" width="175"></el-table-column>
+                    <el-table-column>
+                        <template slot-scope="scope">
+                            <el-button @click="changeTableStatus(scope.row)" size="mini">{{scope.row.enabled?'停止':'启用'}}
+                            </el-button>
+                            <el-button @click="showEditTableDialog(scope.row)" size="mini">编辑</el-button>
+                        </template>
+                    </el-table-column>
                 </el-table>
             </template>
         </el-table-column>
@@ -82,7 +92,7 @@
         </el-table-column>
         <el-table-column label="状态" width="80">
             <template slot-scope="scope">
-                <div v-if="scope.row.enabled" style="color: green;">启用</div>
+                <div v-if="scope.row.enabled" style="color: green;font-weight:bold">启用</div>
                 <div v-if="!scope.row.enabled" style="color: red;">停止</div>
                 <div>{{scope.row.tableList.length}}张表</div>
             </template>
@@ -96,12 +106,13 @@
         <el-table-column label="操作">
             <template slot-scope="scope">
                 <el-button @click="changeStatus(scope.row)" size="mini">{{scope.row.enabled?'停止':'启用'}}</el-button>
-                <el-button @click="showEditDialog(scope.row)" size="mini">编辑</el-button>
+                <el-button @click="showEditMainDialog(scope.row)" size="mini">编辑</el-button>
+                <el-button @click="showEditTableDialog(scope.row.id)" size="mini">新增表清理</el-button>
             </template>
         </el-table-column>
     </el-table>
 
-    <el-dialog title="任务编辑" :visible.sync="editDialogShow" :close-on-press-escape="true"
+    <el-dialog title="主任务编辑" :visible.sync="editDialogShow" :close-on-press-escape="true"
                :close-on-click-modal="false">
         <div>
             <el-form :model="editData" ref="editForm">
@@ -130,6 +141,54 @@
             <el-button type="primary" @click="saveData('editForm')">保存</el-button>
         </div>
     </el-dialog>
+
+    <el-dialog title="清理表编辑" :visible.sync="editTableDialogShow" :close-on-press-escape="true"
+               :close-on-click-modal="false">
+        <div>
+            <el-form :model="editTableData" ref="editTableForm">
+                <el-form-item label="开关">
+                    <el-checkbox v-model="editTableData.enabled">启用</el-checkbox>
+                    <el-checkbox v-model="editTableData.needBackup">备份</el-checkbox>
+                </el-form-item>
+                <el-form-item label="说明">
+                    <el-input v-model="editTableData.title" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item label="待清理表">
+                    <el-input v-model="editTableData.tableName" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item label="表的主键字段名">
+                    <el-input v-model="editTableData.keyField" placeholder="请输入"></el-input>
+                </el-form-item>
+                <el-form-item label="表的时间字段">
+                    <el-input v-model="editTableData.timeField" placeholder="请输入"></el-input>
+                    注：通过该字段筛选要删除的数据
+                </el-form-item>
+                <el-form-item label="强制索引名">
+                    <el-input v-model="editTableData.forceIndexName" placeholder="请输入"></el-input>
+                    注：可空，通常为时间字段对应的索引
+                </el-form-item>
+                <el-form-item label="删除的其它条件">
+                    <el-input v-model="editTableData.otherCondition" placeholder="请输入"></el-input>
+                    注：有些数据过期，但是又要保留时，可以增加删除条件
+                </el-form-item>
+                <el-form-item label="保留天数">
+                    <el-input v-model="editTableData.keepDays" placeholder="请输入"></el-input>
+                    注：超过这个天数的数据，会被删除
+                </el-form-item>
+                <el-form-item label="清理时段">
+                    <el-input v-model="editTableData.runHours" placeholder="请输入"></el-input>
+                    注：执行清理的小时范围，[0,4-10,15-23] 表示0点，4点到10点，15到23点; 为空表示0-23
+                </el-form-item>
+                <el-form-item label="分区个数">
+                    <el-input v-model="editTableData.partitionNum" placeholder="请输入"></el-input>
+                    注：如果是分区表，可以填写，提升清理效率，不是分区表填写1
+                </el-form-item>
+            </el-form>
+        </div>
+        <div>
+            <el-button type="primary" @click="saveTableData('editTableForm')">保存</el-button>
+        </div>
+    </el-dialog>
 </div>
 <script>
     const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
@@ -140,9 +199,10 @@
             loading: false,
             sqlConns: [],
 
-            codeNum: 3,
             editDialogShow: false,
             editData: {},
+            editTableDialogShow: false,
+            editTableData: {},
 
             costTime: 0,
             resultData: [],
@@ -202,7 +262,7 @@
                 return '不存在';
             },
 
-            showEditDialog: function (row) {
+            showEditMainDialog: function (row) {
                 if (row) {
                     this.editData = row;
                 } else {
@@ -216,7 +276,7 @@
                 }
                 this.editDialogShow = true;
             },
-            hideEditDialog: function () {
+            hideEditMainDialog: function () {
                 this.editDialogShow = false;
             },
             saveData(form) {
@@ -236,7 +296,7 @@
                             message: '操作成功！',
                             type: 'success'
                         });
-                        this.hideEditDialog();
+                        this.hideEditMainDialog();
                         this.getDataList();
                     }).catch(error => this.ajaxError(error));
                 });
@@ -256,6 +316,72 @@
                     alert(response.data.errMsg);
                 }).catch(error => {
                     this.ajaxError(error);
+                });
+            },
+
+            showEditTableDialog: function (row) {
+                let isNew = typeof (row) === 'number';
+                if (!isNew) {
+                    this.editTableData = row;
+                } else {
+                    this.editTableData = {
+                        id: '',
+                        title: '',
+                        configId: row,  // 新建时，这个必须是主配置id
+                        enabled: true,
+                        tableName: '',
+                        timeField: 'create_date',
+                        forceIndexName: '',
+                        keyField: 'id',
+                        otherCondition: '',
+                        keepDays: 90,
+                        runHours: '0-23',
+                        needBackup: true,
+                        partitionNum: 1,
+                    };
+                }
+                this.editTableDialogShow = true;
+            },
+            hideEditTableDialog: function () {
+                this.editTableDialogShow = false;
+            },
+            changeTableStatus: function (row) {
+                let txt = row.enabled ? '停止' : '启用';
+                if (!confirm('确认要' + txt + '该表吗？'))
+                    return;
+
+                let url = BASE_URL + 'dataClean/table/status?id=' + row.id + '&status=' + (!row.enabled);
+                return axios.post(url).then(response => {
+                    if (typeof (response.data) === 'number') {
+                        alert('操作成功条数:' + response.data);
+                        this.getDataList();
+                        return;
+                    }
+                    alert(response.data.errMsg);
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            saveTableData(form) {
+                this.$refs[form].validate(valid => {
+                    if (!valid)
+                        return false;
+                    let url = BASE_URL + 'dataClean/table';
+                    return axios.post(url, this.editTableData).then(response => {
+                        if (!response || !response.data || response.data.code > 0) {
+                            this.$message({
+                                message: '操作失败！' + response.data.msg,
+                                type: 'error'
+                            });
+                            return;
+                        }
+                        this.$message({
+                            message: '操作成功！',
+                            type: 'success'
+                        });
+                        this.hideEditTableDialog();
+                        this.getDataList();
+                    }).catch(error => this.ajaxError(error));
                 });
             },
             ajaxError: function (error) {

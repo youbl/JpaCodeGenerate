@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+
 /**
  * 清理配置表
  *
@@ -13,6 +15,10 @@ import org.springframework.util.StringUtils;
 @Data
 @Accessors(chain = true)
 public class CleanTable {
+    /**
+     * 说明
+     */
+    private String title;
     /**
      * 主键
      */
@@ -129,4 +135,7 @@ public class CleanTable {
 
     // 非字段，内部用，备份到哪个表
     private String backToTableName;
+
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

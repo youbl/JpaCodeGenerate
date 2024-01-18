@@ -74,6 +74,43 @@ public class CleanConfigDal {
         return jdbcTemplate.update(sql, new Object[]{enabled, id});
     }
 
+
+    public int saveTableConfig(CleanTable table) {
+        String sql;
+        List<Object> params = new ArrayList<>();
+        params.add(table.getTitle());
+        params.add(table.getConfigId());
+        params.add(table.getEnabled());
+        params.add(table.getTableName());
+        params.add(table.getTimeField());
+        params.add(table.getForceIndexName());
+        params.add(table.getKeyField());
+        params.add(table.getOtherCondition());
+        params.add(table.getKeepDays());
+        params.add(table.getRunHours());
+        params.add(table.getNeedBackup());
+        params.add(table.getPartitionNum());
+
+        if (table.getId() > 0) {
+            sql = "UPDATE `clean_tables` SET " +
+                    "`title`=?,`config_id`=?,`enabled`=?,`table_name`=?,`time_field`=?,`force_index_name`=?,`key_field`=?," +
+                    "`other_condition`=?,`keep_days`=?,`run_hours`=?,`need_backup`=?,`partition_num`=? " +
+                    " WHERE `id`=?";
+            // sql里的问号，必须跟参数个数一样多，否则报错：Parameter index out of range (5 > number of parameters, which is 4).
+            params.add(table.getId());
+        } else {
+            sql = "INSERT INTO `clean_tables` (`title`,`config_id`,`enabled`,`table_name`,`time_field`,`force_index_name`,`key_field`,`other_condition`,`keep_days`,`run_hours`,`need_backup`,`partition_num`)" +
+                    " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
+        }
+        return jdbcTemplate.update(sql, params.toArray());
+    }
+
+    public int changeTableStatus(int id, boolean status) {
+        int enabled = status ? 1 : 0;
+        String sql = "UPDATE clean_tables SET enabled=? WHERE id=?";
+        return jdbcTemplate.update(sql, new Object[]{enabled, id});
+    }
+
     /**
      * 根据配置的连接id，读取连接信息并填充
      *

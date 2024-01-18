@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.dataClean;
 
 import cn.beinet.codegenerate.dataClean.configDal.CleanConfigDal;
 import cn.beinet.codegenerate.dataClean.configDal.entity.CleanConfig;
+import cn.beinet.codegenerate.dataClean.configDal.entity.CleanTable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,5 +38,16 @@ public class CleanupController {
     @PostMapping("dataClean/status")
     public int changeStatus(@RequestParam int id, @RequestParam boolean status) {
         return cleanConfigDal.changeStatus(id, status);
+    }
+
+
+    @PostMapping("dataClean/table")
+    public int saveTableConfig(@RequestBody CleanTable table) {
+        return cleanConfigDal.saveTableConfig(table);
+    }
+
+    @PostMapping("dataClean/table/status")
+    public int changeTableStatus(@RequestParam int id, @RequestParam boolean status) {
+        return cleanConfigDal.changeTableStatus(id, status);
     }
 }
