@@ -8,6 +8,11 @@
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+    <style>
+        .mainTableRow {
+            font-size: 20px;
+        }
+    </style>
 </head>
 <body>
 
@@ -27,23 +32,49 @@
               border
               height="1200"
               :data="resultData"
+              default-expand-all
+              :row-class-name="'mainTableRow'"
               :header-row-class-name="'tableHeader'">
         <!-- 序号列 -->
         <!--        <el-table-column align="center" label="序号" type="index" width="80"></el-table-column>-->
         <!-- 展开详情的列 -->
-        <!--        <el-table-column type="expand">-->
-        <!--            <template slot-scope="props">-->
-        <!--                {{props.row.tableList.length}}-->
-        <!--            </template>-->
-        <!--        </el-table-column>-->
+        <el-table-column type="expand">
+            <template slot-scope="props">
+                <el-table border :data="props.row.tableList">
+                    <el-table-column label="表名" sortable width="180">
+                        <template slot-scope="scope">
+                            {{scope.row.tableName}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="状态" width="60">
+                        <template slot-scope="scope">
+                            <div v-if="scope.row.enabled" style="color: red;">启用</div>
+                            <div v-if="!scope.row.enabled">停止</div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="时间字段" prop="timeField" width="120"></el-table-column>
+                    <el-table-column label="强制索引" prop="forceIndexName" width="120"></el-table-column>
+                    <el-table-column label="主键" prop="keyField" width="50"></el-table-column>
+                    <el-table-column label="其它条件" prop="otherCondition" width="120"></el-table-column>
+                    <el-table-column label="保留天" prop="keepDays" width="70"></el-table-column>
+                    <el-table-column label="运行时段" prop="runHours" width="100"></el-table-column>
+                    <el-table-column label="备份" width="50">
+                        <template slot-scope="scope">
+                            {{scope.row.needBackup?'是':'否'}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="分区数" prop="partitionNum" width="70"></el-table-column>
+                </el-table>
+            </template>
+        </el-table-column>
 
-        <el-table-column label="ID" property="id" width="50"></el-table-column>
-        <el-table-column label="连接" sortable width="320">
+        <el-table-column label="ID" property="id" width="70"></el-table-column>
+        <el-table-column label="连接" sortable width="520">
             <template slot-scope="scope">
                 <div v-html="getConnectionById(scope.row.linkinfoId)"></div>
             </template>
         </el-table-column>
-        <el-table-column label="数据库" width="250">
+        <el-table-column label="数据库" width="350">
             <template slot-scope="scope">
                 <div>待清理:{{scope.row.db}}</div>
                 <div>备份到:{{scope.row.backDb}}</div>
@@ -51,17 +82,18 @@
         </el-table-column>
         <el-table-column label="状态" width="80">
             <template slot-scope="scope">
-                <div v-if="scope.row.enabled" style="color: red;">启用</div>
-                <div v-if="!scope.row.enabled">停止</div>
+                <div v-if="scope.row.enabled" style="color: green;">启用</div>
+                <div v-if="!scope.row.enabled" style="color: red;">停止</div>
+                <div>{{scope.row.tableList.length}}张表</div>
             </template>
         </el-table-column>
-        <el-table-column label="创建/更新时间" width="180">
+        <el-table-column label="创建/更新时间" width="250">
             <template slot-scope="scope">
                 <div>{{scope.row.createTime}}</div>
                 <div>{{scope.row.updateTime}}</div>
             </template>
         </el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column label="操作">
             <template slot-scope="scope">
                 <el-button @click="changeStatus(scope.row)" size="mini">{{scope.row.enabled?'停止':'启用'}}</el-button>
                 <el-button @click="showEditDialog(scope.row)" size="mini">编辑</el-button>
