@@ -192,8 +192,8 @@
             foundedData: ''
         },
         created: function () {
-            this.getLoginUser()
-                .then(this.getMySecure);
+            this.getLoginUser();
+            this.getMySecure(1);
         },
         computed: {},
         methods: {
@@ -211,13 +211,18 @@
                 copyStr(code);
                 return alert('已复制: ' + code);
             },
-            getMySecure: function () {
+            getMySecure: function (loop) {
                 let url = BASE_URL + 'otpcode/list?codeNum=' + this.codeNum;
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
                     }
                     this.resultData = response.data;
+                    if (loop) {
+                        setTimeout(() => {
+                            vueApp.getMySecure(1);
+                        }, 30000);
+                    }
                 }).catch(error => {
                     this.ajaxError(error);
                 });
