@@ -50,6 +50,7 @@
         <span style="padding-left:20px;"
               v-show="resultData.length">请求耗时: {{costTime}}ms, 已存密钥数: {{resultData.length}}</span>
         <el-button type="primary" icon="el-icon-save" @click="savedSecureShow=true">添加密钥</el-button>
+        <span>服务器时间: {{getStrTimeFromTimestamp(serverTs)}}</span>
     </el-form>
     <br>
     <el-tabs :tab-position="'left'">
@@ -73,6 +74,7 @@
                         <span style="font-size: 10px;">{{getStrTimeFromTimestamp(ts)}}</span>
                         <span style="font-weight: bold;color: crimson">{{code}}</span>
                         <el-button size="mini" @click="copyCode(code)">复制</el-button>
+                        <span style="font-size: 12px;">剩余{{getTimeRemaining(ts)}}秒</span>
                     </div>
                 </div>
                 <div style="clear: both;"></div>
@@ -173,6 +175,7 @@
         data: {
             loginuser: '',
             loading: false,
+            serverTs: new Date().getTime(), // 存储服务端时间戳，毫秒
 
             codeNum: 3,
             savedSecureShow: false,
@@ -193,7 +196,7 @@
         },
         created: function () {
             this.getLoginUser();
-            this.getMySecure(1);
+            this.getMySecure().then(this.refreshServerTs);
         },
         computed: {},
         methods: {
@@ -211,19 +214,36 @@
                 copyStr(code);
                 return alert('已复制: ' + code);
             },
-            getMySecure: function (loop) {
+            // 服务器时间戳每秒加1，方便计算otp的剩余时间
+            refreshServerTs: function () {
+                setTimeout(() => {
+                    vueApp.serverTs = parseInt(vueApp.serverTs, 10) + 1000;
+                    vueApp.refreshServerTs();
+                }, 1000);
+            },
+            getTimeRemaining: function (ts) {
+                let ret = ts - Math.floor(this.serverTs / 1000);
+                if (ret <= 0) {
+                    // code过期时，重新获取otp
+                    this.getMySecure();
+                }
+                return ret;
+            },
+            getMySecure: function () {
+                if (this.loading)
+                    return;
+                this.loading = true;
+
                 let url = BASE_URL + 'otpcode/list?codeNum=' + this.codeNum;
                 return axios.get(url).then(response => {
+                    this.loading = false;
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
                     }
                     this.resultData = response.data.result ? response.data.result : [];
-                    if (loop) {
-                        setTimeout(() => {
-                            vueApp.getMySecure(1);
-                        }, 30000);
-                    }
+                    this.serverTs = response.data.ts;
                 }).catch(error => {
+                    this.loading = false;
                     this.ajaxError(error);
                 });
             },
@@ -234,6 +254,7 @@
                         return alert('出错:\n' + response.data.errMsg);
                     }
                     row.code = response.data.result;
+                    this.serverTs = response.data.ts;
                 }).catch(error => {
                     this.ajaxError(error);
                 });

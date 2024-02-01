@@ -46,13 +46,21 @@ public class OtpCodeGeneratorTool {
      */
     public static Map<String, String> countCodeStr(String secret, int codeNum) {
         Map<String, String> ret = new HashMap<>();
-        int winSize = codeNum / 2;
         long timeSecond = System.currentTimeMillis() / 1000L;
-        for (int i = -winSize; i <= winSize; ++i) {
+//        int winSize = codeNum / 2;
+//        for (int i = -winSize; i <= winSize; ++i) { // 负号用于计算过期的otp
+        for (int i = 0; i < codeNum; ++i) {
             long countTime = timeSecond + (i * second_per_size);
-            int code = countCode(secret, countTime);
-            String strCode = addZero(code, 6);
-            ret.put(String.valueOf(countTime), strCode);
+
+            // 把秒级时间戳，转换为30秒的时间窗口，即每30秒生成一个otp
+            // this is per the TOTP spec (see the RFC for details)
+            long timeWindow = countTime / second_per_size;
+            String strCode = countCode(secret, timeWindow);
+
+            // 起始时间为每个30秒的起始
+            long secondBegin = timeWindow * second_per_size;// otp起始时间
+            long secondEnd = secondBegin + second_per_size; // otp失效时间
+            ret.put(String.valueOf(secondEnd), strCode);
         }
         return ret;
     }
@@ -71,13 +79,10 @@ public class OtpCodeGeneratorTool {
      * @param timeSecond 秒级时间戳
      * @return 生成的当前时间的code
      */
-    public static int countCode(String secret, long timeSecond) {
+    public static String countCode(String secret, long timeWindow) {
         Base32 codec = new Base32();
         byte[] decodedKey = codec.decode(secret);
-        // convert unix msec time into a 30 second "window"
-        // this is per the TOTP spec (see the RFC for details)
-        long t = timeSecond / second_per_size;
-        return verifyCode(decodedKey, t);
+        return addZero(verifyCode(decodedKey, timeWindow), 6);
     }
 
     @SneakyThrows
@@ -106,10 +111,10 @@ public class OtpCodeGeneratorTool {
     }
 
     private static String addZero(int code, int returnLen) {
-        String ret = String.valueOf(code);
+        StringBuilder ret = new StringBuilder(String.valueOf(code));
         for (int i = ret.length(), j = returnLen; i < j; i++) {
-            ret = "0" + ret;
+            ret.insert(0, "0");
         }
-        return ret;
+        return ret.toString();
     }
 }
