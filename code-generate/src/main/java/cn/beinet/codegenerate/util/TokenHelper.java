@@ -1,12 +1,14 @@
 package cn.beinet.codegenerate.util;
 
+import lombok.Data;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 新类
+ * Token生成和校验辅助类
  *
  * @author youbl
  * @date 2023/3/27 15:45
@@ -42,7 +44,7 @@ public final class TokenHelper {
     /**
      * 修改加盐值
      *
-     * @param salt
+     * @param salt 盐值
      */
     public static void setTokenSalt(String salt) {
         TOKEN_SALT = salt;
@@ -54,7 +56,7 @@ public final class TokenHelper {
      * @param token token
      * @return 是否正确token
      */
-    public static String getLoginUserFromToken(String token) {
+    public static Token getLoginUserFromToken(String token) {
         init();
         if (!StringUtils.hasLength(token)) {
             return null;
@@ -62,13 +64,6 @@ public final class TokenHelper {
         // 0为用户名，1为时间，2为md5
         String[] arr = token.split(TOKEN_SPLIT);
         if (arr.length != 3 || arr[0].isEmpty() || arr[1].isEmpty() || arr[2].isEmpty()) {
-            return null;
-        }
-        long loginTime = Long.parseLong(arr[1]);
-        long now = Long.parseLong(LocalDateTime.now().format(FORMATTER));
-        long diff = now - loginTime;
-        // 1000000为1天，要求每天登录
-        if (diff < 0 || diff > 1000000) {
             return null;
         }
 
@@ -81,7 +76,13 @@ public final class TokenHelper {
             */
         String countToken = buildToken(arr[0], arr[1]);
         if (countToken.equalsIgnoreCase(token)) {
-            return arr[0];
+            Token ret = new Token();
+            long loginTime = Long.parseLong(arr[1]);
+            long diffSecond = getDiffTime(loginTime);
+            ret.setLoginTime(loginTime);
+            ret.setUsername(arr[0]);
+            ret.setSeconds(diffSecond);
+            return ret;
         }
         return null;
     }
@@ -107,4 +108,35 @@ public final class TokenHelper {
         String md5 = StringHelper.md5(ret, TOKEN_SALT, username);
         return ret + md5;
     }
+
+    /**
+     * 计算当前时间与登录时间的差值，返回相差多少秒
+     *
+     * @param loginTime 登录时间
+     * @return 秒
+     */
+    private static long getDiffTime(long loginTime) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime loginDt = LocalDateTime.parse(String.valueOf(loginTime), FORMATTER);
+        Duration duration = Duration.between(loginDt, now);
+        return duration.getSeconds();
+    }
+
+    @Data
+    public static class Token {
+        /**
+         * 用户名
+         */
+        private String username;
+        /**
+         * 登录时间，格式为14位数字：yyyyMMddHHmmss
+         */
+        private long loginTime;
+
+        /**
+         * 登录到现在，经过了多少秒
+         */
+        private long seconds;
+    }
+
 }

@@ -3,8 +3,8 @@ package cn.beinet.codegenerate.configs.logins;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.TokenHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 @Slf4j
 public class CookieValidator implements Validator {
+    // 登录token有效时长，【604,800】是7天的秒数
+    @Value("${login.keepSecond:604800}")
+    private long loginSecond;
 
     /**
      * 正常优先级
@@ -35,11 +38,15 @@ public class CookieValidator implements Validator {
         // 判断有没有cookie，有cookie时是否有效
         String token = RequestHelper.getCookie(cookName, request);
         log.debug("url:{} token: {}", request.getRequestURI(), token);
-        String loginUser = TokenHelper.getLoginUserFromToken(token);
-        if (!StringUtils.hasLength(loginUser)) {
+        TokenHelper.Token loginUser = TokenHelper.getLoginUserFromToken(token);
+        if (!isSuccess(loginUser)) {
             log.debug("token无效: {}", token);
             return Result.fail();
         }
-        return Result.ok(loginUser);
+        return Result.ok(loginUser.getUsername());
+    }
+
+    private boolean isSuccess(TokenHelper.Token loginUser) {
+        return loginUser != null && loginUser.getSeconds() < loginSecond;
     }
 }
