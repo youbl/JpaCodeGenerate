@@ -70,7 +70,7 @@
                         <div class="notice">{{val.memo}}</div>
                     </div>
                     <div v-for="(code, ts, index) in val['code']" style="padding-top:4px;">
-                        {{getStrTimeFromTimestamp(ts)}}:
+                        <span style="font-size: 10px;">{{getStrTimeFromTimestamp(ts)}}</span>
                         <span style="font-weight: bold;color: crimson">{{code}}</span>
                         <el-button size="mini" @click="copyCode(code)">复制</el-button>
                     </div>
@@ -217,7 +217,7 @@
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
                     }
-                    this.resultData = response.data;
+                    this.resultData = response.data.result ? response.data.result : [];
                     if (loop) {
                         setTimeout(() => {
                             vueApp.getMySecure(1);
@@ -233,7 +233,7 @@
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
                     }
-                    row.code = response.data;
+                    row.code = response.data.result;
                 }).catch(error => {
                     this.ajaxError(error);
                 });

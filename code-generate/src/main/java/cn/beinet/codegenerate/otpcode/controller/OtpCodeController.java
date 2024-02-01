@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.otpcode.controller;
 
+import cn.beinet.codegenerate.ResponseData;
 import cn.beinet.codegenerate.configs.AuthDetails;
 import cn.beinet.codegenerate.otpcode.controller.dto.OtpCodeDto;
 import cn.beinet.codegenerate.otpcode.service.OtpCodeService;
@@ -11,7 +12,14 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -39,10 +47,10 @@ public class OtpCodeController {
      * @return 列表
      */
     @GetMapping("list")
-    public List<OtpCodeDto> getCode(@RequestParam(required = false) int codeNum, AuthDetails loginInfo) {
+    public ResponseData<List<OtpCodeDto>> getCode(@RequestParam(required = false) int codeNum, AuthDetails loginInfo) {
         String username = loginInfo == null ? null : loginInfo.getAccount();
         Assert.hasLength(username, "未登录");
-        return otpCodeService.getOtpCodesByUser(codeNum, username);
+        return ResponseData.ok(otpCodeService.getOtpCodesByUser(codeNum, username));
     }
 
     /**
@@ -53,10 +61,10 @@ public class OtpCodeController {
      * @return 列表
      */
     @GetMapping("list/{id}")
-    public Map<String, String> refreshCode(@RequestParam(required = false) int codeNum, @PathVariable int id, AuthDetails loginInfo) {
+    public ResponseData<Map<String, String>> refreshCode(@RequestParam(required = false) int codeNum, @PathVariable int id, AuthDetails loginInfo) {
         String username = loginInfo == null ? null : loginInfo.getAccount();
         Assert.hasLength(username, "未登录");
-        return otpCodeService.getOtpCodesById(id, codeNum, username);
+        return ResponseData.ok(otpCodeService.getOtpCodesById(id, codeNum, username));
     }
 
     /**

@@ -24,42 +24,4 @@ public class GlobalExceptionFilter {
             ret = e.getCause().getMessage();
         return ResponseData.fail(ret);
     }
-
-
-    @Data
-    @AllArgsConstructor
-    public static class ResponseData {
-
-        /**
-         * 编码：200成功，其它失败
-         */
-        private int code;
-
-        /**
-         * 异常堆栈
-         */
-        private String errMsg;
-
-        /**
-         * 源数据
-         */
-        private Object result;
-
-        public static ResponseData fail(String msg) {
-            return new ResponseData(500, msg, null);
-        }
-
-        public static ResponseData fail(int code, String msg) {
-            return new ResponseData(code, msg, null);
-        }
-
-        public static ResponseData ok(Object obj) {
-            return new ResponseData(200, "", obj);
-        }
-
-        public static ResponseData ok(String msg, Object obj) {
-            return new ResponseData(200, msg, obj);
-        }
-    }
-
 }

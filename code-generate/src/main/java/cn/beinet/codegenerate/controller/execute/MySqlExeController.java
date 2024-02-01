@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.controller.execute;
 
-import cn.beinet.codegenerate.GlobalExceptionFilter;
+import cn.beinet.codegenerate.ResponseData;
 import cn.beinet.codegenerate.configs.AuthDetails;
 import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
@@ -30,11 +30,11 @@ public class MySqlExeController {
      * @return 结果集
      */
     @PostMapping("mysql/executeSql")
-    public GlobalExceptionFilter.ResponseData executeSelectSql(@RequestBody SqlDto sql) {
+    public ResponseData executeSelectSql(@RequestBody SqlDto sql) {
         String sqlStr = formatSql(sql.getSql());
         MySqlExecuteRepository repository = linkInfoService.getExeRepository(sql);
         List<Map<String, Object>> result = repository.queryData(sqlStr);
-        return GlobalExceptionFilter.ResponseData.ok(sqlStr, result);
+        return ResponseData.ok(sqlStr, result);
     }
 
     private String formatSql(String originSql) {
@@ -76,15 +76,15 @@ public class MySqlExeController {
      * @return 影响行数（如果次数大于1，则是异步执行，返回-1）
      */
     @PostMapping("mysql/executeDml")
-    public GlobalExceptionFilter.ResponseData executeDML(@RequestBody SqlDto sql, AuthDetails loginInfo) {
+    public ResponseData executeDML(@RequestBody SqlDto sql, AuthDetails loginInfo) {
         Assert.isTrue(loginInfo != null && "beiliang_you".equals(loginInfo.getAccount()),
                 "不允许访问");
 
         if (sql.getTime() == 1) {
             int affectedRows = mySqlService.executeDml(sql);
-            return GlobalExceptionFilter.ResponseData.ok("OK", affectedRows);
+            return ResponseData.ok("OK", affectedRows);
         }
         mySqlService.executeDmlAsync(sql);
-        return GlobalExceptionFilter.ResponseData.ok("已开始执行,请关注后台日志", -1);
+        return ResponseData.ok("已开始执行,请关注后台日志", -1);
     }
 }
