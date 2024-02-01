@@ -13,6 +13,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 2FA使用的OTP（one time password）生成辅助工具类
+ */
 public class OtpCodeGeneratorTool {
     static long second_per_size = 30L;// 每次时间长度，默认30秒
 
@@ -38,7 +41,7 @@ public class OtpCodeGeneratorTool {
     }
 
     /**
-     * 获取指定密钥的otpcode
+     * 获取指定密钥的otpCode, 键为到期时间，值为otp
      *
      * @param secret  用户绑定的secretKey
      * @param codeNum 生成几个code返回
@@ -76,7 +79,7 @@ public class OtpCodeGeneratorTool {
      * 获取指定密钥的otpcode
      *
      * @param secret     用户绑定的secretKey
-     * @param timeSecond 秒级时间戳
+     * @param timeWindow 时间窗口，截止当前是每30秒一个窗口
      * @return 生成的当前时间的code
      */
     public static String countCode(String secret, long timeWindow) {
