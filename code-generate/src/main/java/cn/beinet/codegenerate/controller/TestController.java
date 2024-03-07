@@ -89,7 +89,7 @@ public class TestController {
     @GetMapping("test/telnet")
     @SneakyThrows
     public String testTelnet(@RequestParam String ip, @RequestParam int port, @RequestParam(required = false) Integer timeout) {
-        String ret = ip + ":" + port + " 连接";
+        String ret = "telnet " + ip + " " + port + "    连接";
         long start = System.currentTimeMillis();
         try {
             IpHelper.telnet(ip, port, timeout);

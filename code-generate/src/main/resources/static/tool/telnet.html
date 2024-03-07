@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Telnet工具</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/axios.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/sql-formatter.min.js"></script>
+    <script src="../static/qs.min.js"></script>
+    <script src="../static/common.js?v=1"></script>
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <el-form-item label="IP">
+            <el-input placeholder="请输入" v-model.trim="searchCond.ip"></el-input>
+        </el-form-item>
+        <el-form-item label="端口">
+            <el-input placeholder="请输入" v-model.trim="searchCond.port"></el-input>
+        </el-form-item>
+        <el-form-item label="连接超时-毫秒">
+            <el-input placeholder="请输入" v-model.trim="searchCond.timeout"></el-input>
+        </el-form-item>
+        <el-button type="primary" icon="el-icon-view" @click="doTest">测试</el-button>
+        <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+        <br>
+        <div v-for="(val,key,idx) in result" style="font-size: 12px;margin-bottom: 5px;">
+            <div style="float:left;width: 250px;">{{val[0]}}-客户端耗时:{{val[1]}}ms</div>
+            <div style="float:left;">
+                <label>结果:<input type="text" v-model="val[2]" style="width:800px;"></label>
+            </div>
+            <div style="clear: both"></div>
+        </div>
+    </el-form>
+    <br>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loading: false,
+
+            searchCond: {
+                ip: '120.24.1.1',
+                port: '22',
+                timeout: '5000',
+            },
+            result: [],
+        },
+        created: function () {
+            let ip = getQueryString('ip');
+            if (ip) this.searchCond.ip = ip;
+            let port = getQueryString('port');
+            if (port) this.searchCond.port = port;
+            if (ip && port) {
+                this.doTest();
+            }
+        },
+        computed: {},
+        methods: {
+            doTest: function () {
+                if (!this.searchCond.ip) {
+                    return alert('请输入IP');
+                }
+                if (!this.searchCond.port) {
+                    return alert('请输入端口');
+                }
+
+                let beginTime = new Date();
+                if (this.loading) {
+                    return alert('执行中，请稍候');
+                }
+                this.loading = true;
+
+                let url = BASE_URL + 'test/telnet?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                return axios.get(url).then(response => {
+                    let costTime = Math.floor((new Date()) - beginTime);
+                    this.loading = false;
+                    this.result.unshift([getStrTime(beginTime), costTime, response.data]);
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+            ajaxError: function (error) {
+                window.ajaxError(error, vueApp);
+            },
+        },
+    });
+</script>
+</body>
+</html>
