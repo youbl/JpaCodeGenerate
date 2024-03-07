@@ -32,6 +32,8 @@ logging:
   level:
     cn.beinet.codegenerate.configs.LdapLoginFilter: debug
 
+getip-url: https://www.taobao.com/help/getip.php
+
 ip-filter:
   white-ip: # 客户端IP，以这些IP为前缀时，才允许访问
     - 127.
