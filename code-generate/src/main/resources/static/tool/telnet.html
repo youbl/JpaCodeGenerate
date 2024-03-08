@@ -16,17 +16,22 @@
 <div id="divApp">
     <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
-        <el-form-item label="IP">
-            <el-input placeholder="请输入" v-model.trim="searchCond.ip"></el-input>
+        <el-form-item label="IP/域名">
+            <el-input size="mini" placeholder="请输入" v-model.trim="searchCond.ip"></el-input>
         </el-form-item>
         <el-form-item label="端口">
-            <el-input placeholder="请输入" v-model.trim="searchCond.port"></el-input>
+            <div style="width:67px;">
+                <el-input size="mini" placeholder="请输入" v-model.trim="searchCond.port"></el-input>
+            </div>
         </el-form-item>
         <el-form-item label="连接超时-毫秒">
-            <el-input placeholder="请输入" v-model.trim="searchCond.timeout"></el-input>
+            <div style="width:67px;">
+                <el-input size="mini" placeholder="请输入" v-model.trim="searchCond.timeout"></el-input>
+            </div>
         </el-form-item>
-        <el-button type="primary" icon="el-icon-view" @click="doTest">测试</el-button>
-        <el-button icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+        <el-button type="primary" size="mini" icon="el-icon-view" @click="doTest">测试</el-button>
+        <el-button size="mini" icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+        <span>{{serverInfo}}</span>
         <br>
         <div v-for="(val,key,idx) in result" style="font-size: 12px;margin-bottom: 5px;">
             <div style="float:left;width: 250px;">{{val[0]}}-客户端耗时:{{val[1]}}ms</div>
@@ -43,6 +48,8 @@
     const vueApp = new Vue({
         el: '#divApp',
         data: {
+            serverInfo: '',
+
             loading: false,
 
             searchCond: {
@@ -53,6 +60,8 @@
             result: [],
         },
         created: function () {
+            this.getServerInfo();
+
             let ip = getQueryString('ip');
             if (ip) this.searchCond.ip = ip;
             let port = getQueryString('port');
@@ -63,6 +72,15 @@
         },
         computed: {},
         methods: {
+            getServerInfo: function () {
+                let url = BASE_URL + 'test/sip';
+                return axios.get(url).then(response => {
+                    this.serverInfo = response.data;
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
             doTest: function () {
                 if (!this.searchCond.ip) {
                     return alert('请输入IP');

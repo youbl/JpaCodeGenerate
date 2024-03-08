@@ -75,7 +75,9 @@ public class TestController {
 
     @GetMapping("test/sip")
     public String testShowServerIp(HttpServletRequest request) {
-        return "local:[" + IpHelper.getServerIp() + "] outer:[" + IpHelper.getOuterIp(getIpUrl) + "]";
+        return "client:[" + IpHelper.getClientIp(request) + "]" +
+                " local:[" + IpHelper.getServerIp() + "]" +
+                " outer:[" + IpHelper.getOuterIp(getIpUrl) + "]";
     }
 
     /**
