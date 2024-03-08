@@ -96,10 +96,10 @@
                 this.loading = true;
 
                 let url = BASE_URL + 'test/telnet?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
-                return axios.get(url).then(response => {
+                return jsonp(url).then(data => {
                     let costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
-                    this.result.unshift([getStrTime(beginTime), costTime, response.data]);
+                    this.result.unshift([getStrTime(beginTime), costTime, data]);
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);

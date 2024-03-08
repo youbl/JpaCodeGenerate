@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.util.IpHelper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,8 @@ import java.util.Enumeration;
 @RestController
 @Slf4j
 public class TestController {
+    private final String callbackPrefix = "jsonp_callback";
+
     @Value("${getip-url}")
     private String getIpUrl;
 
@@ -68,16 +71,18 @@ public class TestController {
         return "ok";
     }
 
-    @GetMapping("test/ip")
+    @GetMapping(value = "test/ip", produces = {"application/javascript"})
     public String testShowClientIp(HttpServletRequest request) {
-        return IpHelper.getClientIp(request);
+        String ret = IpHelper.getClientIp(request);
+        return combinJsonp(ret, request);
     }
 
-    @GetMapping("test/sip")
+    @GetMapping(value = "test/sip", produces = {"application/javascript"})
     public String testShowServerIp(HttpServletRequest request) {
-        return "client:[" + IpHelper.getClientIp(request) + "]" +
+        String ret = "client:[" + IpHelper.getClientIp(request) + "]" +
                 " local:[" + IpHelper.getServerIp() + "]" +
                 " outer:[" + IpHelper.getOuterIp(getIpUrl) + "]";
+        return combinJsonp(ret, request);
     }
 
     /**
@@ -88,9 +93,12 @@ public class TestController {
      * @param timeout 超时时间，默认5000毫秒
      * @return 测试结果
      */
-    @GetMapping("test/telnet")
+    @GetMapping(value = "test/telnet", produces = {"application/javascript"})
     @SneakyThrows
-    public String testTelnet(@RequestParam String ip, @RequestParam int port, @RequestParam(required = false) Integer timeout) {
+    public String testTelnet(@RequestParam String ip,
+                             @RequestParam int port,
+                             @RequestParam(required = false) Integer timeout,
+                             HttpServletRequest request) {
         String ret = "telnet " + ip + " " + port + "    连接";
         long start = System.currentTimeMillis();
         try {
@@ -99,6 +107,33 @@ public class TestController {
         } catch (Exception exp) {
             ret += "失败:" + exp.getMessage();
         }
-        return ret + " 耗时:" + (System.currentTimeMillis() - start) + "ms";
+
+        ret += " 耗时:" + (System.currentTimeMillis() - start) + "ms";
+        return combinJsonp(ret, request);
+    }
+
+    private String combinJsonp(String str, HttpServletRequest request) {
+        // 前端jsonp的支持
+        String jsonp = getCallbackValue(request);
+        if (StringUtils.hasLength(jsonp)) {
+            str = jsonp + "('" + str + "')";
+        }
+        return str;
+    }
+
+    /**
+     * 从请求上下文中，读取jsonp的回调函数名
+     *
+     * @param request 请求上下文
+     * @return callback函数名
+     */
+    private String getCallbackValue(HttpServletRequest request) {
+        Enumeration<String> paraNameArr = request.getParameterNames();
+        while (paraNameArr.hasMoreElements()) {
+            String paraName = paraNameArr.nextElement();
+            if (StringUtils.hasLength(paraName) && paraName.startsWith(callbackPrefix))
+                return request.getParameter(paraName);
+        }
+        return "";
     }
 }

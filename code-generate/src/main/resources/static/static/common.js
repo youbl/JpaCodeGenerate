@@ -94,7 +94,7 @@ function getTimestamp(date) {
         date = new Date(date);
     }
     if (!(date instanceof Date) || isNaN(date)) {
-        date = new Date();
+        return Date.now();
     }
     return date.getTime();
 }
@@ -542,6 +542,24 @@ function downloadJson(jsonStr, downFilename) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
+}
+
+function jsonp(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_callback_' + Date.now();
+        const scriptDom = document.createElement('script');
+        const linkChar = url.indexOf('?') >= 0 ? '&' : '?';
+        scriptDom.src = url + linkChar + 'jsonp_callback=' + callbackName;
+        scriptDom.onerror = reject;
+        document.body.appendChild(scriptDom);
+
+        window[callbackName] = (data) => {
+            resolve(data);
+            // 清理资源
+            document.body.removeChild(scriptDom);
+            delete window[callbackName];
+        };
+    });
 }
 
 function ajaxSuccessCheck(response) {
