@@ -1,6 +1,50 @@
 const $$BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
 
 /**
+ * 从当前window上下文查找vue实例
+ *
+ * @param domId vue的根dom对象id，可空
+ * @returns {*|Window.Vue|void}
+ */
+function getVueInstance(domId) {
+    if (!window.Vue) {
+        return null;// alert('当前页未引用Vue.js');
+    }
+
+    if (window.vueApp && window.vueApp instanceof window.Vue) {
+        return window.vueApp;
+    }
+    if (domId === null || domId === undefined) {
+        domId = 'divApp';
+    }
+    let dom = document.getElementById(domId);
+    if (dom && dom.__vue__ && dom.__vue__ instanceof window.Vue) {
+        return dom.__vue__;
+    }
+    return null;//alert('未找到Vue实例，请指定正确的dom元素id');
+}
+
+/**
+ * 弹出消息
+ * @param msg 要显示的消息
+ * @param duration 多久后自动关闭，毫秒，默认0不关闭
+ */
+function vueAlert(msg, duration) {
+    let vue = getVueInstance();
+    if (!vue)
+        return alert(msg);
+
+    if (duration === undefined)
+        duration = 0;
+    return vue.$message({
+        message: msg,
+        type: 'success',
+        duration: duration,
+        showClose: true,
+    });
+}
+
+/**
  * 获取url里的变量值
  * @param {string} name 变量名
  * @return {string} 变量值
@@ -335,6 +379,16 @@ function downloadDataToCsv(data) {
     document.body.removeChild(downloadLink);
 }
 
+function downloadDataToTxt(data, filename) {
+    let uri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(data);
+    let downloadLink = document.createElement("a");
+    downloadLink.href = uri;
+    if (!filename) filename = 'down.txt';
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
 
 // 计算带中文字符的字符串长度
 function lenb(str) {
@@ -416,15 +470,16 @@ function copyStr(str) {
 
 /**
  * 导出指定的数据
- * @param dataList 对象数组，如 [{'aa':11, 'bb':22}, {'aa':33, 'bb':44}]
- * @param downFilename 下载使用的文件名
- * @param ignoreFieldArr 字符串数组，上面对象里哪些字段不需要导出，如 ['aa', 'cc']
- * @param attToTitle 函数，用于转换字段为导出的列标题
+ * @param dataList 对象数组，必需，如 [{'aa':11, 'bb':22}, {'aa':33, 'bb':44}]
+ * @param downFilename 下载使用的文件名, 可空
+ * @param ignoreFieldArr 字符串数组, 可空，上面对象里哪些字段不需要导出，如 ['aa', 'cc']
+ * @param attToTitle 函数, 可空，用于转换字段为导出的列标题
  */
 function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle) {
     if (!dataList || !dataList.length) {
         return alert('没有结果可导出');
     }
+    if (!downFilename) downFilename = 'export.csv';
     if (attToTitle && typeof (attToTitle) !== 'function')
         attToTitle = null;
 
@@ -448,7 +503,7 @@ function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle) {
             dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
         }
     }
-    downloadCsv(dataHeader + '\r\n' + dataContent, 'errcodes.csv');
+    downloadCsv(dataHeader + '\r\n' + dataContent, downFilename);
 }
 
 /**
@@ -489,11 +544,10 @@ function downloadJson(jsonStr, downFilename) {
     document.body.removeChild(downloadLink);
 }
 
-function ajaxSuccessCheck(response, vueApp) {
-    if (!vueApp)
-        vueApp = window.vueApp;
+function ajaxSuccessCheck(response) {
+    let vueApp = getVueInstance();
     // 外部业务，使用了loading作为ajax加载防重复逻辑
-    if (typeof (vueApp) !== undefined && vueApp.loading)
+    if (vueApp && vueApp.loading)
         vueApp.loading = false;
 
     // 响应的http状态不等于200
@@ -516,11 +570,10 @@ function ajaxSuccessCheck(response, vueApp) {
  * 用于axios的error
  * @param error 错误对象
  */
-function ajaxError(error, vueApp) {
-    if (!vueApp)
-        vueApp = window.vueApp;
+function ajaxError(error) {
+    let vueApp = getVueInstance();
     // 外部业务，使用了loading作为ajax加载防重复逻辑
-    if (typeof (vueApp) !== undefined && vueApp.loading)
+    if (vueApp && vueApp.loading)
         vueApp.loading = false;
 
     if (error.response && error.response.data) {

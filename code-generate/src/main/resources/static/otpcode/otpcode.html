@@ -6,7 +6,7 @@
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=1"></script>
+    <script src="../static/common.js?v=2"></script>
     <script src="../static/jsQR.js"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
@@ -212,7 +212,7 @@
             },
             copyCode: function (code) {
                 copyStr(code);
-                return alert('已复制: ' + code);
+                return vueAlert('复制成功: ' + code, 3000);
             },
             // 服务器时间戳每秒加1，方便计算otp的剩余时间
             refreshServerTs: function () {
@@ -238,7 +238,7 @@
                 return axios.get(url).then(response => {
                     this.loading = false;
                     if (response.data.code && response.data.code === 500) {
-                        return alert('出错:\n' + response.data.errMsg);
+                        return vueAlert('出错:\n' + response.data.errMsg);
                     }
                     this.resultData = response.data.result ? response.data.result : [];
                     this.serverTs = response.data.ts;
@@ -251,7 +251,7 @@
                 let url = BASE_URL + 'otpcode/list/' + row.id + '?codeNum=' + this.codeNum;
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
-                        return alert('出错:\n' + response.data.errMsg);
+                        return vueAlert('出错:\n' + response.data.errMsg);
                     }
                     row.code = response.data.result;
                     this.serverTs = response.data.ts;
@@ -315,12 +315,12 @@
                 let url = BASE_URL + 'otpcode';
                 return axios.post(url, this.saveData).then(response => {
                     if (typeof (response.data) === 'number') {
-                        alert('保存成功条数:' + response.data);
+                        vueAlert('保存成功条数:' + response.data, 3000);
                         this.getMySecure();
                         this.savedSecureShow = false;
                         return;
                     }
-                    alert(response.data.errMsg);
+                    vueAlert(response.data.errMsg);
                 }).catch(error => {
                     this.ajaxError(error);
                 });
@@ -332,11 +332,11 @@
                 let url = BASE_URL + 'otpcode?id=' + row.id;
                 return axios.delete(url).then(response => {
                     if (typeof (response.data) === 'number') {
-                        alert('删除条数:' + response.data);
+                        vueAlert('删除条数:' + response.data, 3000);
                         this.getMySecure();
                         return;
                     }
-                    alert(response.data.errMsg);
+                    vueAlert(response.data.errMsg);
                 }).catch(error => {
                     this.ajaxError(error);
                 });
