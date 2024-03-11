@@ -26,6 +26,8 @@ public class BackupConfigs {
 
     private BackFiles files;
 
+    private Redis redis;
+
     // Gitlab配置，结果是备份到Gitlab上的
     @Data
     public static class Gitlab {
@@ -43,7 +45,7 @@ public class BackupConfigs {
         private String[] paths;
     }
 
-    // Jenkins的备份配置
+    // Jenkins的全局备份配置
     @Data
     public static class Jenkins {
         private Boolean enable;
@@ -60,7 +62,7 @@ public class BackupConfigs {
         private String password;
     }
 
-    // Nacos的备份配置
+    // Nacos的全局备份配置
     @Data
     public static class Nacos {
         private Boolean enable;
@@ -78,7 +80,7 @@ public class BackupConfigs {
         private String password;
     }
 
-    // Mysql的备份配置
+    // Mysql的全局备份配置
     @Data
     public static class Mysql {
         private Boolean enable;
@@ -93,6 +95,23 @@ public class BackupConfigs {
         private String ip;
         private Integer port;
         private String username;
+        private String password;
+    }
+
+    // Redis的全局备份配置
+    @Data
+    public static class Redis {
+        private Boolean enable;
+        private String backDir;
+        private RedisInstance[] instances;
+    }
+
+    // Mysql的备份细项，每个Mysql服务
+    @Data
+    public static class RedisInstance {
+        private Boolean enable;
+        private String ip;
+        private Integer port;
         private String password;
     }
 }

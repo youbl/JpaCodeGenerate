@@ -116,6 +116,13 @@ backup:
       - /etc/nginx                 # 要备份的目录或文件
       - /etc/supervisord.conf
       - /etc/supervisord.d
+  # 要备份的redis实例列表，目前备份info命令结果
+  redis:
+    enable: false
+    back-dir: /data/app/backups/redis
+    instances:
+      - ip: 10.100.72.165
+        password: 123456
 
 data-clean:
   enabled: false

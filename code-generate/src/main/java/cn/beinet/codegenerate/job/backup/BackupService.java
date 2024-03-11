@@ -21,8 +21,10 @@ public class BackupService {
     private final GitHelper gitHelper;
 
     public void run() {
+        // 备份到git，所以要先允许git，并初始化git目录
         if (!gitHelper.enabled())
             return;
+
         log.info("backupOperations 启动...");
         for (Backup item : backupList) {
             try {
@@ -33,6 +35,7 @@ public class BackupService {
                 log.error("backupOperations error:{0} {1}", item.getClass().getName(), exp.getMessage());
             }
         }
+
         log.info("文件写入完成，开始操作git...");
         gitHelper.pull();
         gitHelper.commit("备份");
