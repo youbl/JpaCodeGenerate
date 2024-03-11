@@ -61,43 +61,46 @@ public class RedisInfoBackup implements Backup {
 
     @SneakyThrows
     private String readInfo(BackupConfigs.RedisInstance item) {
-        try (Socket socket = new Socket(item.getIp(), item.getPort());
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter writer = new PrintWriter(socket.getOutputStream())) {
+        try (Socket socket = new Socket(item.getIp(), item.getPort())) {
+            socket.setSoTimeout(5000); // 防止读取超时
 
-            // 读取服务器返回的欢迎信息，要注释，没有欢迎信息
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 PrintWriter writer = new PrintWriter(socket.getOutputStream())) {
+
+                // 读取服务器返回的欢迎信息，要注释，没有欢迎信息
 //                String welcomeMessage = reader.readLine();
 //                System.out.println("=================" + welcomeMessage);
 
-            if (StringUtils.hasLength(item.getPassword())) {
-                // 发送AUTH命令，进行身份验证
-                writer.println("AUTH " + item.getPassword());
+                if (StringUtils.hasLength(item.getPassword())) {
+                    // 发送AUTH命令，进行身份验证
+                    writer.println("AUTH " + item.getPassword());
+                    writer.flush();
+
+                    // 读取身份验证结果
+                    String authResult = reader.readLine();
+                    if (authResult.startsWith("-")) {
+                        // -ERR invalid password
+                        // 正常是 +OK
+                        throw new RuntimeException("redisPasswordError");
+                    }
+                }
+
+                // 发送INFO命令
+                writer.println("INFO");
                 writer.flush();
 
-                // 读取身份验证结果
-                String authResult = reader.readLine();
-                if (authResult.startsWith("-")) {
-                    // -ERR invalid password
-                    // 正常是 +OK
-                    throw new RuntimeException("redisPasswordError");
+                // 读取服务器返回的信息
+                StringBuilder sb = new StringBuilder();
+                char[] buffer = new char[10240];
+                int readCharLen;
+                while ((readCharLen = reader.read(buffer)) != -1) {
+                    sb.append(buffer, 0, readCharLen);
+                    // 极端情况可能出现误判
+                    if (readCharLen < buffer.length && sb.toString().endsWith("\r\n"))
+                        break;
                 }
+                return sb.toString();
             }
-
-            // 发送INFO命令
-            writer.println("INFO");
-            writer.flush();
-
-            // 读取服务器返回的信息
-            StringBuilder sb = new StringBuilder();
-            char[] buffer = new char[10240];
-            int readCharLen;
-            while ((readCharLen = reader.read(buffer)) != -1) {
-                sb.append(buffer, 0, readCharLen);
-                // 极端情况可能出现误判
-                if (readCharLen < buffer.length && sb.toString().endsWith("\r\n"))
-                    break;
-            }
-            return sb.toString();
         }
     }
 
