@@ -137,15 +137,15 @@
                         <div style="float: left; cursor: pointer; color: blue;">
                             <label for="files" style="cursor: pointer;">识别二维码图片</label>
                             <input id="files" style="visibility:hidden;" type="file" accept="image/*"
-                                   @change="imgSelected"/>
-                        </div>
-                        <div style="float: left;">
-                            <span>{{foundedData}}</span>
-                            <!--img id="imgQrcode"/-->
+                                   @change="imgSelected"/><br>
                             <canvas id="canvas" style="width:200px;"></canvas>
                         </div>
+                        <div style="float: left;">
+                            <span style="">{{foundedData}}</span>
+                            <!--img id="imgQrcode"/-->
+                        </div>
+                        <div style="clear: both"></div>
                     </div>
-                    <div style="clear: both"></div>
                 </el-form-item>
                 <el-form-item label="对应网址">
                     <el-input v-model="saveData.url" placeholder="请输入"></el-input>
@@ -290,26 +290,42 @@
                     const imageData = context.getImageData(0, 0, img.width, img.height);
                     // jsQR识别
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    _vue.foundedData = JSON.stringify(code);
+                    if (!code || !code.data) {
+                        _vue.foundedData = '无数据：' + code;
+                        return;
+                    }
+                    _vue.foundedData = JSON.stringify(code.data);
                     console.log("Found QR code", _vue.foundedData);
-                    _vue.parseSecretFromCode(code);
+                    _vue.parseSecretFromCode(code.data);
                 };
                 img.src = url;  // 给img标签设置src属性
             },
             parseSecretFromCode: function (code) {
                 this.saveData.secure = '无法识别';
-                if (!code || !code.data)
+                if (!code)
                     return;
                 // "otpauth://totp/AmazonWebServices:mfa-abc?secret=abc&issuer=AmazonWebServices"
                 let start = 'secret=';
-                let idx = code.data.indexOf(start);
-                if (idx < 0)
-                    return;
-                let ret = code.data.substring(idx + start.length);
+                let idx = code.indexOf(start);
+                if (idx < 0) {
+                    return this.parseSecretFromGoogleAppExport(code);
+                }
+                let ret = code.substring(idx + start.length);
                 idx = ret.indexOf('&');
                 if (idx > 0)
                     ret = ret.substring(0, idx);
                 this.saveData.secure = ret;
+            },
+            parseSecretFromGoogleAppExport: function (codeData) {
+                if (codeData.indexOf('otpauth-migration://offline?data=') !== 0) {
+                    return;
+                }
+                let url = BASE_URL + 'otpcode/convertGoogleCode?code=' + encodeURIComponent(codeData);
+                return axios.get(url).then(response => {
+                    this.parseSecretFromCode(response.data);
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
             },
             saveMySecure: function () {
                 let url = BASE_URL + 'otpcode';

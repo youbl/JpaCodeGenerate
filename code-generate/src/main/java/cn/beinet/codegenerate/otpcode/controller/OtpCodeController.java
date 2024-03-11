@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.ResponseData;
 import cn.beinet.codegenerate.configs.AuthDetails;
 import cn.beinet.codegenerate.otpcode.controller.dto.OtpCodeDto;
 import cn.beinet.codegenerate.otpcode.service.OtpCodeService;
+import cn.beinet.codegenerate.otpcode.service.proto.MigrationParser;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -130,5 +131,10 @@ public class OtpCodeController {
         try (ServletOutputStream outputStream = response.getOutputStream()) {
             MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
         }
+    }
+
+    @GetMapping("convertGoogleCode")
+    public String convertGoogleCode(@RequestParam String code) {
+        return MigrationParser.convert(code);
     }
 }
