@@ -29,7 +29,8 @@
                 <el-input size="mini" placeholder="请输入" v-model.trim="searchCond.timeout"></el-input>
             </div>
         </el-form-item>
-        <el-button type="primary" size="mini" icon="el-icon-view" @click="doTest">测试</el-button>
+        <el-button type="primary" size="mini" icon="el-icon-view" @click="doTelnet">TELNET一下</el-button>
+        <el-button type="primary" size="mini" icon="el-icon-view" @click="doPing">PING一下</el-button>
         <el-button size="mini" icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
         <span>{{serverInfo}}</span>
         <br>
@@ -67,7 +68,7 @@
             let port = getQueryString('port');
             if (port) this.searchCond.port = port;
             if (ip && port) {
-                this.doTest();
+                this.doTelnet();
             }
         },
         computed: {},
@@ -81,21 +82,41 @@
                     this.ajaxError(error);
                 });
             },
-            doTest: function () {
+            doTelnet: function () {
                 if (!this.searchCond.ip) {
-                    return alert('请输入IP');
+                    return vueAlert('请输入IP');
                 }
                 if (!this.searchCond.port) {
-                    return alert('请输入端口');
+                    return vueAlert('请输入端口');
                 }
 
                 let beginTime = new Date();
                 if (this.loading) {
-                    return alert('执行中，请稍候');
+                    return vueAlert('执行中，请稍候');
                 }
                 this.loading = true;
 
                 let url = BASE_URL + 'test/telnet?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                return jsonp(url).then(data => {
+                    let costTime = Math.floor((new Date()) - beginTime);
+                    this.loading = false;
+                    this.result.unshift([getStrTime(beginTime), costTime, data]);
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+            doPing: function () {
+                if (!this.searchCond.ip) {
+                    return vueAlert('请输入IP');
+                }
+                let beginTime = new Date();
+                if (this.loading) {
+                    return vueAlert('执行中，请稍候');
+                }
+                this.loading = true;
+
+                let url = BASE_URL + 'test/ping?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
                 return jsonp(url).then(data => {
                     let costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;

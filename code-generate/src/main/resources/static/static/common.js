@@ -348,7 +348,7 @@ function isEmpty(str) {
 
 function exportDataToCsv(dataList) {
     if (!dataList || !dataList.length) {
-        return alert('没有结果可导出');
+        return vueAlert('没有结果可导出');
     }
     let dataHeader = '';
     let dataContent = '';
@@ -477,7 +477,7 @@ function copyStr(str) {
  */
 function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle) {
     if (!dataList || !dataList.length) {
-        return alert('没有结果可导出');
+        return vueAlert('没有结果可导出');
     }
     if (!downFilename) downFilename = 'export.csv';
     if (attToTitle && typeof (attToTitle) !== 'function')
@@ -604,13 +604,13 @@ function ajaxError(error) {
         if (msg && msg === 'Unauthorized') {
             goLoginPage();
         } else {
-            alert(msg ? msg : '出错了');
+            vueAlert(msg ? msg : '出错了');
         }
     } else if (error.message) {
-        alert('ajax错误:' + error.message);
+        vueAlert('ajax错误:' + error.message);
     } else {
         console.log(JSON.stringify(error));
-        alert('未知错误');
+        vueAlert('未知错误');
     }
 }
 

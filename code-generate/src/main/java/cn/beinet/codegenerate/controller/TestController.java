@@ -112,10 +112,30 @@ public class TestController {
         return combinJsonp(ret, request);
     }
 
+
+    /**
+     * 在本机测试与远端IP的网络连接性，模拟Telnet
+     *
+     * @param ip      远端IP
+     * @param port    远端端口
+     * @param timeout 超时时间，默认5000毫秒
+     * @return 测试结果
+     */
+    @GetMapping(value = "test/ping", produces = {"application/javascript"})
+    @SneakyThrows
+    public String testPing(@RequestParam String ip,
+                           @RequestParam(required = false) Integer timeout,
+                           HttpServletRequest request) {
+        String ret = IpHelper.ping(ip, timeout, 3);
+        return combinJsonp(ret, request);
+    }
+
     private String combinJsonp(String str, HttpServletRequest request) {
         // 前端jsonp的支持
         String jsonp = getCallbackValue(request);
         if (StringUtils.hasLength(jsonp)) {
+            str = str.replaceAll("\r", "\\r")
+                    .replaceAll("\n", "\\n");
             str = jsonp + "('" + str + "')";
         }
         return str;

@@ -128,7 +128,7 @@ public class IpHelper {
     /**
      * 尝试连接指定IP和端口，用于检测网络是否连通
      *
-     * @param ip      远端IP
+     * @param ip      远端IP或域名
      * @param port    远端端口
      * @param timeout 超时时间，毫秒，默认5000
      */
@@ -137,8 +137,8 @@ public class IpHelper {
         if (timeout == null)
             timeout = 5000;
 
+        SocketAddress address = new InetSocketAddress(ip, port);
         try (Socket socket = new Socket()) {
-            SocketAddress address = new InetSocketAddress(ip, port);
             socket.connect(address, timeout);
             // socket.setSoTimeout(timeout);
 
@@ -146,5 +146,42 @@ public class IpHelper {
             // 休眠期间，会输出：  TCP    10.100.68.142:14290    IP:端口      ESTABLISHED     11556
             // Thread.sleep(3000);
         }
+    }
+
+    @SneakyThrows
+    public static String ping(String ip, Integer timeout, int tryTimes) {
+        if (timeout == null || timeout <= 0)
+            timeout = 3000;
+        if (tryTimes <= 0)
+            tryTimes = 3;
+
+        StringBuilder stringBuilder = new StringBuilder();
+        while (tryTimes > 0) {
+            tryTimes--;
+
+            String result;
+            long start = System.currentTimeMillis();
+            try {
+                InetAddress address = InetAddress.getByName(ip);
+                // java1.4支持的ping命令
+                if (address.isReachable(timeout)) {
+                    result = "成功";
+                } else {
+                    result = "失败";
+                }
+            } catch (Exception exp) {
+                result = "错误:" + exp.getMessage();
+            }
+
+            long cost = System.currentTimeMillis() - start;
+            stringBuilder.append(ip)
+                    .append(" ping")
+                    .append(result)
+                    .append(",耗时:")
+                    .append(cost)
+                    .append("ms")
+                    .append("; ");
+        }
+        return stringBuilder.toString();
     }
 }
