@@ -32,6 +32,7 @@ public class OtpCodeGeneratorTool {
             title = title.replaceAll(":", ""); // 不允许包含冒号
             user = title + ":" + user;
         }
+
         String format = "otpauth://totp/%s?secret=%s";
         String ret = String.format(format, user, secret);
 //        if (StringUtils.hasLength(title)) {
@@ -83,9 +84,30 @@ public class OtpCodeGeneratorTool {
      * @return 生成的当前时间的code
      */
     public static String countCode(String secret, long timeWindow) {
-        Base32 codec = new Base32();
-        byte[] decodedKey = codec.decode(secret);
+        byte[] decodedKey = countKey(secret);
         return addZero(verifyCode(decodedKey, timeWindow), 6);
+    }
+
+    /**
+     * 把指定的otp密钥，转换为字节数组返回
+     *
+     * @param secret 密钥
+     * @return 字节数组
+     */
+    public static byte[] countKey(String secret) {
+        Base32 codec = new Base32();
+        return codec.decode(secret);
+    }
+
+    /**
+     * 还原密钥
+     *
+     * @param secretKey 字节数组
+     * @return 密钥
+     */
+    public static String restoreSecret(byte[] secretKey) {
+        Base32 codec = new Base32();
+        return codec.encodeAsString(secretKey);
     }
 
     @SneakyThrows
