@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class RedisRepository {
@@ -189,6 +190,17 @@ public class RedisRepository {
         if (ret == null)
             return 0L;
         return ret;
+    }
+
+    /**
+     * 设置超时时间（秒）
+     *
+     * @param key    key
+     * @param second 超时时间
+     * @return true false
+     */
+    public Boolean setTTL(String key, int second) {
+        return getRedisTemplate().expire(key, second, TimeUnit.SECONDS);
     }
 
     // 查询所有keys，直接写入输出流中

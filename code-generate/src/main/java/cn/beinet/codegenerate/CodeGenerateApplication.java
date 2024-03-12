@@ -44,20 +44,23 @@ public class CodeGenerateApplication implements CommandLineRunner {
         AtomicInteger idx = new AtomicInteger();
         String keyPrefix = "STORE:OPEN_TOKEN";
         FileHelper.readEachLine(fileName, row -> {
-            int currentIdx = idx.getAndIncrement();
-            if (currentIdx % 10000 == 0) {
-                System.out.println(currentIdx + "--");
-                Thread.sleep(5);
-            }
-
             if (row == null)
                 return;
             String key = row.toString();
-            if (key.isEmpty())
+            if (!key.startsWith(keyPrefix))
                 return;
+
+            int currentIdx = idx.getAndIncrement();
+            if (currentIdx % 10000 == 0) {
+                System.out.println("成功个数:" + currentIdx);
+                Thread.sleep(5);
+            }
+
             long ttl = redis.getTTL(key);
-            if (ttl <= 0) {
-                System.out.println(key + " " + ttl);
+            // 返回-2表示key不存在，返回-1表示key存在但是永不过期
+            if (ttl == -1) {
+                if (!redis.setTTL(key, 1800))
+                    System.out.println(key + " 失败");
             }
         });
 
