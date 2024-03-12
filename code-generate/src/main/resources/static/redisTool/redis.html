@@ -6,7 +6,7 @@
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=1"></script>
+    <script src="../static/common.js?v=20240312"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -53,11 +53,10 @@
             <tr>
                 <td style="width: 1010px;">
                     <el-form-item label="Redis的Key" prop="redisCmd" style="font-weight: bold;">
-                        <el-input type="text" v-model="searchCond.redisCmd" placeholder="请输入Redis的KEY"
-                                  style="width:500px"/>
+                        <el-input size="mini" type="text" v-model="searchCond.redisCmd" placeholder="请输入Redis的KEY"
+                                  style="width:300px"></el-input>
                     </el-form-item>
-                    <br>
-                    <span style="color: red">只允许输入key的名称，不允许输入命令(只支持info命令)</span>
+                    <span style="color: red">只允许输入key名，不支持命令(除info命令)</span>
                 </td>
                 <td>
                     <div style="font-weight: bold;">历史KEY列表</div>
@@ -69,11 +68,10 @@
         </table>
         <br>
         <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd">执 行</el-button>
-        </el-form-item>
-        <div>
+            <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd" size="small">执 行</el-button>
+            <el-button type="primary" icon="el-icon-search" @click="exportKeys" size="small">导出所有Key</el-button>
             <span style="padding-left:20px;">耗时: {{costTime}}ms，类型：{{redisResult.type}}，过期：{{redisResult.ttl}}秒，数据长度：{{redisResult.result.length}}</span>
-        </div>
+        </el-form-item>
     </el-form>
     <br>
 
@@ -238,6 +236,13 @@
                     this.loading = false;
                     this.ajaxError(error);
                 });
+            },
+            exportKeys: function () {
+                if (!this.searchCond.redisDbIdx) {
+                    this.searchCond.redisDbIdx = 0;
+                }
+                let url = BASE_URL + 'v1/redis/allkeys?config=' + encodeURIComponent(this.searchCond.configName) + '&db=' + this.searchCond.redisDbIdx;
+                window.open(url);
             },
             jsonFormat: function (str) {
                 if (!str) {

@@ -83,6 +83,41 @@ function getQueryString(name) {
 }
 
 /**
+ * window.open是GET方式，此方法是POST方式，在指定窗口打开页面。
+ * 注：不支持Content-type: application/json
+ *
+ * @param url 页面地址
+ * @param data POST数据
+ * @param target 目标窗口
+ * @param target 目标窗口
+ */
+function postToNewWindow(url, data, contentType, target) {
+    // 创建一个隐藏的表单
+    const form = document.createElement('form');
+    form.action = url;
+    form.method = 'POST';
+    form.enctype = ''; // 默认为 application/x-www-form-urlencoded
+    // 默认在新的窗口中打开
+    form.target = target === undefined ? '_blank' : target;
+
+    // 将数据添加到表单中作为隐藏字段
+    if (data) {
+        Object.keys(data).forEach(key => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = data[key];
+            form.appendChild(input);
+        });
+    }
+    // 将表单添加到文档中并提交
+    document.body.appendChild(form);
+    form.submit();
+    // 提交后移除表单
+    document.body.removeChild(form);
+}
+
+/**
  * 获取指定时间对应的时间戳。
  * 如果是字符串，进行转换；
  * 如果不是字符串，也不是Date，取当前时间

@@ -4,20 +4,32 @@ import cn.beinet.codegenerate.model.RedisResultDto;
 import cn.beinet.codegenerate.util.SpringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.DataType;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 
+import java.io.BufferedWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 @Slf4j
 public class RedisRepository {
@@ -176,6 +188,29 @@ public class RedisRepository {
         if (ret == null)
             return 0L;
         return ret;
+    }
+
+    @SneakyThrows
+    public void saveAllKeys(OutputStream stream) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream))) {
+            RedisConnection redisConnection = null;
+            try {
+                redisConnection = getRedisTemplate().getConnectionFactory().getConnection();
+                ScanOptions options = ScanOptions.scanOptions().match("*").count(100).build();
+                Cursor<byte[]> c = redisConnection.scan(options);
+                while (c.hasNext()) {
+                    String key = new String(c.next());
+                    writer.write(key);
+                    // 不能加，会严重拖慢速度
+                    //writer.write(" ttl:");
+                    //writer.write(getTTL(key).toString());
+                    writer.write("\r\n");
+                }
+            } finally {
+                redisConnection.close(); //Ensure closing this connection.
+            }
+            writer.flush();
+        }
     }
 
     private String serialObj(Object obj) {
