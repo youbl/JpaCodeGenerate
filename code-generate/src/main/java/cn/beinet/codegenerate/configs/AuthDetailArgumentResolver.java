@@ -1,6 +1,8 @@
 package cn.beinet.codegenerate.configs;
 
+import cn.beinet.codegenerate.configs.logins.RoleType;
 import org.springframework.core.MethodParameter;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -30,8 +32,26 @@ public class AuthDetailArgumentResolver implements HandlerMethodArgumentResolver
 //            return ret;
 //        }
 //        ret.setAccount(principal.getName());
-        ret.setAccount(LdapLoginFilter.getLoginInfo(webRequest));
+        String loginAccount = LdapLoginFilter.getLoginInfo(webRequest);
+        ret.setAccount(loginAccount);
+        ret.setRole(getRole(loginAccount));
 
         return ret;
+    }
+
+    /**
+     * 根据登录账号，获取对应的角色
+     *
+     * @param account 账号
+     * @return 角色
+     */
+    private RoleType getRole(String account) {
+        if (!StringUtils.hasLength(account) || account.equals("匿名"))
+            return RoleType.ANONYMOUS;
+
+        if (account.startsWith("beiliang_you"))
+            return RoleType.ADMIN;
+
+        return RoleType.MEMBER;
     }
 }

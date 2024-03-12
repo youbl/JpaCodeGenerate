@@ -77,7 +77,7 @@ public class MySqlExeController {
      */
     @PostMapping("mysql/executeDml")
     public ResponseData executeDML(@RequestBody SqlDto sql, AuthDetails loginInfo) {
-        Assert.isTrue(loginInfo != null && "beiliang_you".equals(loginInfo.getAccount()),
+        Assert.isTrue(loginInfo != null && loginInfo.isAdmin(),
                 "不允许访问");
 
         if (sql.getTime() == 1) {

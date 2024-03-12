@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 新类
+ * 日志查询
  *
  * @author youbl
  * @since 2023/8/25 23:54
@@ -24,16 +24,24 @@ public class LogController {
     @GetMapping("logs")
     public List<RequestLog> getLogs(SearchLogDto dto, AuthDetails loginInfo) {
         Assert.isTrue(loginInfo != null, "不允许访问");
-        if (!"beiliang_you".equals(loginInfo.getAccount())) {
+        if (!loginInfo.isAdmin()) {
+            // 非管理员，只能查自己的日志
             dto.setLoginUser(loginInfo.getAccount());
         }
         return logService.getNewLogs(dto);
     }
 
+    /**
+     * 给前端用于过滤的人员列表和url列表
+     *
+     * @param loginInfo 登录信息
+     * @return 条件
+     */
     @GetMapping("logs/conditions")
     public List<List<String>> getConditions(AuthDetails loginInfo) {
         List<List<String>> ret = new ArrayList<>(2);
-        if (!"beiliang_you".equals(loginInfo.getAccount())) {
+        if (!loginInfo.isAdmin()) {
+            // 不是管理员，不让条件过滤
             return ret;
         }
         ret.add(logService.getDistinctField("loginUser"));

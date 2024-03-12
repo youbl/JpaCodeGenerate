@@ -44,7 +44,7 @@ public class PublishController {
     public String upload(@RequestParam("file") MultipartFile file,
                          @PathVariable String serviceName,
                          AuthDetails loginInfo) throws IOException {
-        Assert.isTrue(loginInfo != null && "beiliang_you".equals(loginInfo.getAccount()),
+        Assert.isTrue(loginInfo != null && loginInfo.isAdmin(),
                 "不允许访问");
 
         if (file == null || file.isEmpty()) {
@@ -65,7 +65,7 @@ public class PublishController {
     // 重启指定服务
     @PostMapping("publish/{serviceName}")
     public String publish(@PathVariable String serviceName, AuthDetails loginInfo) {
-        Assert.isTrue(loginInfo != null && "beiliang_you".equals(loginInfo.getAccount()),
+        Assert.isTrue(loginInfo != null && loginInfo.isAdmin(),
                 "不允许访问");
 
         String command = "/bin/supervisorctl restart '" + serviceName + "'";
