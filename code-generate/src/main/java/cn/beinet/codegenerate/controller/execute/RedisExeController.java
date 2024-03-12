@@ -95,8 +95,7 @@ public class RedisExeController {
 
     private List<String> getAllKeys(RedisRepository repository) {
         List<String> ret = new ArrayList<>();
-        repository.getAllKeys(key -> ret.add(key.toString()));
+        repository.getAllKeys("*", key -> ret.add(key.toString()));
         return ret;
     }
-
 }

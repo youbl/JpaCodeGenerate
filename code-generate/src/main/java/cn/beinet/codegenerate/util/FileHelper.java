@@ -1,11 +1,20 @@
 package cn.beinet.codegenerate.util;
 
+import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
 public final class FileHelper {
@@ -106,5 +115,21 @@ public final class FileHelper {
     public static String getRealPath(String file) {
         String basePath = getResourceBasePath();
         return new File(basePath, file).getAbsolutePath();
+    }
+
+    @SneakyThrows
+    public static int readEachLine(String file, ParamRunnable runnable) {
+        if (runnable == null)
+            throw new RuntimeException("方法不能为空");
+
+        int ret = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                ret++;
+                runnable.run(line);
+            }
+        }
+        return ret;
     }
 }

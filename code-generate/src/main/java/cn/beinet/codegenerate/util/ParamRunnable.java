@@ -10,5 +10,5 @@ import java.io.IOException;
  */
 @FunctionalInterface
 public interface ParamRunnable {
-    void run(Object parameter) throws IOException;
+    void run(Object parameter) throws Exception;
 }

@@ -195,7 +195,7 @@ public class RedisRepository {
     @SneakyThrows
     public void saveAllKeys(OutputStream stream) {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream))) {
-            getAllKeys(key -> {
+            getAllKeys("*", key -> {
                 writer.write(key.toString());
                 // 不能加，会严重拖慢速度
                 //writer.write(" ttl:");
@@ -207,12 +207,12 @@ public class RedisRepository {
     }
 
     @SneakyThrows
-    public List<String> getAllKeys(ParamRunnable callable) {
+    public List<String> getAllKeys(String match, ParamRunnable callable) {
         List<String> ret = new ArrayList<>();
         RedisConnection redisConnection = null;
         try {
             redisConnection = getRedisTemplate().getConnectionFactory().getConnection();
-            ScanOptions options = ScanOptions.scanOptions().match("*").count(100).build();
+            ScanOptions options = ScanOptions.scanOptions().match(match).count(100).build();
             Cursor<byte[]> c = redisConnection.scan(options);
             while (c.hasNext()) {
                 String key = new String(c.next());
