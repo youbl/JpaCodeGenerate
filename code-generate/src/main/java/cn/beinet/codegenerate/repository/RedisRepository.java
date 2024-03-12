@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.repository;
 
 import cn.beinet.codegenerate.model.RedisResultDto;
+import cn.beinet.codegenerate.util.ParamRunnable;
 import cn.beinet.codegenerate.util.SpringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -190,27 +191,40 @@ public class RedisRepository {
         return ret;
     }
 
+    // 查询所有keys，直接写入输出流中
     @SneakyThrows
     public void saveAllKeys(OutputStream stream) {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream))) {
-            RedisConnection redisConnection = null;
-            try {
-                redisConnection = getRedisTemplate().getConnectionFactory().getConnection();
-                ScanOptions options = ScanOptions.scanOptions().match("*").count(100).build();
-                Cursor<byte[]> c = redisConnection.scan(options);
-                while (c.hasNext()) {
-                    String key = new String(c.next());
-                    writer.write(key);
-                    // 不能加，会严重拖慢速度
-                    //writer.write(" ttl:");
-                    //writer.write(getTTL(key).toString());
-                    writer.write("\r\n");
-                }
-            } finally {
-                redisConnection.close(); //Ensure closing this connection.
-            }
+            getAllKeys(key -> {
+                writer.write(key.toString());
+                // 不能加，会严重拖慢速度
+                //writer.write(" ttl:");
+                //writer.write(getTTL(key).toString());
+                writer.write("\r\n");
+            });
             writer.flush();
         }
+    }
+
+    @SneakyThrows
+    public List<String> getAllKeys(ParamRunnable callable) {
+        List<String> ret = new ArrayList<>();
+        RedisConnection redisConnection = null;
+        try {
+            redisConnection = getRedisTemplate().getConnectionFactory().getConnection();
+            ScanOptions options = ScanOptions.scanOptions().match("*").count(100).build();
+            Cursor<byte[]> c = redisConnection.scan(options);
+            while (c.hasNext()) {
+                String key = new String(c.next());
+                if (callable != null) {
+                    callable.run(key);
+                }
+            }
+        } finally {
+            if (redisConnection != null)
+                redisConnection.close(); //Ensure closing this connection.
+        }
+        return ret;
     }
 
     private String serialObj(Object obj) {
