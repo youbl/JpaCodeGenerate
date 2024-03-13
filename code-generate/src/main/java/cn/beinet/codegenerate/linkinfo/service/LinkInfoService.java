@@ -150,8 +150,14 @@ public class LinkInfoService {
     private LinkInfo getLinkInfoByName(String name) {
         String sql = "SELECT * FROM linkinfo a WHERE a.name=? LIMIT 1";
         List<LinkInfo> lst = jdbcTemplate.query(sql, new Object[]{name}, new BeanPropertyRowMapper<>(LinkInfo.class));
-        if (lst.size() > 0)
-            return lst.get(0);
+        if (!lst.isEmpty()) {
+            LinkInfo item = lst.get(0);
+            // 防止数据库里有空格，导致dns解析失败
+            item.setAddress(item.getAddress().trim());
+            item.setAccount(item.getAccount().trim());
+            item.setPwd(item.getPwd().trim());
+            return item;
+        }
         return null;
     }
 

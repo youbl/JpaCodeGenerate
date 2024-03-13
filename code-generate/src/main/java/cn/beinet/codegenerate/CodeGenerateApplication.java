@@ -29,7 +29,7 @@ public class CodeGenerateApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Redis内存增长，先尝试用scan输出所有的key
         // 再读取每个key的ttl，看看哪些key没有设置过期时间，并对应输出方案修复
-        new Thread(CodeGenerateApplication::runJob).start();
+        //new Thread(CodeGenerateApplication::runJob).start();
     }
 
     @SneakyThrows
