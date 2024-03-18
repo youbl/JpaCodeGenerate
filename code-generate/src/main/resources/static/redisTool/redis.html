@@ -57,6 +57,14 @@
                                   style="width:300px"></el-input>
                     </el-form-item>
                     <span style="color: red">只允许输入key名，不支持命令(除info命令)</span>
+                    <el-form-item>
+                        <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd" size="small">执 行
+                        </el-button>
+                        <span style="padding-left:20px;">耗时:{{costTime}}ms, 类型:{{redisResult.type}}, 过期:{{redisResult.ttl}}秒,数据长度:{{redisResult.result.length}}</span>
+                        <el-button type="primary" icon="el-icon-search" @click="exportKeys" size="small">导出所有Key
+                        </el-button>
+                        <el-checkbox v-model="searchCond.ttl">导出TTL</el-checkbox>
+                    </el-form-item>
                 </td>
                 <td>
                     <div style="font-weight: bold;">历史KEY列表</div>
@@ -66,12 +74,6 @@
                 </td>
             </tr>
         </table>
-        <br>
-        <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd" size="small">执 行</el-button>
-            <el-button type="primary" icon="el-icon-search" @click="exportKeys" size="small">导出所有Key</el-button>
-            <span style="padding-left:20px;">耗时: {{costTime}}ms，类型：{{redisResult.type}}，过期：{{redisResult.ttl}}秒，数据长度：{{redisResult.result.length}}</span>
-        </el-form-item>
     </el-form>
     <br>
 
@@ -104,6 +106,7 @@
                 redisPwd: '',
                 redisDbIdx: 0,
                 redisCmd: '',
+                ttl: 0,
             },
 
             costTime: 0,
@@ -241,7 +244,9 @@
                 if (!this.searchCond.redisDbIdx) {
                     this.searchCond.redisDbIdx = 0;
                 }
-                let url = BASE_URL + 'v1/redis/allkeys?config=' + encodeURIComponent(this.searchCond.configName) + '&db=' + this.searchCond.redisDbIdx;
+                let url = BASE_URL + 'v1/redis/allkeys?config=' + encodeURIComponent(this.searchCond.configName) +
+                    '&db=' + this.searchCond.redisDbIdx +
+                    '&ttl=' + (this.searchCond.ttl ? 1 : 0);
                 window.open(url);
             },
             jsonFormat: function (str) {
