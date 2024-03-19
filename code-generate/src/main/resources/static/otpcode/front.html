@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OTPCode操作页</title>
+    <script src="../static/unpkg/vue.min.js"></script>
+    <script src="../static/unpkg/elemeIndex.js"></script>
+    <script src="../static/common.js?v=2"></script>
+    <script src="../static/jsQR.js"></script>
+
+    <!-- otpcode生成的库: https://github.com/hectorm/otpauth
+    注：totp算法rfc文档： https://datatracker.ietf.org/doc/html/rfc6238
+    -->
+    <script src="../static/otpauth.umd.min.js"></script>
+
+    <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
+</head>
+<body>
+
+<div id="divApp">
+    <el-form ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        Secret密钥:<input type="text" v-model.trim="secret" style="width: 300px"/>
+        <el-button size="mini" icon="el-icon-download" @click="getCode">生成</el-button>
+
+        <el-button size="mini" icon="el-icon-refresh" @click="location.reload()">刷新</el-button>
+    </el-form>
+    <br>
+    <div>{{code}}</div>
+    <div>{{optUrl}}</div>
+</div>
+<script>
+    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            secret: '',
+            code: '',
+            optUrl: '',
+        },
+        created: function () {
+        },
+        computed: {},
+        methods: {
+            getCode: function () {
+                if (!this.secret) {
+                    return vueAlert('请输入密钥');
+                }
+                let totp = new OTPAuth.TOTP({
+                    issuer: 'youbl',            // 生成的url里的发行者
+                    algorithm: "SHA1",          // 使用的算法
+                    digits: 6,                  // 生成的otp位数
+                    period: 30,                 // 时间窗口，单位秒，每30秒生成一次
+                    secret: this.secret,        // 生成otp使用的密钥
+                });
+                this.code = totp.generate();    // 生成密钥
+                this.optUrl = totp.toString();  // 对应的二维码url
+            },
+        },
+    });
+</script>
+</body>
+</html>
