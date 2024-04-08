@@ -96,6 +96,8 @@ backup:
         port: 3306
         username: readonly
         password: 123456
+        back-data-tables: # 这个清单里的表，要备份数据，不在清单里的表只备份表结构,格式为 库名.表名
+          - ops.admin_menu_group
       - ip: 10.2.5.3
         port: 3306
         username: readonly

@@ -170,4 +170,24 @@ public class MySqlExecuteRepository {
         return jdbcTemplate;
     }
 
+    public String getIpPort() {
+        String ret = url;
+
+        String findStr1 = "://";
+        int idx = ret.indexOf(findStr1);
+        if (idx >= 0) {
+            ret = ret.substring(idx + findStr1.length());
+        }
+        idx = ret.indexOf("/");
+        if (idx > 0) {
+            ret = ret.substring(0, idx);
+        } else {
+            idx = ret.indexOf("?");
+            if (idx > 0) {
+                ret = ret.substring(0, idx);
+            }
+        }
+
+        return ret;
+    }
 }

@@ -96,6 +96,8 @@ public class BackupConfigs {
         private Integer port;
         private String username;
         private String password;
+        // 这个清单里的表，要备份数据，不在清单里的表只备份表结构
+        private String[] backDataTables;
     }
 
     // Redis的全局备份配置
