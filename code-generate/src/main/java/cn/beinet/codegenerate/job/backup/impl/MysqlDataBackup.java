@@ -33,10 +33,9 @@ public class MysqlDataBackup implements Backup {
             return false;
         if (configs.getEnable() != null && !configs.getEnable())
             return false;
-return true;
         // 只有上午10点和下午10点允许备份
-        //int hour = LocalDateTime.now().getHour();
-        //return hour == 10 || hour == 22;
+        int hour = LocalDateTime.now().getHour();
+        return hour == 10 || hour == 22;
     }
 
     @Override
@@ -83,7 +82,7 @@ return true;
 
             String filePath = getFileName(table, repository);
             FileHelper.saveFile(filePath, sbAllData.toString());
-            log.info("备份表数据结束:{}", table);
+            log.info("备份表数据结束:{} {}行,文件:{}", table, result.size(), filePath);
         } catch (Exception exp) {
             log.error("备份表数据出错:{} {}", table, exp.getMessage());
         }
@@ -103,7 +102,7 @@ return true;
             val = val.replaceAll("'", "''");
             sbColValue.append("'").append(val).append("'");
         }
-        return "INSERT INTO " + table + " (" + sbColNames + ")VALUES(" + sbColValue + ");";
+        return "INSERT INTO " + table + " (" + sbColNames + ")\n  VALUES(" + sbColValue + ");";
     }
 
     // 替换掉无用的sql内容，如自增数据
@@ -125,7 +124,7 @@ return true;
         db = FileHelper.replaceInvalidCh(db);
         table = FileHelper.replaceInvalidCh(table);
 
-        return dir + url + "/" + db + "/" + table;
+        return dir + url + "/" + db + "/" + table + "_INSERT.sql";
     }
 
 }
