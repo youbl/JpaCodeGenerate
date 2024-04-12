@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class SearchLogDto {
+    private Boolean except;
     private String loginUser;
     private String url;
     private String reportTimeBegin;

@@ -48,7 +48,7 @@
             </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
             <el-form-item label="刷新数据库列表">
-                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库" @change="dbChange">
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库" @change="dbChange" allow-create>
                     <el-option
                             v-for="item in dbsTest"
                             :key="item"

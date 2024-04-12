@@ -30,6 +30,13 @@
     <el-form ref="searchForm" :inline="true" class="demo-form-inline"
              style="text-align: left">
         <el-form-item label="操作人" prop="loginUser">
+            <el-select style="width:75px;"
+                       default-first-option
+                       placeholder="请选择"
+                       v-model="searchCond.except">
+                <el-option label="指定" value="0"></el-option>
+                <el-option label="排除" value="1"></el-option>
+            </el-select>
             <el-select
                     filterable
                     allow-create
@@ -125,6 +132,7 @@
             searchCond: {
                 reportTimeBegin: '',
                 reportTimeEnd: '',
+                except: '0', // 0指定操作人，1排除操作人
                 loginUser: '',
                 url: '',
                 limit: 1000,

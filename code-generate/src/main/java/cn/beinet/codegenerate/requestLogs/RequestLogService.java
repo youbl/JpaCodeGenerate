@@ -46,7 +46,10 @@ public class RequestLogService {
         String sqlWhere = " where 1=1 ";
         if (StringUtils.hasLength(dto.getLoginUser())) {
             args.add(dto.getLoginUser());
-            sqlWhere += "and loginUser=? ";
+            if (dto.getExcept() != null && dto.getExcept())
+                sqlWhere += "and loginUser<>? ";
+            else
+                sqlWhere += "and loginUser=? ";
         }
         if (StringUtils.hasLength(dto.getUrl())) {
             args.add(dto.getUrl());

@@ -355,6 +355,7 @@ function isOnlyNum(str) {
 
 /**
  * 是否数字，允许正负号，允许小数点
+ * 注：对于 12e4 也会返回true
  *
  * @param str
  * @returns {boolean}
@@ -367,6 +368,18 @@ function isNum(str) {
 
     str = str.toString().trim();
     return !isNaN(parseFloat(str)) && isFinite(str);
+}
+
+/**
+ * 是否由0-9的数字组成，不允许正负号和小数点
+ *
+ * @param str
+ * @returns {boolean}
+ */
+function isDigit(str) {
+    if (str === null || str === undefined)
+        return false;
+    return /^\d+$/.test(str.toString());
 }
 
 /**
@@ -508,11 +521,12 @@ function copyStr(str) {
  * @param dataList 对象数组，必需，如 [{'aa':11, 'bb':22}, {'aa':33, 'bb':44}]
  * @param downFilename 下载使用的文件名, 可空
  * @param ignoreFieldArr 字符串数组, 可空，上面对象里哪些字段不需要导出，如 ['aa', 'cc']
- * @param attToTitle 函数, 可空，用于转换字段为导出的列标题
+ * @param attToTitle 函数,接收1个属性名参数, 可空，存在该方法时，调用它，获取实际展示使用的列标题
+ * @param attValConvert 函数,接收2个参数:属性名/属性值, 可空，存在该方法时，调用它，把列值进行转换，如枚举转换为文字展示
  */
-function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle) {
+function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle, attValConvert) {
     if (!dataList || !dataList.length) {
-        return vueAlert('没有结果可导出');
+        return vueAlert('没有结果可导出', 3000);
     }
     if (!downFilename) downFilename = 'export.csv';
     if (attToTitle && typeof (attToTitle) !== 'function')
@@ -534,11 +548,27 @@ function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle) {
                 let attName = attToTitle ? attToTitle(att) : att;
                 dataHeader += '"' + attName + '",';
             }
-            let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
-            dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
+            let cell = attValConvert ? attValConvert(att, row[att]) : row[att];
+            cell = convertToCsvText(cell);
+            dataContent += cell + ',';
         }
     }
     downloadCsv(dataHeader + '\r\n' + dataContent, downFilename);
+}
+
+/**
+ * 把val转换为csv可展示的字符串
+ *
+ * @param val
+ * @returns {string}
+ */
+function convertToCsvText(val) {
+    if (val === null || val === undefined)
+        return '""';
+    val = val + '';// toString
+    if (isDigit(val))
+        return '="' + val + '"'; // 加个等号，避免数字精度丢失；之前加\t，会导致复制出去不方便使用
+    return '"' + val.replace(/"/g, '""') + '"'; // csv里的双引号转义为2个
 }
 
 /**
@@ -639,13 +669,13 @@ function ajaxError(error) {
         if (msg && msg === 'Unauthorized') {
             goLoginPage();
         } else {
-            vueAlert(msg ? msg : '出错了');
+            vueAlert(msg ? msg : '出错了', 3000);
         }
     } else if (error.message) {
-        vueAlert('ajax错误:' + error.message);
+        vueAlert('ajax错误:' + error.message, 3000);
     } else {
         console.log(JSON.stringify(error));
-        vueAlert('未知错误');
+        vueAlert('未知错误', 3000);
     }
 }
 

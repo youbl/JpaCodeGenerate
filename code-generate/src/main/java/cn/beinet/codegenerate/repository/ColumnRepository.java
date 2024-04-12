@@ -32,7 +32,7 @@ public class ColumnRepository {
             port = Integer.parseInt(tmp);
             ip = ip.substring(0, idx);
         }
-        return new ColumnRepository(ip, port, user, pwd);
+        return new ColumnRepository(ip, port, user, pwd, null);
     }
 
     public ColumnRepository(Environment env, DbEnv dbEnv) {
@@ -43,9 +43,11 @@ public class ColumnRepository {
     }
 
 
-    public ColumnRepository(String ip, int port, String userName, String pwd) {
-        this.url = "jdbc:mysql://" + ip + ":" + port +
-                "/mysql?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=1000&connectTimeout=1000";
+    public ColumnRepository(String ip, int port, String userName, String pwd, String db) {
+        if (!StringUtils.hasLength(db))
+            db = "information_schema";
+        this.url = "jdbc:mysql://" + ip + ":" + port + "/" + db +
+                "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=1000&connectTimeout=1000";
         // ?allowMultiQueries=true&useUnicode=true&characterEncoding=utf8&socketTimeout=2000&connectTimeout=2000&rewriteBatchedStatements=true&useSSL=false&serverTimezone=Asia/Shanghai&useSSL=false
         this.userName = userName;
         this.pwd = pwd;
