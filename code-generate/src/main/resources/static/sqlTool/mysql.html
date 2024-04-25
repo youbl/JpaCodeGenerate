@@ -46,9 +46,13 @@
             <el-form-item label="密码">
                 <input type="password" v-model="searchCond.dbTestPwd" style="width:60px" :readonly="!isCustom"/>
             </el-form-item>
+            <el-form-item label="超时-秒">
+                <input type="text" v-model.trim="searchCond.dbTimeout" style="width:30px"/>
+            </el-form-item>
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
             <el-form-item label="刷新数据库列表">
-                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库" @change="dbChange" allow-create>
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库" @change="dbChange"
+                           allow-create>
                     <el-option
                             v-for="item in dbsTest"
                             :key="item"
@@ -180,7 +184,8 @@
         </template>
     </el-dialog>
 
-    <el-dialog :title="'字段值详情:' + selectedTable + '.' + selectedField + '（按ESC关窗）'" :visible.sync="fieldValueShow">
+    <el-dialog :title="'字段值详情:' + selectedTable + '.' + selectedField + '（按ESC关窗）'"
+               :visible.sync="fieldValueShow">
         <el-input
                 type="textarea"
                 :rows="20"
@@ -224,6 +229,7 @@
                 dbTestUser: '',
                 dbTestPwd: '',
                 dbTestName: '',
+                dbTimeout: '5',
                 sql: '',
             },
 
@@ -606,6 +612,7 @@
                     'pwd': this.searchCond.dbTestPwd,
                     'db': this.searchCond.dbTestName,
                     'name': this.searchCond.configName,
+                    'dbTimeout': this.searchCond.dbTimeout,
                 };
                 if (this.loading) {
                     return alert('执行中，请稍候');
