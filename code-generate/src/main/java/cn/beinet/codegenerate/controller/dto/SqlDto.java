@@ -38,6 +38,10 @@ public class SqlDto {
      */
     private String sql;
     /**
+     * 执行超时
+     */
+    private Integer dbTimeout;
+    /**
      * 要操作的数据库表名
      */
     private String tableName;

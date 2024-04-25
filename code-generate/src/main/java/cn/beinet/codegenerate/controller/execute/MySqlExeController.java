@@ -49,7 +49,7 @@ public class MySqlExeController {
         // 判断是否修改语句
         Pattern regModify = Pattern.compile("(?i)(insert|update|delete|alter|create)\\s");
         if (regModify.matcher(originSql).find()) {
-            throw new RuntimeException("只支持查询语句");
+            throw new RuntimeException("只支持查询语句:" + originSql);
         }
 
         while (originSql.endsWith(";")) {

@@ -90,7 +90,7 @@ public class LinkInfoService {
     public MySqlExecuteRepository getExeRepository(SqlDto dto) {
         fillLinkInfo(dto);
         return new MySqlExecuteRepository(
-                dto.getIp(), dto.getPort(), dto.getUser(), dto.getPwd(), dto.getDb());
+                dto.getIp(), dto.getPort(), dto.getUser(), dto.getPwd(), dto.getDb(), dto.getDbTimeout());
     }
 
     private void fillLinkInfo(SqlDto dto) {

@@ -28,14 +28,19 @@ public class MySqlExecuteRepository {
     }
 
     public MySqlExecuteRepository(LinkInfo info, String dbName) {
-        this(info.getAddress(), info.getPort(), info.getAccount(), info.getPwd(), dbName);
+        this(info.getAddress(), info.getPort(), info.getAccount(), info.getPwd(), dbName, null);
     }
 
-    public MySqlExecuteRepository(String ip, int port, String userName, String pwd, String dbName) {
+    public MySqlExecuteRepository(String ip, int port, String userName, String pwd, String dbName, Integer timeout) {
+        if (timeout == null || timeout <= 0)
+            timeout = 5;
+        timeout *= 1000;
+
         if (port <= 0)
             port = 3306;
         this.url = "jdbc:mysql://" + ip + ":" + port +
-                "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=5000&connectTimeout=5000";
+                "/" + dbName + "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai" +
+                "&useSSL=false&socketTimeout=" + timeout + "&connectTimeout=" + timeout;
         this.userName = userName;
         this.pwd = pwd;
 

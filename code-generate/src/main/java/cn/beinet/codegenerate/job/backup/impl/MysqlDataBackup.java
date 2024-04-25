@@ -56,7 +56,8 @@ public class MysqlDataBackup implements Backup {
 
             try {
                 MySqlExecuteRepository repository = new MySqlExecuteRepository(
-                        item.getIp(), item.getPort(), item.getUsername(), item.getPassword(), "information_schema");
+                        item.getIp(), item.getPort(), item.getUsername(), item.getPassword(),
+                        "information_schema", null);
 
                 for (String table : item.getBackDataTables()) {
                     // 必须有小数点，数据库名.表名

@@ -47,7 +47,8 @@ public final class TokenHelper {
      * @param salt 盐值
      */
     public static void setTokenSalt(String salt) {
-        TOKEN_SALT = salt;
+        if (StringUtils.hasLength(salt))
+            TOKEN_SALT = salt;
     }
 
     /**
