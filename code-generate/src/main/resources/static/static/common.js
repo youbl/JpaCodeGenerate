@@ -1,6 +1,22 @@
 const $$BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
 
 /**
+ * 把对象转换为字符串，并去空格返回
+ *
+ * @param obj 对象
+ * @param noTrim 为true时，不进行trim，默认false
+ * @returns {string} 字符串
+ */
+function toStr(obj, noTrim) {
+    if (obj === null || obj === undefined)
+        return '';
+    if (noTrim === true)
+        return obj.toString();
+    else
+        return obj.toString().trim();
+}
+
+/**
  * 从当前window上下文查找vue实例
  *
  * @param domId vue的根dom对象id，可空
@@ -347,9 +363,7 @@ function secondDiff(dateStart, dateEnd) {
  * @returns {boolean}
  */
 function isOnlyNum(str) {
-    if (str === null || str === undefined)
-        return false;
-    str = str.toString();
+    str = toStr(str);
     return /^\d+$/.test(str);
 }
 
@@ -377,9 +391,8 @@ function isNum(str) {
  * @returns {boolean}
  */
 function isDigit(str) {
-    if (str === null || str === undefined)
-        return false;
-    return /^\d+$/.test(str.toString());
+    str = toStr(str);
+    return /^\d+$/.test(str);
 }
 
 /**
@@ -388,32 +401,33 @@ function isDigit(str) {
  * @returns {boolean}
  */
 function isEmpty(str) {
-    if (str === null || str === undefined)
-        return true;
-    str = str.toString().trim();
+    str = toStr(str);
     return str.length === 0;
 }
 
-function exportDataToCsv(dataList) {
-    if (!dataList || !dataList.length) {
-        return vueAlert('没有结果可导出');
-    }
-    let dataHeader = '';
-    let dataContent = '';
-    for (let i = 0, j = dataList.length; i < j; i++) {
-        let row = dataList[i];
-        if (i > 0) {
-            dataContent += '\r\n';
-        }
-        for (let att in row) {
-            if (i === 0) {
-                dataHeader += '"' + att + '",';
-            }
-            let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
-            dataContent += '"\t' + cell + '",';  // \t是避免数字变成科学计数
-        }
-    }
-    downloadDataToCsv(dataHeader + '\r\n' + dataContent);
+/**
+ * 判断输入的字符串，是否邮箱地址
+ * @param str 邮箱
+ * @returns {boolean}
+ */
+function isEmail(str) {
+    str = toStr(str);
+    const regex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    return regex.test(str);
+}
+
+/**
+ * 从给定的字符串中，提取第一个邮箱，不存在时返回空串
+ * @param str 含邮箱的字符串
+ * @returns {string} 第一个邮箱
+ */
+function getEmailFromStr(str) {
+    str = toStr(str);
+    const regex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+    const emails = str.match(regex);
+    if (emails === null || emails.length === 0)
+        return '';
+    return emails[0];
 }
 
 function downloadDataToCsv(data) {
@@ -440,12 +454,7 @@ function downloadDataToTxt(data, filename) {
 
 // 计算带中文字符的字符串长度
 function lenb(str) {
-    if (str === null || str === undefined)
-        return 0;
-
-    if (typeof (str) !== 'string') {
-        str = str.toString();
-    }
+    str = toStr(str, true);
     let ret = 0;
     for (let i = 0, j = str.length; i < j; i++) {
         let code = str.charCodeAt(i);
@@ -563,9 +572,7 @@ function exportDataToCsv(dataList, downFilename, ignoreFieldArr, attToTitle, att
  * @returns {string}
  */
 function convertToCsvText(val) {
-    if (val === null || val === undefined)
-        return '""';
-    val = val + '';// toString
+    val = toStr(val);
     if (isDigit(val))
         return '="' + val + '"'; // 加个等号，避免数字精度丢失；之前加\t，会导致复制出去不方便使用
     return '"' + val.replace(/"/g, '""') + '"'; // csv里的双引号转义为2个

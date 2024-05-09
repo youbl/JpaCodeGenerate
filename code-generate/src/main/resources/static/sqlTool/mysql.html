@@ -7,7 +7,7 @@
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/sql-formatter.min.js"></script>
-    <script src="../static/common.js?v=1"></script>
+    <script src="../static/common.js?v=20240509"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -363,9 +363,9 @@
                         dataContent += '\r\n';
                     }
                     let cell = (row.sql + '').replace(/"/g, '""'); // csv里的双引号转义为2个
-                    dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
+                    dataContent += '="' + cell + '",';  // 加= 是避免数字变成科学计数
                 }
-                this.downloadData('历史SQL\r\n' + dataContent);
+                window.downloadDataToCsv('历史SQL\r\n' + dataContent);
             },
             removeSql: function (idx, flg) {
                 if (idx === -1) {
@@ -638,37 +638,9 @@
                 });
             },
             exportResult: function () {
-                if (!this.resultData || !this.resultData.length) {
-                    return alert('没有结果可导出');
-                }
-                let dataHeader = '';
-                let dataContent = '';
-                for (let i = 0, j = this.resultData.length; i < j; i++) {
-                    let row = this.resultData[i];
-                    if (i > 0) {
-                        dataContent += '\r\n';
-                    }
-                    for (let att in row) {
-                        if (i === 0) {
-                            dataHeader += '"' + att + '",';
-                        }
-                        let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
-                        dataContent += '"' + cell + '",';
-                        //dataContent += '"\t' + cell + '",';  // \t是避免数字变成科学计数
-                    }
-                }
-                this.downloadData(dataHeader + '\r\n' + dataContent);
+                window.exportDataToCsv(this.resultData);
             },
-            downloadData: function (data) {
-                // “\ufeff” BOM头
-                let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(data);
-                let downloadLink = document.createElement("a");
-                downloadLink.href = uri;
-                downloadLink.download = "sqlReslut-beinet.csv";
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-            },
+
             ajaxError: function (error) {
                 window.ajaxError(error, vueApp);
             },

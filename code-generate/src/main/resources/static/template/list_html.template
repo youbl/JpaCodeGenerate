@@ -256,35 +256,7 @@
                 return flexWidth + 'px';
             },
             exportToCsv: function () {
-                if (!this.dataList || !this.dataList.length) {
-                    return alert('没有结果可导出');
-                }
-                let dataHeader = '';
-                let dataContent = '';
-                for (let i = 0, j = this.dataList.length; i < j; i++) {
-                    let row = this.dataList[i];
-                    if (i > 0) {
-                        dataContent += '\r\n';
-                    }
-                    for (let att in row) {
-                        if (i === 0) {
-                            dataHeader += '"' + att + '",';
-                        }
-                        let cell = (row[att] + '').replace(/"/g, '""'); // csv里的双引号转义为2个
-                        dataContent += '"' + cell + '",';  // \t是避免数字变成科学计数
-                    }
-                }
-                this.downloadCsv(dataHeader + '\r\n' + dataContent);
-            },
-            downloadCsv: function (data) {
-                // “\ufeff” BOM头
-                let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(data);
-                let downloadLink = document.createElement("a");
-                downloadLink.href = uri;
-                downloadLink.download = "errcodes.csv";
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
+                window.exportDataToCsv(this.dataList);
             },
 
             goLogin: function () {
