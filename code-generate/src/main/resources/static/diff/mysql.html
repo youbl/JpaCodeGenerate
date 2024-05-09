@@ -48,7 +48,8 @@
             <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestDb"></el-button>
 
             <el-form-item label="刷新数据库列表">
-                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库1" @change="testDbChange">
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库1"
+                           @change="testDbChange">
                     <el-option
                             v-for="item in dbsTest"
                             :key="item"
@@ -564,6 +565,12 @@
                     }
                     defaultVal = ' DEFAULT ' + defaultVal;
                 }
+                let onUpdate = '';
+                if (sourceCol.extra !== null && sourceCol.extra.length > 0) {
+                    const idx = sourceCol.extra.indexOf('on update ');
+                    if (idx >= 0)
+                        onUpdate = ' ' + sourceCol.extra.substring(idx);
+                }
                 let nullable = ' NOT NULL ';
                 if (sourceCol.nullable) {
                     nullable = ' NULL ';
@@ -579,7 +586,7 @@
                     comment = ' COMMENT \'' + tmpComment + '\' ';
                 }
                 return '\n  `' + sourceCol.column + '` ' + sourceCol.type +
-                    defaultVal + nullable + autoInc + primaryKey + comment;
+                    defaultVal + onUpdate + nullable + autoInc + primaryKey + comment;
             },
             cellStyle(row, column, rowIndex, columnIndex) {
                 let style = 'text-align:left;margin-left:20px;';
@@ -718,6 +725,11 @@
                 }
                 if (col.defaultVal !== null && col.defaultVal.length > 0) {
                     ret += ' 默认值:' + col.defaultVal;
+                }
+                if (col.extra !== null && col.extra.length > 0) {
+                    const idx = col.extra.indexOf('on update ');
+                    if (idx >= 0)
+                        ret += ' ' + col.extra.substring(idx);
                 }
                 return ret;
             },
