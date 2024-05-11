@@ -9,6 +9,9 @@ import cn.beinet.codegenerate.repository.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpHeaders;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +42,22 @@ public class RedisExeController {
         return ResponseData.ok(cmd.getCmd(), result);
     }
 
+    @DeleteMapping("v1/redis/removeKey")
+    public int removeKey(@RequestBody RedisDto cmd,
+                         AuthDetails loginInfo) {
+        if (loginInfo == null || !loginInfo.isAdmin()) {
+            throw new RuntimeException("仅管理员允许操作");
+        }
+
+        Assert.isTrue(StringUtils.hasLength(cmd.getCmd()), "key不能为空");
+
+        RedisRepository repository = linkInfoService.getRedisRepository(cmd);
+        Boolean ret = repository.removeKey(cmd.getCmd());
+        if (ret == null || !ret)
+            return 0;
+        return 1;
+    }
+
     /**
      * scan所有redis的key，并返回
      *
@@ -61,7 +80,7 @@ public class RedisExeController {
                            HttpServletResponse response,
                            AuthDetails loginInfo) {
         if (loginInfo == null || !loginInfo.isAdmin()) {
-            throw new RuntimeException("不允许操作");
+            throw new RuntimeException("仅管理员允许操作");
         }
 
         RedisDto dto = new RedisDto().setName(config).setDb(db);

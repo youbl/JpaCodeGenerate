@@ -239,6 +239,10 @@ public class RedisRepository {
         return ret;
     }
 
+    public Boolean removeKey(String key) {
+        return getRedisTemplate().delete(key);
+    }
+
     private String serialObj(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);

@@ -51,35 +51,48 @@
         </el-form-item>
         <table>
             <tr>
-                <td style="width: 1010px;">
+                <td colspan="2">
                     <el-form-item label="Redis的Key" prop="redisCmd" style="font-weight: bold;">
                         <el-input size="mini" type="text" v-model="searchCond.redisCmd" placeholder="请输入Redis的KEY"
                                   style="width:300px"></el-input>
                     </el-form-item>
-                    <span style="color: red">只允许输入key名，不支持命令(除info命令)</span>
+                    <el-form-item label="只支持key和info命令">
+                        <el-button icon="el-icon-refresh" @click="location.reload()" size="small">页面刷新</el-button>
+                    </el-form-item>
+                    <el-form-item label="">
+                        <el-button icon="el-icon-delete" @click="removeKey" size="small">删除该Key</el-button>
+                    </el-form-item>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1010px;">
                     <el-form-item>
-                        <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd" size="small">执 行
+                        <el-button type="primary" icon="el-icon-search" @click="executeRedisCmd" size="mini">执 行
                         </el-button>
-                        <span style="padding-left:20px;">耗时:{{costTime}}ms, 类型:{{redisResult.type}}, 过期:{{redisResult.ttl}}秒,数据长度:{{redisResult.result.length}}</span>
-                        <el-button type="primary" icon="el-icon-search" @click="exportKeys" size="small">导出所有Key
+                        <el-button type="primary" icon="el-icon-search" @click="tryJsonFormat" size="mini">尝试JSON格式化
                         </el-button>
+                        <span style="padding-left:2px;font-size: 12px;">耗时:{{costTime}}ms, 类型:{{redisResult.type}}, 过期:{{redisResult.ttl}}秒,数据长度:{{redisResult.result.length}}</span>
+                        <el-button @click="exportKeys" size="mini">导出所有Key</el-button>
                         <el-checkbox v-model="searchCond.ttl">导出TTL</el-checkbox>
                     </el-form-item>
                 </td>
-                <td>
-                    <div style="font-weight: bold;">历史KEY列表</div>
-                    <div v-for="(item, idx) in usingRedisCmds" style="font-size: 12px;">
-                        {{idx+1}}: <a href="javascript:void(0)" @click="setRedisCmd(item)">{{item}}</a>
+                <td rowspan="2" style="vertical-align: top;">
+                    <div style="padding-left:10px;">
+                        <div style="font-weight: bold;">历史KEY列表</div>
+                        <div v-for="(item, idx) in usingRedisCmds" style="font-size: 12px;">
+                            {{idx+1}}: <a href="javascript:void(0)" @click="setRedisCmd(item)">{{item}}</a>
+                        </div>
                     </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <el-input type="textarea" :rows="100" v-model="redisResult.result"
+                              style="width:100%"/>
                 </td>
             </tr>
         </table>
     </el-form>
-    <br>
-
-
-    <el-input type="textarea" :rows="100" v-model="redisResult.result"
-              style="width:100%"/>
 </div>
 <script>
     const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
@@ -136,7 +149,7 @@
                 let url = BASE_URL + 'linkinfo/list?type=redis';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
-                        return alert('出错:' + response.data.errMsg);
+                        return vueAlert('出错:' + response.data.errMsg);
                     }
                     for (let i = 0, j = response.data.length; i < j; i++) {
                         let item = response.data[i];
@@ -194,7 +207,7 @@
             },
             combineDbPara: function () {
                 if (!this.searchCond.redisIP) {
-                    alert('请输入IP');
+                    vueAlert('请输入IP', 3000);
                     throw new Error('请输入IP');
                 }
                 return 'ip=' + this.searchCond.redisIP +
@@ -213,7 +226,7 @@
                 this.attData = [];
 
                 if (this.loading) {
-                    return alert('执行中，请稍候');
+                    return vueAlert('执行中，请稍候', 3000);
                 }
                 this.loading = true;
                 let beginTime = new Date();
@@ -230,11 +243,53 @@
                     this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
                     if (response.data.code !== 200) {
-                        return alert(response.data.code + ':' + response.data.errMsg);
+                        return vueAlert(response.data.code + ':' + response.data.errMsg);
                     }
                     response.data.result.result = this.jsonFormat(response.data.result.result);
                     this.redisResult = response.data.result;
                     this.saveUsingRedisCmds(response.data.errMsg);
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+            tryJsonFormat: function () {
+                if (!this.redisResult.result)
+                    return vueAlert('无内容', 3000);
+                try {
+                    let str = JSON.parse(this.redisResult.result);
+                    if (typeof (str) === 'string')
+                        str = JSON.parse(str);
+                    this.redisResult.result = JSON.stringify(str, null, 4);
+                } catch (e) {
+                    return vueAlert('格式化出错:' + e.message);
+                }
+            },
+            removeKey: function () {
+                if (!this.searchCond.redisCmd)
+                    return vueAlert('请输入要删除的key', 3000);
+                if (!confirm('确认要从redis删除该key: ' + this.searchCond.redisCmd + ' 吗?'))
+                    return;
+                if (!this.searchCond.redisDbIdx) {
+                    this.searchCond.redisDbIdx = 0;
+                }
+                if (!this.searchCond.redisPort) {
+                    this.searchCond.redisPort = 6379;
+                }
+                let body = {
+                    ip: this.searchCond.redisIP,
+                    port: this.searchCond.redisPort,
+                    db: this.searchCond.redisDbIdx,
+                    pwd: this.searchCond.redisPwd,
+                    name: this.searchCond.configName,
+                    cmd: this.searchCond.redisCmd,
+                };
+                let url = BASE_URL + 'v1/redis/removeKey';
+                return axios.delete(url, {data: body}).then(response => {
+                    if (response.data === 1)
+                        return vueAlert('删除成功', 3000);
+
+                    return vueAlert('删除失败，可能不存在', 5000);
                 }).catch(error => {
                     this.loading = false;
                     this.ajaxError(error);
