@@ -53,18 +53,31 @@ public class LoginController {
     /**
      * 钉钉回调地址
      *
-     * @param code
-     * @param authCode
-     * @param state
-     * @return
+     * @param code     暂不清楚用途
+     * @param authCode 钉钉认证通过时，回调的authCode，用于获取后续的钉钉token用
+     * @param state    暂不清楚用途
+     * @return html
      */
     @GetMapping("authCallback")
     @SneakyThrows
     public String authCallback(@RequestParam(required = false) String code,
                                @RequestParam(required = false) String authCode,
-                               @RequestParam(required = false) String state,
-                               HttpServletRequest request,
-                               HttpServletResponse response) {
+                               @RequestParam(required = false) String state) {
+        // 因为chrome的同源策略限制，iframe里无法写入cookie，
+        // 如果在frame框架内设置cookie，因为浏览器默认使用SameSite=lax，导致cookie不生效，所以要手工设置
+        // 但是，SameSite=lax必须搭配Secure属性，而Secure属性仅https服务允许设置，所以http无法设置SameSite=none
+        // 参考: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value
+
+        // 因此增加这段代码，钉钉回调时，使用js强制顶部跳转，从而在top写cookie，而不是在iframe写cookie
+        return "<script>top.location.href='authCallbackOperation?authCode=" +
+                authCode + "';</script>";
+    }
+
+    @GetMapping("authCallbackOperation")
+    @SneakyThrows
+    public String authCallbackOperation(@RequestParam(required = false) String authCode,
+                                        HttpServletRequest request,
+                                        HttpServletResponse response) {
         String accessToken = dingtalkService.getUserToken(authCode);
         DingtalkUserResult userInfo = dingtalkService.getUserInfo(accessToken);
         DingtalkUserInfoResult userInfo2 = dingtalkService.getUserInfoByMobile(accessToken, userInfo.getMobile());
