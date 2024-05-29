@@ -27,10 +27,27 @@ public class MySqlExecuteRepository {
         initField();
     }
 
-    public MySqlExecuteRepository(LinkInfo info, String dbName) {
-        this(info.getAddress(), info.getPort(), info.getAccount(), info.getPwd(), dbName, null);
+    /**
+     * 构造函数
+     *
+     * @param info    连接信息
+     * @param dbName  数据库名
+     * @param timeout 超时时长，秒
+     */
+    public MySqlExecuteRepository(LinkInfo info, String dbName, Integer timeout) {
+        this(info.getAddress(), info.getPort(), info.getAccount(), info.getPwd(), dbName, timeout);
     }
 
+    /**
+     * 构造函数
+     *
+     * @param ip       ip
+     * @param port     端口
+     * @param userName 登录名
+     * @param pwd      登录密码
+     * @param dbName   数据库名
+     * @param timeout  超时时长，秒
+     */
     public MySqlExecuteRepository(String ip, int port, String userName, String pwd, String dbName, Integer timeout) {
         if (timeout == null || timeout <= 0)
             timeout = 5;

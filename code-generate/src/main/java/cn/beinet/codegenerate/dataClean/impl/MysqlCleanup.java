@@ -46,14 +46,15 @@ public class MysqlCleanup implements Cleanup {
             String backToDb = StringUtils.hasLength(mysql.getBackDb()) ?
                     mysql.getBackDb() : mysql.getDb();
 
-            MySqlExecuteRepository repository = new MySqlExecuteRepository(mysql.getMysql(), mysql.getDb());
+            MySqlExecuteRepository repositoryWrite = new MySqlExecuteRepository(mysql.getMysqlWrite(), mysql.getDb(), 10);
+            MySqlExecuteRepository repositoryRead = new MySqlExecuteRepository(mysql.getMysqlRead(), mysql.getDb(), 300);
             for (CleanTable table : mysql.getTableList()) {
                 if (!table.getEnabled() || !StringUtils.hasLength(table.getTableName()))
                     continue;
                 if (!StringUtils.hasLength(table.getBackDb())) {
                     table.setBackDb(backToDb);
                 }
-                cleanService.cleanTable(table, repository);
+                cleanService.cleanTable(table, repositoryRead, repositoryWrite);
             }
         }
     }

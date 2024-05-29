@@ -81,7 +81,7 @@
         <el-table-column label="ID" property="id" width="70"></el-table-column>
         <el-table-column label="连接" sortable width="520">
             <template slot-scope="scope">
-                <div v-html="getConnectionById(scope.row.linkinfoId)"></div>
+                <div v-html="getConnectionById(scope.row.linkWriteId)"></div>
             </template>
         </el-table-column>
         <el-table-column label="数据库" width="350">
@@ -112,15 +112,26 @@
         </el-table-column>
     </el-table>
 
-    <el-dialog title="主任务编辑" :visible.sync="editDialogShow" :close-on-press-escape="true"
+    <el-dialog :title="(editData.id?'编辑':'新增')+'主任务'" :visible.sync="editDialogShow"
+               :close-on-press-escape="true"
                :close-on-click-modal="false">
         <div>
             <el-form :model="editData" ref="editForm">
                 <el-form-item label="开关">
                     <el-checkbox v-model="editData.enabled">启用</el-checkbox>
                 </el-form-item>
-                <el-form-item label="数据库实例">
-                    <el-select v-model="editData.linkinfoId" filterable placeholder="请选择">
+                <el-form-item label="可写数据库实例">
+                    <el-select v-model="editData.linkWriteId" filterable placeholder="请选择">
+                        <el-option
+                                v-for="item in sqlConns"
+                                :key="item.id"
+                                :label="getConnectionStr(item)"
+                                :value="item.id">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="只读数据库实例">
+                    <el-select v-model="editData.linkReadId" filterable placeholder="请选择">
                         <el-option
                                 v-for="item in sqlConns"
                                 :key="item.id"
@@ -142,7 +153,8 @@
         </div>
     </el-dialog>
 
-    <el-dialog title="清理表编辑" :visible.sync="editTableDialogShow" :close-on-press-escape="true"
+    <el-dialog :title="'清理表' + (editTableData.id?'编辑':'新增')" :visible.sync="editTableDialogShow"
+               :close-on-press-escape="true"
                :close-on-click-modal="false">
         <div>
             <el-form :model="editTableData" ref="editTableForm">
@@ -269,7 +281,8 @@
                     this.editData = {
                         id: '',
                         enabled: true,
-                        linkinfoId: '',
+                        linkReadId: '',
+                        linkWriteId: '',
                         db: '',
                         backDb: '',
                     };
@@ -283,6 +296,13 @@
                 this.$refs[form].validate(valid => {
                     if (!valid)
                         return false;
+                    if (!this.editData.linkWriteId)
+                        return alert('请选择写库');
+                    if (!this.editData.linkReadId)
+                        return alert('请选择读库');
+                    if (!this.editData.db)
+                        return alert('请设置数据库名');
+
                     let url = BASE_URL + 'dataClean';
                     return axios.post(url, this.editData).then(response => {
                         if (!response || !response.data || response.data.code > 0) {

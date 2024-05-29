@@ -38,7 +38,7 @@ public class CleanConfigDal {
         if (isRun) {
             enableSql = " AND a.enabled=1 ";
         }
-        String sql = "SELECT * FROM clean_config a WHERE a.linkinfo_id>0 " + enableSql + " ORDER BY id";
+        String sql = "SELECT * FROM clean_config a WHERE a.link_write_id>0 " + enableSql + " ORDER BY id";
         List<CleanConfig> configList = jdbcTemplate.query(sql, new Object[0], new BeanPropertyRowMapper<>(CleanConfig.class));
         if (configList == null)
             return new ArrayList<>();
@@ -53,17 +53,18 @@ public class CleanConfigDal {
     public int saveConfig(CleanConfig config) {
         String sql;
         List<Object> params = new ArrayList<>();
-        params.add(config.getLinkinfoId());
+        params.add(config.getLinkReadId());
+        params.add(config.getLinkWriteId());
         params.add(config.getEnabled());
         params.add(config.getDb());
         params.add(config.getBackDb());
 
         if (config.getId() > 0) {
-            sql = "UPDATE `clean_config` SET `linkinfo_id`=?,`enabled`=?,`db`=?,`back_db`=? WHERE `id`=?";
+            sql = "UPDATE `clean_config` SET `link_read_id`=?,`link_write_id`=?,`enabled`=?,`db`=?,`back_db`=? WHERE `id`=?";
             // sql里的问号，必须跟参数个数一样多，否则报错：Parameter index out of range (5 > number of parameters, which is 4).
             params.add(config.getId());
         } else {
-            sql = "INSERT INTO `clean_config` (`linkinfo_id`,`enabled`,`db`,`back_db`)VALUES(?,?,?,?)";
+            sql = "INSERT INTO `clean_config` (`link_read_id`,`link_write_id`,`enabled`,`db`,`back_db`)VALUES(?,?,?,?,?)";
         }
         return jdbcTemplate.update(sql, params.toArray());
     }
@@ -120,9 +121,11 @@ public class CleanConfigDal {
         List<LinkInfo> infoList = linkInfoService.getLinkInfo("mysql");
         for (CleanConfig config : configList) {
             for (LinkInfo info : infoList) {
-                if (info.getId() == config.getLinkinfoId()) {
-                    config.setMysql(info);
-                    break;
+                if (info.getId() == config.getLinkReadId()) {
+                    config.setMysqlRead(info);
+                }
+                if (info.getId() == config.getLinkWriteId()) {
+                    config.setMysqlWrite(info);
                 }
             }
         }

@@ -118,10 +118,11 @@ CREATE TABLE `otpcode` (
 
 CREATE TABLE `clean_config` (
     `id` int NOT NULL AUTO_INCREMENT,
-    `linkinfo_id` int NOT NULL DEFAULT '0' COMMENT 'mysql连接信息表id',
+    `link_read_id` int NOT NULL DEFAULT '0' COMMENT 'linkinfo表id，读库',
+    `link_write_id` int NOT NULL DEFAULT '0' COMMENT 'linkinfo表id，写库',
     `enabled` tinyint NOT NULL DEFAULT '0' COMMENT '是否启用，0否，1是',
     `db` varchar(100) NOT NULL DEFAULT '' COMMENT '要清理的表，所在的数据库名',
-    `back_db` varchar(100) NOT NULL DEFAULT '' COMMENT '全局备份库名，备份数据放到哪个数据库名（同一IP实例下的另一个数据库），为空使用表所在数据库',
+    `back_db` varchar(100) NOT NULL DEFAULT '' COMMENT '全局备份库名，备份数据放到哪个数据库名（同一IP写实例下的另一个数据库），为空使用表所在数据库',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)

@@ -33,8 +33,9 @@ public class MysqlCleanService {
 
     @Async
     public void cleanTable(CleanTable table,
-                           MySqlExecuteRepository repository) {
-        String key = repository.getIp() + ":" + repository.getDb() + ":" + table.getTableName();
+                           MySqlExecuteRepository repositoryRead,
+                           MySqlExecuteRepository repositoryWrite) {
+        String key = repositoryRead.getIp() + ":" + repositoryRead.getDb() + ":" + table.getTableName();
         try {
             if (!isRunningHour(table.getRunHours())) {
                 log.warn("当前时段不允许执行: {} {},当前线程数: {}", table.getRunHours(), key, count.get());
@@ -48,7 +49,7 @@ public class MysqlCleanService {
             }
             log.info("{} 启动,当前线程数: {}", key, count.incrementAndGet());
 
-            doCleanTable(table, repository);
+            doCleanTable(table, repositoryRead, repositoryWrite);
             log.info("{} 完成，剩余线程数: {}", key, count.decrementAndGet());
         } catch (Exception exp) {
             log.error("{} 异常，剩余线程数: {}", key, count.decrementAndGet(), exp);
@@ -58,8 +59,9 @@ public class MysqlCleanService {
     }
 
     protected void doCleanTable(CleanTable table,
-                                MySqlExecuteRepository repository) {
-        String tbnameForLog = getTableWithPartition(repository.getDb(), table.getTableName(), -1);
+                                MySqlExecuteRepository repositoryRead,
+                                MySqlExecuteRepository repositoryWrite) {
+        String tbnameForLog = getTableWithPartition(repositoryRead.getDb(), table.getTableName(), -1);
         int keepDays = table.getKeepDays();
         if (keepDays < 1) {
             log.error("{} 数据保留天数不能小于1: {}", tbnameForLog, keepDays);
@@ -71,7 +73,7 @@ public class MysqlCleanService {
 
         // 获取要删除记录的最大主键，后续用主键操作，效率高
         // 注：不兼容没有自增主键的表
-        Long maxId = getCleanupMaxId(table, moveMaxTime, repository);
+        Long maxId = getCleanupMaxId(table, moveMaxTime, repositoryRead);
         if (maxId == null || maxId <= 0) {
             log.warn("{} 未获取到要删除记录的最大id: {}", tbnameForLog, maxId);
             return;
@@ -79,16 +81,16 @@ public class MysqlCleanService {
 
         if (table.getNeedBackup()) {
             // 先创建备份用的表
-            String backupTbName = createBackupTable(table, moveMaxTime, repository);
+            String backupTbName = createBackupTable(table, moveMaxTime, repositoryWrite);
             table.setBackToTableName(backupTbName);
         }
 
         int partition = table.getPartitionNum();
         if (partition <= 1) {
-            process(table, maxId, -1, repository);
+            process(table, maxId, -1, repositoryWrite);
         } else {
             for (int currentPart = 0; currentPart < partition; currentPart++) {
-                process(table, maxId, currentPart, repository);
+                process(table, maxId, currentPart, repositoryWrite);
             }
         }
     }

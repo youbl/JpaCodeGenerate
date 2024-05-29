@@ -32,9 +32,15 @@ public class CleanConfig {
     }
 
     /**
-     * 数据库连接信息表id
+     * 数据库连接信息表id，读库
      */
-    private int linkinfoId;
+    private int linkReadId;
+
+    /**
+     * 数据库连接信息表id，写库
+     */
+    private int linkWriteId;
+
     /**
      * 要清理的数据库名
      */
@@ -49,9 +55,14 @@ public class CleanConfig {
     private LocalDateTime updateTime;
 
     /**
-     * 要清理的表所在的数据库连接信息
+     * 要清理的表所在的数据库连接信息, 读库
      */
-    private LinkInfo mysql;
+    private LinkInfo mysqlRead;
+
+    /**
+     * 要清理的表所在的数据库连接信息, 写库
+     */
+    private LinkInfo mysqlWrite;
 
     /**
      * 要清理的表清单
