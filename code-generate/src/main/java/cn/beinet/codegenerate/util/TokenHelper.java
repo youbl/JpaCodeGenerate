@@ -55,9 +55,10 @@ public final class TokenHelper {
      * 校验token格式和md5是否正确
      *
      * @param token token
+     * @param salt  计算md5使用的盐值（为保证安全性, 建议定期更换）
      * @return 是否正确token
      */
-    public static Token getLoginUserFromToken(String token) {
+    public static Token getLoginUserFromToken(String token, String salt) {
         init();
         if (!StringUtils.hasLength(token)) {
             return null;
@@ -75,7 +76,7 @@ public final class TokenHelper {
             另一个作法，是使用独立服务的rsa算法，在独立服务里，用私钥生成token，
             在校验token的地方，使用公钥验证客户端提交的token有效性
             */
-        String countToken = buildToken(arr[0], arr[1]);
+        String countToken = buildToken(arr[0], arr[1], salt);
         if (countToken.equalsIgnoreCase(token)) {
             Token ret = new Token();
             long loginTime = Long.parseLong(arr[1]);
@@ -88,9 +89,16 @@ public final class TokenHelper {
         return null;
     }
 
-    public static String buildToken(String username) {
+    /**
+     * 根据用户名和当前时间，计算md5，并拼接token返回
+     *
+     * @param username 用户名
+     * @param salt     计算md5使用的盐值（为保证安全性, 建议定期更换）
+     * @return token
+     */
+    public static String buildNewToken(String username, String salt) {
         String date = LocalDateTime.now().format(FORMATTER);
-        return buildToken(username, date);
+        return buildToken(username, date, salt);
     }
 
     /**
@@ -98,15 +106,16 @@ public final class TokenHelper {
      *
      * @param username 用户名
      * @param date     登录时间
+     * @param salt     计算md5使用的盐值（为保证安全性, 建议定期更换）
      * @return token
      */
-    public static String buildToken(String username, String date) {
+    public static String buildToken(String username, String date, String salt) {
         init();
         if (date == null) {
             date = LocalDateTime.now().format(FORMATTER);
         }
         String ret = username + TOKEN_SPLIT + date + TOKEN_SPLIT;
-        String md5 = StringHelper.md5(ret, TOKEN_SALT, username);
+        String md5 = StringHelper.md5(ret, TOKEN_SALT, username, salt);
         return ret + md5;
     }
 

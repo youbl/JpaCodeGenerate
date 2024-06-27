@@ -555,7 +555,7 @@
                 return fieldList;
             },
             generatePrimaryKey: function () {
-                let regex = /PRIMARY\s+KEY\s+\(([^\)]+)\)/g;
+                let regex = /PRIMARY\s+KEY\s+\(([^)]+)\)/g;
                 if (regex.test(this.generateSql)) {
                     return RegExp.$1;
                 }

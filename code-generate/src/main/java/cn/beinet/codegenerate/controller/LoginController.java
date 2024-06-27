@@ -29,6 +29,8 @@ public class LoginController {
 
     private final DingtalkService dingtalkService;
 
+    private final LdapLoginFilter ldapLoginFilter;
+
     @Value("${spring.ldap.email-domain:}")
     private String emailDomain;
 
@@ -97,8 +99,8 @@ public class LoginController {
 
         // cookie里不要放域名
         String username = email.substring(0, idx);
-        LdapLoginFilter.addToken(username, request, response);
-        LdapLoginFilter.redirect(response, "index.html");
+        ldapLoginFilter.addToken(username, request, response);
+        ldapLoginFilter.redirect(response, "index.html");
         return "ok";
     }
 }

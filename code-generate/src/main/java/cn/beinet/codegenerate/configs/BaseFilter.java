@@ -52,7 +52,7 @@ public abstract class BaseFilter extends OncePerRequestFilter {
      * @param response 响应上下文
      * @param url      跳转地址
      */
-    public static void redirect(HttpServletResponse response, String url) {
+    public void redirect(HttpServletResponse response, String url) {
         if (!StringUtils.hasLength(url)) {
             url = "/index.html";
         }

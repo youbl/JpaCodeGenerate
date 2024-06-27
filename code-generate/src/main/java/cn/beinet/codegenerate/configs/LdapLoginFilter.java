@@ -3,6 +3,7 @@ package cn.beinet.codegenerate.configs;
 import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.logins.Validator;
 import cn.beinet.codegenerate.configs.thirdLogin.ThirdLoginService;
+import cn.beinet.codegenerate.service.SaltService;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.TokenHelper;
@@ -55,6 +56,9 @@ public class LdapLoginFilter extends BaseFilter {
     private final ImgCodeService codeService;
 
     private final ThirdLoginService thirdLoginInfo;
+
+    // 用于获取token的md5加密随机盐值，确保安全性
+    private final SaltService saltService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -144,14 +148,14 @@ public class LdapLoginFilter extends BaseFilter {
      * @param username 用户名，为空表示删除token
      * @param response 响应上下文
      */
-    public static void addToken(String username, HttpServletRequest request, HttpServletResponse response) {
+    public void addToken(String username, HttpServletRequest request, HttpServletResponse response) {
         Cookie loginCookie = new Cookie(TokenHelper.getTokenCookieName(), "");
         loginCookie.setPath("/");
         if (username.isEmpty()) {
             loginCookie.setMaxAge(0);
         } else {
             loginCookie.setMaxAge(7 * 24 * 3600);
-            String token = TokenHelper.buildToken(username);
+            String token = TokenHelper.buildNewToken(username, saltService.getSalt());
             log.debug("登录成功:{}", token);
             loginCookie.setValue(token);
         }
