@@ -57,9 +57,15 @@ public class MybatisServiceGenerater implements Generater {
         StringBuilder sb = new StringBuilder("\n");
         for (ColumnDto item : columns) {
             String colName = getFieldName(item.getColumn(), false);
+            String colType = item.getManagerType();
+            String condCheck;
+            if (colType.equals("String")) {
+                condCheck = "StringUtils.hasLength(dto.get" + colName + "())";
+            } else {
+                condCheck = "dto.get" + colName + "() != null";
+            }
             // wrapper.eq(dto.getCreateMember() != null, {{entity_name}}::getCreateMember, dto.getCreateMember());
-            String cond = "wrapper.eq(dto.get" + colName +
-                    "() != null, " + entityName + "::get" + colName +
+            String cond = "wrapper.eq(" + condCheck + ", " + entityName + "::get" + colName +
                     ", dto.get" + colName +
                     "());";
             sb.append("            ").append(cond).append("\n");

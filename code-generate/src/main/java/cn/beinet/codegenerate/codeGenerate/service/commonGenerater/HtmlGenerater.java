@@ -56,6 +56,8 @@ public class HtmlGenerater implements Generater {
 
         replaceSymbol(sb, Vars.HTML_FIELDS, getBody(columns));
 
+        replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 

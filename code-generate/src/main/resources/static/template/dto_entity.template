@@ -8,7 +8,7 @@ import org.mapstruct.factory.Mappers;
 import java.util.List;
 
 /**
- * 需要添加如下2个引用，并进行maven构建：
+ * need add these dependency, and compile with maven:
  * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
  * <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct-processor</artifactId></dependency>
  *

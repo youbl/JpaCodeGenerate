@@ -11,6 +11,10 @@
     <link href="../res/elemeIndex.css" rel="stylesheet">
 </head>
 <body>
+<h1>
+1、请修改页面上面的script和link的src，确保引用正确；<br>
+2、请修改下面script里的const BASE_URL，确保根路径正确。
+</h1>
 <div id="divApp" style="text-align: center;width: 98%;">
     <el-form :inline="true" class="demo-form-inline" style="text-align: left">
         <el-form-item v-for="key in tableFields" :label="key" label-width="150px">
@@ -58,7 +62,7 @@
     </el-table>
 {{start-modify_content}}
     <!-- 编辑窗口 -->
-    <el-dialog :visible.sync="statusEditDialog" :title="(editRow.id?'编辑界面':'新增界面')">
+    <el-dialog :visible.sync="statusEditDialog" :title="(editRow.{{low_key_field}}?'编辑界面':'新增界面')">
         <el-form size="mini" :model="editRow" ref="editRowForm" style="width:700px">
             <el-form-item v-for="(val,key,idx) in editRow" :label="key" label-width="150px" v-if="isEditKey(key)">
                 <el-input placeholder="请输入" v-model.trim="editRow[key]"></el-input>
@@ -94,7 +98,7 @@
             }
         },
         mounted: function () {
-            this.searchCondition['id'] = getQueryString('id');
+            this.searchCondition['{{low_key_field}}'] = getQueryString('id');
             this.loadDatas();
         },
         computed: {},
@@ -112,7 +116,7 @@
                 }
                 let ret = [];
                 for (let i = 0, j = this.multipleSelection.length; i < j; i++) {
-                    ret.push(this.multipleSelection[i].id);
+                    ret.push(this.multipleSelection[i].{{low_key_field}});
                 }
                 return ret;
             },
@@ -128,7 +132,7 @@
                     }
                 }
 
-                let url = BASE_URL + '{{low_entity_name}}';
+                let url = BASE_URL + '{{low_entity_name}}/all';
                 let para = {'params': this.searchCondition};
                 this.dataList = [];
                 return axios.get(url, para).then(response => {
@@ -148,11 +152,15 @@
             },
 {{start-modify_content}}
             isEditKey: function (key) {
-                if (key === 'id' ||
+                if (key === '{{low_key_field}}' ||
                     key === 'createDate' ||
-                    key === 'updateDate'||
+                    key === 'updateDate' ||
                     key === 'create_date' ||
-                    key === 'update_date'
+                    key === 'update_date' ||
+                    key === 'createTime' ||
+                    key === 'updateTime' ||
+                    key === 'create_time' ||
+                    key === 'update_time'
                 ) // 在这里配置：编辑窗口里不需要显示的列名
                     return false;
                 return true;
@@ -161,7 +169,7 @@
                 if (!confirm('确认要删除吗?')) {
                     return;
                 }
-                let url = BASE_URL + '{{low_entity_name}}/' + row.id;
+                let url = BASE_URL + '{{low_entity_name}}?{{low_key_field}}=' + row.{{low_key_field}};
                 // post和put的第二个参数直接为data，第三个参数为config，而delete的第二个参数是config，所以要把data放在config里
                 return axios.delete(url, {data: row}).then(response => {
                     alert('删除成功');
@@ -172,7 +180,7 @@
                 if (row) {
                     if (isClone) {
                         this.editRow = {...row};
-                        Vue.set(this.editRow, 'id', '');
+                        Vue.set(this.editRow, '{{low_key_field}}', '');
                     } else {
                         this.editRow = row;
                     }

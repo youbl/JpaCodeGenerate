@@ -8,6 +8,7 @@ import {{package_name}}.dto.{{entity_name}}Dto;
 import {{package_name}}.mapstruct.{{entity_name}}EntityMapper;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import org.springframework.util.StringUtils;
 
 /**
  *

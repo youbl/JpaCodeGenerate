@@ -9,5 +9,15 @@ import {{package_name}}.dal.entity.*;
  * @since {{date_time}}
  */
 public interface {{entity_name}}Mapper extends BaseMapper<{{entity_name}}> {
+    static final String TABLE = "{{table_name}}";
 
+    @Select("<script>" +
+            "SELECT * FROM " + TABLE + " a " +
+            "WHERE a.{{low_key_field}} IN " +
+            "<foreach item='item' index='index' collection='idList' open='(' separator=',' close=')'>" +
+            " #{item} " +
+            "</foreach> " +
+            "ORDER BY a.{{low_key_field}} DESC" +
+            "</script>")
+    List<SysDict> getListByIds(List<Long> idList);
 }

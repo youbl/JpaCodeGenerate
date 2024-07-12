@@ -29,7 +29,9 @@ public final class FileHelper {
     public static void saveFile(String filePath, String content) throws IOException {
         ensureDirectory(filePath);
 
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath)))) {
+        try (FileOutputStream fos = new FileOutputStream(filePath);
+             OutputStreamWriter osw = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+             BufferedWriter writer = new BufferedWriter(osw)) {
             writer.write(content);
             writer.flush();
         }

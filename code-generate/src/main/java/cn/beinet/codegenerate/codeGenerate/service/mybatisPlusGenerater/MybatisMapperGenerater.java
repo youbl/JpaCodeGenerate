@@ -45,6 +45,11 @@ public class MybatisMapperGenerater implements Generater {
         String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
+        String table = columns.get(0).getTable();
+        replaceSymbol(sb, Vars.TABLE_NAME, table);
+
+        replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 }
