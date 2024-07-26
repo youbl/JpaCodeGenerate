@@ -183,7 +183,12 @@ public class ColumnDto {
      */
     public boolean isVirtual() {
         String strExtra = getExtra();
-        return (strExtra != null && strExtra.toUpperCase().contains("GENERATED"));
+        if (!StringUtils.hasLength(strExtra)) {
+            return false;
+        }
+        strExtra = strExtra.toUpperCase();
+        return !strExtra.equals("DEFAULT_GENERATED") &&
+                strExtra.contains("GENERATED");
     }
 
     /**

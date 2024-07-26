@@ -68,8 +68,10 @@ public class MybatisEntityGenerater implements Generater {
             sb.append(getSizeAnnotate(column));
 
             if (column.isPrimaryKey()) {
-                // if(column.isAuto())
-                sb.append("    @TableId(type = IdType.AUTO)\n");
+                if (column.isAuto())
+                    sb.append("    @TableId(type = IdType.AUTO)\n");
+                else
+                    sb.append("    @TableId(type = IdType.INPUT)\n");
             } else {
                 // mybatisplus里， 有TableId注解，就会忽略TableField注解
                 sb.append(getColumnAnnotate(column));
