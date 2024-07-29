@@ -277,7 +277,7 @@
                         return alert(currentIp + '出错:\n' + response.data.errMsg);
                     }
                     this.dbsTest = response.data;
-                    if (this.dbsTest.length > 1) {
+                    if (this.dbsTest.length > 0) {
                         this.searchCond.dbTestName = this.dbsTest[0];
                         this.loadTables();
                     }

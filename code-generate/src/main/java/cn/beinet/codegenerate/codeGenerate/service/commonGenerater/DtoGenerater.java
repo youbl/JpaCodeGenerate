@@ -7,6 +7,7 @@ import cn.beinet.codegenerate.codeGenerate.enums.Vars;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.TimeHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -56,11 +57,28 @@ public class DtoGenerater implements Generater {
     private String getClassBody(List<ColumnDto> columns) {
         StringBuilder sb = new StringBuilder();
         for (ColumnDto column : columns) {
+            sb.append(getColumnComment(column));
             sb.append(getSizeAnnotate(column));
             sb.append(getDateFormatAnnotate(column));
             sb.append(getColumnDefine(column));
         }
         return sb.toString();
+    }
+
+
+    /**
+     * 生成字段注释
+     *
+     * @param column 对应的列
+     * @return 注释
+     */
+    private String getColumnComment(ColumnDto column) {
+        String comment = column.getComment();
+        if (StringUtils.hasLength(comment)) {
+            comment = comment.replace("*/", "* /")
+                    .replace("\n", " ");
+        }
+        return "    /**\n     * " + comment + "\n     */\n";
     }
 
     /**
