@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.otpcode.controller.dto.OtpCodeDto;
 import cn.beinet.codegenerate.otpcode.service.entity.OtpCode;
 import cn.beinet.codegenerate.util.AESUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OtpCodeService {
     private final JdbcTemplate jdbcTemplate;
 
@@ -116,8 +118,14 @@ public class OtpCodeService {
     }
 
     private Map<String, String> countCode(String secure, int codeNum) {
-        // 解密密钥后，进行code计算生成
-        String descryptedSecure = descrypt(secure);
+        String descryptedSecure;
+        try {
+            // 解密密钥后，进行code计算生成
+            descryptedSecure = descrypt(secure);
+        } catch (Exception exp) {
+            log.error("{} 解密失败: {}", secure, exp.getMessage());
+            return new HashMap<>();
+        }
         return OtpCodeGeneratorTool.countCodeStr(descryptedSecure, codeNum);
     }
 
