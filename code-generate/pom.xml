@@ -120,7 +120,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <fork>true</fork>
-                    <finalName>${project.build.finalName}</finalName>
                     <!--解决windows命令行窗口中文乱码-->
                     <jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>
                     <layout>ZIP</layout>
