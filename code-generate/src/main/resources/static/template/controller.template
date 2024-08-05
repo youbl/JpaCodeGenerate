@@ -5,6 +5,7 @@ import {{package_name}}.dto.{{entity_name}}Dto;
 import {{package_name}}.mapstruct.{{entity_name}}EntityMapper;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
 
 import java.util.List;
 
@@ -25,22 +26,19 @@ public class {{entity_name}}Controller {
     }
 
     @GetMapping("/{{low_entity_name}}")
-    public {{entity_name}}Dto findById(@RequestParam Long {{low_key_field}}) {
+    public {{entity_name}}Dto findById(@NonNull @RequestParam Long {{low_key_field}}) {
         return {{entity_name}}EntityMapper.INSTANCE.entity2dto(service.getById({{low_key_field}}));
     }
 
 {{start-modify_content}}
     @DeleteMapping("/{{low_entity_name}}")
-    public boolean delById(@RequestParam Long {{low_key_field}}) {
+    public boolean delById(@NonNull @RequestParam Long {{low_key_field}}) {
         return service.removeById({{low_key_field}});
     }
 
     @PostMapping("/{{low_entity_name}}")
-    public boolean save(@RequestBody {{entity_name}}Dto item) {
-        if (item == null) {
-            return false;
-        }
-        return service.saveOrUpdate({{entity_name}}EntityMapper.INSTANCE.dto2entity(item));
+    public boolean save(@NonNull @RequestBody {{entity_name}}Dto item) {
+        return service.save{{entity_name}}(item);
     }
 {{end-modify_content}}
 }

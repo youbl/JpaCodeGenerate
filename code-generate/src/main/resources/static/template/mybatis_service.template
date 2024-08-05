@@ -25,4 +25,13 @@ public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {
         wrapper.orderByDesc({{entity_name}}::get{{up_key_field}}).last(" LIMIT 123");
         return {{entity_name}}EntityMapper.INSTANCE.entity2dto(list(wrapper));
     }
+
+    // insert or update data
+    public boolean save{{entity_name}}({{entity_name}}Dto dto) {
+        {{entity_name}} entity = {{entity_name}}EntityMapper.INSTANCE.dto2entity(dto);
+        if (entity.get{{up_key_field}}() != null) {
+            return updateById(entity);
+        }
+        return save(entity);
+    }
 }

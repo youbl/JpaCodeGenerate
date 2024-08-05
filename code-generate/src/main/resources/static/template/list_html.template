@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
     <title>数据列表</title>
+    <script src="../res/common.js?flg=1" type="text/javascript"></script>
     <script src="../res/vue.min.js" type="text/javascript"></script>
     <script src="../res/axios.min.js" type="text/javascript"></script>
     <script src="../res/elemeIndex.js" type="text/javascript"></script>
-    <script src="../res/common.js" type="text/javascript"></script>
     <link href="../res/elemeIndex.css" rel="stylesheet">
 </head>
 <body>
@@ -17,7 +17,7 @@
 </h1>
 <div id="divApp" style="text-align: center;width: 98%;">
     <el-form :inline="true" class="demo-form-inline" style="text-align: left">
-        <el-form-item v-for="key in tableFields" :label="key" label-width="150px">
+        <el-form-item v-for="key in tableFields" :label="key" v-if="isSearchKey(key)">
             <el-input placeholder="请输入" v-model.trim="searchCondition[key]"></el-input>
         </el-form-item>
         <el-form-item>
@@ -70,7 +70,9 @@
             </el-form-item>
         </el-form>
         <div class="dialog-footer" slot="footer">
-            <el-button @click="saveData('editRowForm')" icon="el-icon-success" type="primary">保 存
+            <span v-if="editRow.{{low_key_field}}" style="font-size: 12px;color: blue;">更新主键:{{editRow.{{low_key_field}}}}</span>
+            <el-button @click="saveData('editRowForm')" icon="el-icon-success" type="primary">
+                {{(editRow.{{low_key_field}}?'更新数据':'新增数据')}}
             </el-button>
             <el-button @click="hideEditDialog">取 消</el-button>
         </div>
@@ -146,9 +148,22 @@
                 }).catch(error => this.ajaxError(error));
             },
             isShowKey: function (key) {
-                if (key === '') // 在这里配置：table里不需要显示的列名
+                // 在这里配置：table里不需要显示的列名
+                if (key === '')
                     return false;
                 return true;
+            },
+            isSearchKey: function (key) {
+                // 在这里配置：搜索条件里不需要显示的列名
+                return !(key === 'createDate' ||
+                    key === 'updateDate' ||
+                    key === 'create_date' ||
+                    key === 'update_date' ||
+                    key === 'createTime' ||
+                    key === 'updateTime' ||
+                    key === 'create_time' ||
+                    key === 'update_time'
+                );
             },
 {{start-modify_content}}
             isEditKey: function (key) {
