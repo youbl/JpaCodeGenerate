@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Telnet工具</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/sql-formatter.min.js"></script>
     <script src="../static/qs.min.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
 </head>
 <body>
@@ -45,7 +45,6 @@
     <br>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -74,7 +73,7 @@
         computed: {},
         methods: {
             getServerInfo: function () {
-                let url = BASE_URL + 'test/sip';
+                let url = $$BASE_URL + 'test/sip';
                 return axios.get(url).then(response => {
                     this.serverInfo = response.data;
                 }).catch(error => {
@@ -96,7 +95,7 @@
                 }
                 this.loading = true;
 
-                let url = BASE_URL + 'test/telnet?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                let url = $$BASE_URL + 'test/telnet?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
                 return jsonp(url).then(data => {
                     let costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
@@ -116,7 +115,7 @@
                 }
                 this.loading = true;
 
-                let url = BASE_URL + 'test/ping?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                let url = $$BASE_URL + 'test/ping?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
                 return jsonp(url).then(data => {
                     let costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;

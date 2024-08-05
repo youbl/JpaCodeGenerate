@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>数据清理配置</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .mainTableRow {
@@ -203,7 +203,6 @@
     </el-dialog>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -228,7 +227,7 @@
             handleTabClick: function (tab, event) {
             },
             getLoginUser: function () {
-                let url = BASE_URL + 'currentuser';
+                let url = $$BASE_URL + 'currentuser';
                 return axios.get(url).then(response => {
                     this.loginuser = response.data;
                 }).catch(error => {
@@ -236,7 +235,7 @@
                 });
             },
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                let url = $$BASE_URL + 'linkinfo/list?type=mysql';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return alert('取连接出错:' + response.data.errMsg);
@@ -247,7 +246,7 @@
                 });
             },
             getDataList: function () {
-                let url = BASE_URL + 'dataClean';
+                let url = $$BASE_URL + 'dataClean';
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);
@@ -303,7 +302,7 @@
                     if (!this.editData.db)
                         return alert('请设置数据库名');
 
-                    let url = BASE_URL + 'dataClean';
+                    let url = $$BASE_URL + 'dataClean';
                     return axios.post(url, this.editData).then(response => {
                         if (!response || !response.data || response.data.code > 0) {
                             this.$message({
@@ -326,7 +325,7 @@
                 if (!confirm('确认要' + txt + '该记录吗？'))
                     return;
 
-                let url = BASE_URL + 'dataClean/status?id=' + row.id + '&status=' + (!row.enabled);
+                let url = $$BASE_URL + 'dataClean/status?id=' + row.id + '&status=' + (!row.enabled);
                 return axios.post(url).then(response => {
                     if (typeof (response.data) === 'number') {
                         alert('操作成功条数:' + response.data);
@@ -370,7 +369,7 @@
                 if (!confirm('确认要' + txt + '该表吗？'))
                     return;
 
-                let url = BASE_URL + 'dataClean/table/status?id=' + row.id + '&status=' + (!row.enabled);
+                let url = $$BASE_URL + 'dataClean/table/status?id=' + row.id + '&status=' + (!row.enabled);
                 return axios.post(url).then(response => {
                     if (typeof (response.data) === 'number') {
                         alert('操作成功条数:' + response.data);
@@ -386,7 +385,7 @@
                 this.$refs[form].validate(valid => {
                     if (!valid)
                         return false;
-                    let url = BASE_URL + 'dataClean/table';
+                    let url = $$BASE_URL + 'dataClean/table';
                     return axios.post(url, this.editTableData).then(response => {
                         if (!response || !response.data || response.data.code > 0) {
                             this.$message({

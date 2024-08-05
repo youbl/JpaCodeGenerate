@@ -99,6 +99,20 @@ function getQueryString(name) {
 }
 
 /**
+ * 获取url里的变量数字，不存在时返回0
+ *
+ * @param {string} name 变量名
+ * @return {number} 数字或0
+ */
+function getQueryInt(name) {
+    let tmp = getQueryString(name);
+    if ((/^-?\d+$/).test(tmp)) {
+        return parseInt(tmp, 10);
+    }
+    return 0;
+}
+
+/**
  * window.open是GET方式，此方法是POST方式，在指定窗口打开页面。
  * 注：不支持Content-type: application/json
  *
@@ -324,6 +338,8 @@ function byteToStr(size) {
     if (typeof (size) === 'string') {
         size = parseInt(size, 10);
     }
+    if (size <= 0)
+        return size;
     if (size < 1024)
         return size + 'Byte';
 
@@ -614,6 +630,52 @@ function downloadJson(jsonStr, downFilename) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
+}
+
+/**
+ * 获取文件名的扩展名，没有扩展名返回空
+ *
+ * @param filename 文件名
+ * @param withPoint 返回值要不要带小数点，如 .txt
+ * @returns {string} 扩展名
+ */
+function getFileExt(filename, withPoint) {
+    if (!filename)
+        return '';
+    const idx = filename.lastIndexOf('.');
+    if (idx <= 0 || idx >= filename.length - 1)
+        return '';
+    if (withPoint)
+        return filename.substring(idx);
+    return filename.substring(idx + 1);
+}
+
+/**
+ * 判断字符串是否包含非法文件名或字符串
+ * @param str 文件名
+ * @returns {boolean} 包含与否
+ */
+function isValidFileName(str) {
+    if (typeof (str) != 'string' || str.length === 0) {
+        return false;
+    }
+    //  文件名中不允许出现的11个字符
+    let reg = /[\<\>\/\\\|\:""\*\?\r\n]/g;
+    if (reg.test(str)) {
+        return false;
+    }
+    // 不允许以这些文件名开头
+    let deservedFileNames = [
+        "CON.", "PRN.", "AUX.", "NUL.", "COM1.", "COM2.", "COM3.", "COM4.",
+        "COM5.", "COM6.", "COM7.", "COM8.", "COM9.", "LPT1"
+    ];
+    str = str.toUpperCase();
+    for (let i = deservedFileNames.length - 1; i >= 0; i--) {
+        if (str.indexOf(deservedFileNames[i]) === 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function jsonp(url) {

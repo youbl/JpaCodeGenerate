@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>配置对比</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -211,7 +211,6 @@
     </el-dialog>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -323,7 +322,7 @@
         },
         methods: {
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=nacos';
+                let url = $$BASE_URL + 'linkinfo/list?type=nacos';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return alert('出错:' + response.data.errMsg);
@@ -470,7 +469,7 @@
                 this.loadNacosNs(true);
             },
             loadNacosNs: function (isProd) {
-                let url = BASE_URL + 'v1/nacos/namespaces?' + this.getPara(isProd, false);
+                let url = $$BASE_URL + 'v1/nacos/namespaces?' + this.getPara(isProd, false);
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.namespaceProdArr = response.data;
@@ -487,7 +486,7 @@
             loadNacosFile: function (isProd) {
                 this.init();
 
-                let url = BASE_URL + 'v1/nacos/files?' + this.getPara(isProd, true);
+                let url = $$BASE_URL + 'v1/nacos/files?' + this.getPara(isProd, true);
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.fileProdArr = response.data;
@@ -690,7 +689,7 @@
             addIgnoreKey: function (key) {
                 let appNam = this.getCompareKey();
                 Vue.set(this.ignoreKeyByProject[appNam], key, 1);
-                let url = BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
                 return axios.post(url).then((response) => {
                 }).catch((error) => {
                     this.ajaxError(error);
@@ -700,7 +699,7 @@
             delIgnoreKey: function (key) {
                 let appNam = this.getCompareKey();
                 Vue.delete(this.ignoreKeyByProject[appNam], key);
-                let url = BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
                 return axios.delete(url).then((response) => {
                 }).catch((error) => {
                     this.ajaxError(error);
@@ -713,7 +712,7 @@
                 }
                 let appNam = this.getCompareKey();
                 Vue.set(this.ignoreKeyByProject, appNam, {});
-                let url = BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=all';
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=all';
                 return axios.delete(url).then((response) => {
                 }).catch((error) => {
                     this.ajaxError(error);
@@ -727,7 +726,7 @@
                         resolve();
                     });
                 }
-                let url = BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam);
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam);
                 return axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
                         Vue.set(this.ignoreKeyByProject, appNam, {});
@@ -771,7 +770,7 @@
                 return key;
             },
             loadConfigs: function (isProd) {
-                let urlConfig = BASE_URL + 'v1/nacos/concfig?' + this.getPara(isProd, true);
+                let urlConfig = $$BASE_URL + 'v1/nacos/concfig?' + this.getPara(isProd, true);
 
                 return axios.get(urlConfig).then(response => {
                     let resultData = {};

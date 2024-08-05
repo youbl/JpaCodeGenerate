@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>OTPCode操作页</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=2"></script>
     <script src="../static/jsQR.js"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
@@ -169,7 +169,6 @@
     </el-dialog>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -203,7 +202,7 @@
             handleTabClick: function (tab, event) {
             },
             getLoginUser: function () {
-                let url = BASE_URL + 'currentuser';
+                let url = $$BASE_URL + 'currentuser';
                 return axios.get(url).then(response => {
                     this.loginuser = response.data;
                 }).catch(error => {
@@ -234,7 +233,7 @@
                     return;
                 this.loading = true;
 
-                let url = BASE_URL + 'otpcode/list?codeNum=' + this.codeNum;
+                let url = $$BASE_URL + 'otpcode/list?codeNum=' + this.codeNum;
                 return axios.get(url).then(response => {
                     this.loading = false;
                     if (response.data.code && response.data.code === 500) {
@@ -248,7 +247,7 @@
                 });
             },
             getItemSecure: function (row) {
-                let url = BASE_URL + 'otpcode/list/' + row.id + '?codeNum=' + this.codeNum;
+                let url = $$BASE_URL + 'otpcode/list/' + row.id + '?codeNum=' + this.codeNum;
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return vueAlert('出错:\n' + response.data.errMsg);
@@ -320,7 +319,7 @@
                 if (codeData.indexOf('otpauth-migration://offline?data=') !== 0) {
                     return;
                 }
-                let url = BASE_URL + 'otpcode/convertGoogleCode?code=' + encodeURIComponent(codeData);
+                let url = $$BASE_URL + 'otpcode/convertGoogleCode?code=' + encodeURIComponent(codeData);
                 return axios.get(url).then(response => {
                     this.parseSecretFromCode(response.data);
                 }).catch(error => {
@@ -328,7 +327,7 @@
                 });
             },
             saveMySecure: function () {
-                let url = BASE_URL + 'otpcode';
+                let url = $$BASE_URL + 'otpcode';
                 return axios.post(url, this.saveData).then(response => {
                     if (typeof (response.data) === 'number') {
                         vueAlert('保存成功条数:' + response.data, 3000);
@@ -345,7 +344,7 @@
                 if (!confirm('确认删除吗？注：无法恢复'))
                     return;
 
-                let url = BASE_URL + 'otpcode?id=' + row.id;
+                let url = $$BASE_URL + 'otpcode?id=' + row.id;
                 return axios.delete(url).then(response => {
                     if (typeof (response.data) === 'number') {
                         vueAlert('删除条数:' + response.data, 3000);
@@ -363,7 +362,7 @@
                 this.qrCodeShow = true;
             },
             getQRCodeImg: function (rowId) {
-                this.qrCodeUrl = BASE_URL + 'otpcode/export?id=' + rowId;
+                this.qrCodeUrl = $$BASE_URL + 'otpcode/export?id=' + rowId;
             },
             ajaxError: function (error) {
                 window.ajaxError(error, vueApp);

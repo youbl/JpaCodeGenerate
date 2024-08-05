@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>MySQL执行工具</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/sql-formatter.min.js"></script>
-    <script src="../static/common.js?v=20240509"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -205,7 +205,6 @@
     </el-dialog>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -273,7 +272,7 @@
             handleTabClick: function (tab, event) {
             },
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                let url = $$BASE_URL + 'linkinfo/list?type=mysql';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return alert('出错:' + response.data.errMsg);
@@ -425,7 +424,7 @@
             loadDbs: function () {
                 this.dbsTest = {};
                 let currentIp = this.searchCond.dbTestIp;
-                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara();
+                let url = $$BASE_URL + 'mysql/databases?' + this.combineDbPara();
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert(currentIp + '出错:\n' + response.data.errMsg);
@@ -441,7 +440,7 @@
             loadTables: function () {
                 if (!this.searchCond.dbTestName)
                     return;
-                let url = BASE_URL + 'mysql/tableNames?' + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
+                let url = $$BASE_URL + 'mysql/tableNames?' + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
                 return axios.get(url).then(response => {
                     this.tableList = response.data;
                 }).catch(error => {
@@ -452,7 +451,7 @@
                 if (!this.searchCond.dbTestName || !tbName)
                     return;
                 this.selectedTable = tbName;
-                let url = BASE_URL + 'mysql/tables/ddl?' +
+                let url = $$BASE_URL + 'mysql/tables/ddl?' +
                     this.combineDbPara() +
                     '&db=' + this.searchCond.dbTestName +
                     '&tableName=' + encodeURIComponent(tbName);
@@ -601,7 +600,7 @@
                 }
                 this.attData = [];
 
-                let url = BASE_URL + 'mysql/executeSql?';
+                let url = $$BASE_URL + 'mysql/executeSql?';
                 let beginTime = new Date();
                 this.resultData = [];
                 let body = {

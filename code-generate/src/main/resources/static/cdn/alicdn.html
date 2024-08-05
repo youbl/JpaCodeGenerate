@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>阿里CDN刷新</title>
+    <script src="../static/common.js"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/rowColor.js"></script>
@@ -49,7 +50,6 @@
 
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -71,7 +71,7 @@
         },
         methods: {
             refreshCdn: function () {
-                let url = BASE_URL + 'cdn/ali?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                let url = $$BASE_URL + 'cdn/ali?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
                 return axios.get(url).then(response => {
                     this.result = (response.data);
                 }).catch(error => {

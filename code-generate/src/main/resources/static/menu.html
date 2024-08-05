@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <title>内部菜单导航</title>
     <link rel="icon" href="./favicon.ico">
+    <script type="text/javascript" src="./static/common.js?v=1"></script>
     <script type="text/javascript" src="./static/unpkg/vue.min.js"></script>
     <script type="text/javascript" src="./static/unpkg/elemeIndex.js"></script>
     <script type="text/javascript" src="./static/unpkg/axios.min.js"></script>
-    <script type="text/javascript" src="./static/common.js?v=1"></script>
 
     <link rel="stylesheet" href="./static/unpkg/elemeIndex.css">
     <style>
@@ -155,8 +155,6 @@
     </div>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
-
     const vueApp = new Vue({
         el: '#divApp',
         data: function () {
@@ -171,7 +169,7 @@
         computed: {},
         methods: {
             loadMenus: function (saasId) {
-                let url = BASE_URL + 'menuGroup';
+                let url = $$BASE_URL + 'menuGroup';
                 if (saasId)
                     url += '?saasId=' + saasId;
                 axios.get(url).then(response => {

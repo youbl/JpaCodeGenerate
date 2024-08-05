@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>MySQL索引对比</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -157,7 +157,6 @@
     </el-dialog>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -226,7 +225,7 @@
         },
         methods: {
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                let url = $$BASE_URL + 'linkinfo/list?type=mysql';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return alert('出错:' + response.data.errMsg);
@@ -359,7 +358,7 @@
                 } else {
                     this.dbsTest = {};
                 }
-                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara(isProd);
+                let url = $$BASE_URL + 'mysql/databases?' + this.combineDbPara(isProd);
                 return axios.get(url).then(response => {
                     if (isProd) {
                         this.dbsProd = response.data;
@@ -408,7 +407,7 @@
                 }
                 this.attData = [];
 
-                let url = BASE_URL + 'mysql/indexes?';
+                let url = $$BASE_URL + 'mysql/indexes?';
                 let urlTest = url + this.combineDbPara(false) + '&db=' + this.searchCond.dbTestName;
                 let urlProd = url + this.combineDbPara(true) + '&db=' + this.searchCond.dbProdName;
 

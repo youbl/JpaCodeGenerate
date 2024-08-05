@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>操作日志</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/sql-formatter.min.js"></script>
     <script src="../static/qs.min.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -118,7 +118,6 @@
     </el-dialog>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -155,7 +154,7 @@
             handleTabClick: function (tab, event) {
             },
             getConditions: function () {
-                let url = BASE_URL + 'logs/conditions';
+                let url = $$BASE_URL + 'logs/conditions';
                 return axios.get(url).then(response => {
                     if (!response.data || response.data.length < 2)
                         return;
@@ -170,7 +169,7 @@
                 this.searchCond.reportTimeEnd = val[1];
             },
             getLoginUser: function () {
-                let url = BASE_URL + 'currentuser';
+                let url = $$BASE_URL + 'currentuser';
                 return axios.get(url).then(response => {
                     this.loginuser = response.data;
                 }).catch(error => {
@@ -178,7 +177,7 @@
                 });
             },
             getLogs: function () {
-                let url = BASE_URL + 'logs?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
+                let url = $$BASE_URL + 'logs?' + Qs.stringify(this.searchCond, {arrayFormat: 'repeat'});
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert('出错:\n' + response.data.errMsg);

@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Redis执行工具</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=20240312"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .el-select-dropdown__wrap {
@@ -95,7 +95,6 @@
     </el-form>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -146,7 +145,7 @@
         },
         methods: {
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=redis';
+                let url = $$BASE_URL + 'linkinfo/list?type=redis';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return vueAlert('出错:' + response.data.errMsg);
@@ -238,7 +237,7 @@
                     name: this.searchCond.configName,
                     cmd: this.searchCond.redisCmd,
                 };
-                let url = BASE_URL + 'v1/redis/executeCmd';
+                let url = $$BASE_URL + 'v1/redis/executeCmd';
                 return axios.post(url, body).then(response => {
                     this.costTime = Math.floor((new Date()) - beginTime);
                     this.loading = false;
@@ -284,7 +283,7 @@
                     name: this.searchCond.configName,
                     cmd: this.searchCond.redisCmd,
                 };
-                let url = BASE_URL + 'v1/redis/removeKey';
+                let url = $$BASE_URL + 'v1/redis/removeKey';
                 return axios.delete(url, {data: body}).then(response => {
                     if (response.data === 1)
                         return vueAlert('删除成功', 3000);
@@ -299,7 +298,7 @@
                 if (!this.searchCond.redisDbIdx) {
                     this.searchCond.redisDbIdx = 0;
                 }
-                let url = BASE_URL + 'v1/redis/allkeys?config=' + encodeURIComponent(this.searchCond.configName) +
+                let url = $$BASE_URL + 'v1/redis/allkeys?config=' + encodeURIComponent(this.searchCond.configName) +
                     '&db=' + this.searchCond.redisDbIdx +
                     '&ttl=' + (this.searchCond.ttl ? 1 : 0);
                 window.open(url);

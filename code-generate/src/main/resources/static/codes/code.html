@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>代码生成器</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/rowColor.js"></script>
     <script src="../static/qs.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
     <style>
         .tabs { /* tab选项卡外围 */
@@ -161,7 +161,6 @@
     </div>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -219,7 +218,7 @@
                 console.log(tab, event);
             },
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                let url = $$BASE_URL + 'linkinfo/list?type=mysql';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return alert('出错:' + response.data.errMsg);
@@ -271,7 +270,7 @@
             loadDbs: function () {
                 this.dbsTest = {};
                 let currentIp = this.searchCond.dbTestIp;
-                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara();
+                let url = $$BASE_URL + 'mysql/databases?' + this.combineDbPara();
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert(currentIp + '出错:\n' + response.data.errMsg);
@@ -306,7 +305,7 @@
                 if (!this.searchCond.dbTestName)
                     return;
                 this.tableList = [];
-                let url = BASE_URL + 'mysql/tableNames?' + this.combineDbPara();
+                let url = $$BASE_URL + 'mysql/tableNames?' + this.combineDbPara();
                 return axios.get(url).then(response => {
                     this.tableList = response.data;
                 }).catch(error => {
@@ -319,7 +318,7 @@
             loadColumns: function () {
                 this.codeFiles = [];
                 this.codeCond.columnArr = [];
-                let url = BASE_URL + 'mysql/columns?' + this.combineDbPara();
+                let url = $$BASE_URL + 'mysql/columns?' + this.combineDbPara();
                 url += '&tableName=' + this.searchCond.tables.join(',');
                 axios.get(url).then((response) => {
                     if (!response.data || response.data.length <= 0) {
@@ -353,10 +352,10 @@
                 if (!this.initAndCheck())
                     return;
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = BASE_URL + 'v1/code/tables?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
+                let url = $$BASE_URL + 'v1/code/tables?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
                 axios.post(url, this.codeCond).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
-                    this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
+                    this.codeLink = $$BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     window.open(this.codeLink);
                 }).catch(function (error) {
                     this.ajaxError(error);
@@ -365,7 +364,7 @@
             generateMybatisCodePreview: function () {
                 if (!this.initAndCheck())
                     return;
-                let url = BASE_URL + 'codeMybatis/generatePreview';
+                let url = $$BASE_URL + 'codeMybatis/generatePreview';
                 axios.post(url, this.codeCond).then((response) => {
                     this.codeFiles = response.data;
                     this.codeGenerateTime = (new Date()).toString();
@@ -378,10 +377,10 @@
                 if (!this.initAndCheck())
                     return;
                 // 用Qs库，避免 tables[0]这种传输语法
-                let url = BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
+                let url = $$BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
                 axios.post(url, this.codeCond).then((response) => {
                     this.codeGenerateTime = (new Date()).toString();
-                    this.codeLink = BASE_URL + 'v1/code/down?zipfile=' + response.data;
+                    this.codeLink = $$BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     window.open(this.codeLink);
                     this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dal.**"})';
                 }).catch(function (error) {

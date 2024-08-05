@@ -187,7 +187,7 @@ public class ColumnDto {
             return false;
         }
         strExtra = strExtra.toUpperCase();
-        return !strExtra.equals("DEFAULT_GENERATED") &&
+        return !strExtra.contains("DEFAULT_GENERATED") &&
                 strExtra.contains("GENERATED");
     }
 
@@ -199,7 +199,16 @@ public class ColumnDto {
      */
     public boolean isDbManager() {
         String colName = getColumn().toLowerCase();
-        return (colName.equals("creationtime") || colName.equals("lastmodificationtime"));
+        return (colName.equals("creationtime") ||
+                colName.equals("createtime") ||
+                colName.equals("createdate") ||
+                colName.equals("create_time") ||
+                colName.equals("create_date") ||
+                colName.equals("lastmodificationtime") ||
+                colName.equals("updatetime") ||
+                colName.equals("updatedate") ||
+                colName.equals("update_time") ||
+                colName.equals("update_date"));
     }
 
     /**
@@ -211,5 +220,4 @@ public class ColumnDto {
         String strExtra = getExtra();
         return (strExtra != null && strExtra.toLowerCase().contains("auto_increment"));
     }
-
 }

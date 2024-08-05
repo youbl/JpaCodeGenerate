@@ -4,6 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
     <title>通用工具</title>
+    <script src="./static/common.js?v=1"></script>
     <script src="./static/unpkg/vue.min.js"></script>
     <script src="./static/unpkg/axios.min.js"></script>
     <script src="./static/unpkg/elemeIndex.js"></script>
@@ -35,7 +36,6 @@
     </el-form>
 </div>
 <script type="text/javascript">
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: function () {
@@ -82,7 +82,7 @@
                 }
             },
             getBeinetCode: function () {
-                let url = BASE_URL + 'login/imgcode';
+                let url = $$BASE_URL + 'login/imgcode';
                 return axios.get(url).then(response => {
                     if (!response || !response.data || !response.data.codeSn) {
                         return alert('获取图形验证码失败');
@@ -95,7 +95,7 @@
                 this.$refs[form].validate(valid => {
                     if (!valid)
                         return false;
-                    let url = BASE_URL + 'login';
+                    let url = $$BASE_URL + 'login';
                     // 默认登录使用的是form形式，因此要用Qs转换一下
                     return axios.post(url, Qs.stringify(this.login)).then(response => {
                         if (response.data.ret && response.data.ret !== 200) {

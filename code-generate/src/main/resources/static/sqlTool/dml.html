@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>MySQL执行工具</title>
+    <script src="../static/common.js?v=1"></script>
     <script src="../static/unpkg/vue.min.js"></script>
     <script src="../static/unpkg/axios.min.js"></script>
     <script src="../static/unpkg/elemeIndex.js"></script>
     <script src="../static/sql-formatter.min.js"></script>
-    <script src="../static/common.js?v=1"></script>
     <link rel="stylesheet" href="../static/unpkg/elemeIndex.css">
 </head>
 <body>
@@ -59,7 +59,6 @@
     <br>
 </div>
 <script>
-    const BASE_URL = '/' + location.pathname.split('/')[1] + '/'; // '/ops/';
     const vueApp = new Vue({
         el: '#divApp',
         data: {
@@ -105,7 +104,7 @@
             handleTabClick: function (tab, event) {
             },
             loadConnections: function () {
-                let url = BASE_URL + 'linkinfo/list?type=mysql';
+                let url = $$BASE_URL + 'linkinfo/list?type=mysql';
                 return axios.get(url).then(response => {
                     if (!response.data || !response.data.length) {
                         return alert('出错:' + response.data.errMsg);
@@ -159,7 +158,7 @@
             loadDbs: function () {
                 this.dbsTest = {};
                 let currentIp = this.searchCond.dbTestIp;
-                let url = BASE_URL + 'mysql/databases?' + this.combineDbPara();
+                let url = $$BASE_URL + 'mysql/databases?' + this.combineDbPara();
                 return axios.get(url).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert(currentIp + '出错:\n' + response.data.errMsg);
@@ -193,7 +192,7 @@
                 }
                 this.attData = [];
 
-                let url = BASE_URL + 'mysql/executeDml';
+                let url = $$BASE_URL + 'mysql/executeDml';
 
                 let beginTime = new Date();
                 let body = {
