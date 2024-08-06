@@ -231,7 +231,7 @@
                     let url = $$BASE_URL + '{{low_entity_name}}';
                     return axios.post(url, this.editRow).then(response => {
                         if (!response.data || response.data.code !== 0) {
-                            return alert('获取数据列表失败:' + getErrorMsg(response));
+                            return alert('保存失败:' + getErrorMsg(response));
                         }
                         let data = response.data.data;
                         // data是主键

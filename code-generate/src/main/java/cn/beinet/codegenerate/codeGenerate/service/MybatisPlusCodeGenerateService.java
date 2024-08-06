@@ -14,8 +14,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -51,7 +54,8 @@ public class MybatisPlusCodeGenerateService {
     public String generateAndZip(GenerateDto dto) {
         List<GenerateResult> results = generateCode(dto);
 
-        List<String> files = new ArrayList<>();
+        // 一次生成多个表时，ResponseData会出现重复，因此改用HashSet
+        Set<String> files = new HashSet<>();
         for (GenerateResult item : results) {
             String file = saveFile(item.getFileName(), item.getContent());
             files.add(file);
@@ -81,7 +85,7 @@ public class MybatisPlusCodeGenerateService {
         return writeFileName;
     }
 
-    private String doZip(List<String> files) {
+    private String doZip(Collection<String> files) {
         try {
             File zipFile = new File(basePath, "model.zip");
             if (zipFile.exists()) {
