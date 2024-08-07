@@ -40,7 +40,7 @@ public class {{entity_name}}Controller {
 
     @PostMapping("/{{low_entity_name}}")
     // @EventLog(subType = SubType.{{entity_name}}_EDIT)
-    public ResponseData<Boolean> save(@NonNull @RequestBody {{entity_name}}Dto item) {
+    public ResponseData<Long> save(@NonNull @RequestBody {{entity_name}}Dto item) {
         return ResponseData.ok(service.save{{entity_name}}(item));
     }
 {{end-modify_content}}
