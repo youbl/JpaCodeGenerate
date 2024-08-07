@@ -56,7 +56,22 @@ public enum Vars {
     /**
      * HTML文件的字段内容，用于页面遍历生成检索框和编辑框
      */
-    HTML_FIELDS("html_fields");
+    HTML_FIELDS("html_fields"),
+
+    /**
+     * HTML文件的搜索条件区域内容
+     */
+    HTML_SEARCH_CONTENT("html_search_content"),
+
+    /**
+     * HTML文件的表格区域内容
+     */
+    HTML_TABLE_CONTENT("html_table_content"),
+
+    /**
+     * HTML文件的编辑区域内容
+     */
+    HTML_EDIT_CONTENT("html_edit_content");
 
     private String val;
 

@@ -17,9 +17,7 @@
 </h1>
 <div id="divApp" style="text-align: center;width: 98%;">
     <el-form :inline="true" class="demo-form-inline" style="text-align: left">
-        <el-form-item v-for="key in tableFields" :label="key" v-if="isSearchKey(key)">
-            <el-input placeholder="请输入" v-model.trim="searchCondition[key]"></el-input>
-        </el-form-item>
+{{html_search_content}}
         <el-form-item>
             <el-button @click="loadDatas()" type="primary" size="mini">查询</el-button>
             <el-button :disabled="!dataList.length" icon="el-icon-download" @click="exportToCsv" size="mini">导出CSV
@@ -44,10 +42,7 @@
             @selection-change="handleSelectionChange"
             style="width: 100%">
         <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column :label="key" :width="flexColumnWidth(key, dataList)"
-                         v-if="isShowKey(key)" v-for="(value, key, index) in dataList[0]">
-            <template slot-scope="scope"> {{scope.row[key]}}</template>
-        </el-table-column>
+{{html_table_content}}
         {{start-modify_content}}
         <el-table-column label="操作" width="200">
             <template slot-scope="scope">
@@ -64,10 +59,7 @@
     <!-- 编辑窗口 -->
     <el-dialog :visible.sync="statusEditDialog" :title="(editRow.{{low_key_field}}?'编辑界面':'新增界面')">
         <el-form size="mini" :model="editRow" ref="editRowForm" style="width:700px">
-            <el-form-item v-for="(val,key,idx) in editRow" :label="key" label-width="150px" v-if="isEditKey(key)">
-                <el-input :placeholder="isReadonlyKey(key)?'':'请输入'" v-model.trim="editRow[key]"
-                    :disabled="isReadonlyKey(key)"></el-input>
-            </el-form-item>
+{{html_edit_content}}
         </el-form>
         <div class="dialog-footer" slot="footer">
             <span v-if="editRow.{{low_key_field}}" style="font-size: 12px;color: blue;">更新主键:{{editRow.{{low_key_field}}}}</span>
@@ -134,9 +126,9 @@
                     }
                 }
 
+                this.dataList = [];
                 let url = $$BASE_URL + '{{low_entity_name}}/all';
                 let para = {'params': this.searchCondition};
-                this.dataList = [];
                 return axios.get(url, para).then(response => {
                     this.loading = false;
                     if (!response.data || response.data.code !== 0) {
@@ -153,30 +145,7 @@
                     this.statusTxt = this.dataList.length + '行，耗时:' + ((new Date()) - startTime) + 'ms';
                 }).catch(error => this.ajaxError(error));
             },
-            isShowKey: function (key) {
-                // 在这里配置：table里不需要显示的列名
-                if (key === '')
-                    return false;
-                return true;
-            },
-            isSearchKey: function (key) {
-                // 在这里配置：搜索条件里不需要显示的列名
-                return !(key === 'createDate' ||
-                    key === 'updateDate' ||
-                    key === 'create_date' ||
-                    key === 'update_date' ||
-                    key === 'createTime' ||
-                    key === 'updateTime' ||
-                    key === 'create_time' ||
-                    key === 'update_time'
-                );
-            },
 {{start-modify_content}}
-            isEditKey: function (key) {
-                // 在这里配置：编辑窗口里不需要显示的列名
-                return (key !== '{{low_key_field}}'
-                );
-            },
             isReadonlyKey: function (key) {
                 // 在这里配置：编辑窗口里需要显示，但是只读的列名
                 return (key === 'id' ||

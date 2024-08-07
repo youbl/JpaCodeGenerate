@@ -54,14 +54,20 @@ public class HtmlGenerater implements Generater {
         String lowEntityName = StringHelper.lowFirstChar(entityName);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, lowEntityName);
 
-        replaceSymbol(sb, Vars.HTML_FIELDS, getBody(columns));
+        String keyName = getKeyName(columns, true);
+        replaceSymbol(sb, Vars.LOW_KEY_FIELD, keyName);
 
-        replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
+        replaceSymbol(sb, Vars.HTML_SEARCH_CONTENT, getSearchContent(columns));
+        replaceSymbol(sb, Vars.HTML_TABLE_CONTENT, getTableContent(columns));
+        replaceSymbol(sb, Vars.HTML_EDIT_CONTENT, getEditContent(columns, keyName));
+
+        replaceSymbol(sb, Vars.HTML_FIELDS, getFieldListForJsVar(columns));
+
 
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 
-    private String getBody(List<ColumnDto> columns) {
+    private String getFieldListForJsVar(List<ColumnDto> columns) {
         StringBuilder sb = new StringBuilder();
         for (ColumnDto dto : columns) {
             if (sb.length() > 0)
@@ -70,5 +76,139 @@ public class HtmlGenerater implements Generater {
             sb.append("'").append(colName).append("'");
         }
         return sb.toString();
+    }
+
+    /**
+     * 拼接html里的搜索条件区域内容
+     *
+     * @param columns 列数组
+     * @return 搜索条件html
+     */
+    private String getSearchContent(List<ColumnDto> columns) {
+        StringBuilder sb = new StringBuilder();
+        for (ColumnDto dto : columns) {
+            if (!isSearchKey(dto.getColumn())) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            String colName = getFieldName(dto.getColumn(), true);
+            sb.append("        <el-form-item label=\"key\">\n")
+                    .append("            <el-input placeholder=\"请输入\" v-model.trim=\"searchCondition['")
+                    .append(colName)
+                    .append("']\"></el-input>\n")
+                    .append("        </el-form-item>");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 是否要显示在搜索条件区域里
+     *
+     * @param fieldName 字段名
+     * @return 是否显示
+     */
+    private boolean isSearchKey(String fieldName) {
+        // 在这里配置：搜索条件里不需要显示的列名
+        return !("createDate".equalsIgnoreCase(fieldName) ||
+                "updateDate".equalsIgnoreCase(fieldName) ||
+                "create_date".equalsIgnoreCase(fieldName) ||
+                "update_date".equalsIgnoreCase(fieldName) ||
+                "createTime".equalsIgnoreCase(fieldName) ||
+                "updateTime".equalsIgnoreCase(fieldName) ||
+                "create_time".equalsIgnoreCase(fieldName) ||
+                "update_time".equalsIgnoreCase(fieldName)
+        );
+    }
+
+    /**
+     * 拼接html里的表格展示区域内容
+     *
+     * @param columns 列数组
+     * @return 表格列html
+     */
+    private String getTableContent(List<ColumnDto> columns) {
+        StringBuilder sb = new StringBuilder();
+        for (ColumnDto dto : columns) {
+            if (!isTableShowKey(dto.getColumn())) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            String colName = getFieldName(dto.getColumn(), true);
+            sb.append("        <el-table-column label=\"")
+                    .append(colName)
+                    .append("\" :width=\"flexColumnWidth('")
+                    .append(colName)
+                    .append("', dataList)\">\n")
+                    .append("            <template slot-scope=\"scope\">{{scope.row['")
+                    .append(colName)
+                    .append("']}}</template>\n")
+                    .append("        </el-table-column>");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 是否要显示表格的列
+     *
+     * @param fieldName 字段名
+     * @return 是否显示
+     */
+    private boolean isTableShowKey(String fieldName) {
+        if (fieldName == null)
+            return false;
+
+        // 前端脱敏（正常要后端不返回数据）
+        fieldName = fieldName.toLowerCase();
+        if (fieldName.contains("password") ||
+                fieldName.contains("secure"))
+            return false;
+
+        // 在这里配置：表格里不需要显示的列名
+        return !("".equalsIgnoreCase(fieldName));
+    }
+
+    /**
+     * 拼接html里的编辑区域内容
+     *
+     * @param columns 列数组
+     * @param keyName 主键列名
+     * @return 编辑列html
+     */
+    private String getEditContent(List<ColumnDto> columns, String keyName) {
+        StringBuilder sb = new StringBuilder();
+        for (ColumnDto dto : columns) {
+            if (!isEditKey(dto.getColumn(), keyName)) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            String colName = getFieldName(dto.getColumn(), true);
+            sb.append("            <el-form-item label=\"")
+                    .append(colName)
+                    .append("\" label-width=\"150px\">\n")
+                    .append("                <el-input placeholder=\"请输入\" v-model.trim=\"editRow['")
+                    .append(colName)
+                    .append("']\"></el-input>\n")
+                    .append("            </el-form-item>");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 是否要进行编辑的列
+     *
+     * @param fieldName 字段名
+     * @return 是否可编辑
+     */
+    private boolean isEditKey(String fieldName, String keyName) {
+        if (fieldName == null)
+            return false;
+        // 在这里配置：表格里不需要显示的列名
+        return !(keyName.equalsIgnoreCase(fieldName));
     }
 }
