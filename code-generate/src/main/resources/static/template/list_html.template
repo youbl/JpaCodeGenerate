@@ -146,19 +146,6 @@
                 }).catch(error => this.ajaxError(error));
             },
 {{start-modify_content}}
-            isReadonlyKey: function (key) {
-                // 在这里配置：编辑窗口里需要显示，但是只读的列名
-                return (key === 'id' ||
-                    key === 'createDate' ||
-                    key === 'updateDate' ||
-                    key === 'create_date' ||
-                    key === 'update_date' ||
-                    key === 'createTime' ||
-                    key === 'updateTime' ||
-                    key === 'create_time' ||
-                    key === 'update_time'
-                );
-            },
             confirmDel: function (row) {
                 if (!confirm('确认要删除吗?')) {
                     return;

@@ -94,7 +94,9 @@ public class HtmlGenerater implements Generater {
                 sb.append("\n");
             }
             String colName = getFieldName(dto.getColumn(), true);
-            sb.append("        <el-form-item label=\"key\">\n")
+            sb.append("        <el-form-item label=\"")
+                    .append(colName)
+                    .append("\">\n")
                     .append("            <el-input placeholder=\"请输入\" v-model.trim=\"searchCondition['")
                     .append(colName)
                     .append("']\"></el-input>\n")
@@ -181,34 +183,47 @@ public class HtmlGenerater implements Generater {
     private String getEditContent(List<ColumnDto> columns, String keyName) {
         StringBuilder sb = new StringBuilder();
         for (ColumnDto dto : columns) {
-            if (!isEditKey(dto.getColumn(), keyName)) {
-                continue;
-            }
             if (sb.length() > 0) {
                 sb.append("\n");
             }
             String colName = getFieldName(dto.getColumn(), true);
+            String disable = isDisableEditKey(colName, keyName) ? " disabled" : "";
+            // 主键在新建时，要隐藏
+            String vif = dto.isPrimaryKey() ? " v-if=\"editRow['" + colName + "']\"" : "";
             sb.append("            <el-form-item label=\"")
                     .append(colName)
-                    .append("\" label-width=\"150px\">\n")
+                    .append("\" label-width=\"150px\"")
+                    .append(vif)
+                    .append(">\n")
                     .append("                <el-input placeholder=\"请输入\" v-model.trim=\"editRow['")
                     .append(colName)
-                    .append("']\"></el-input>\n")
+                    .append("']\"")
+                    .append(disable)
+                    .append("></el-input>\n")
                     .append("            </el-form-item>");
         }
         return sb.toString();
     }
 
     /**
-     * 是否要进行编辑的列
+     * 是否在编辑界面禁止编辑的列
      *
      * @param fieldName 字段名
-     * @return 是否可编辑
+     * @param keyName   主键字段名
+     * @return 是否禁止编辑
      */
-    private boolean isEditKey(String fieldName, String keyName) {
+    private boolean isDisableEditKey(String fieldName, String keyName) {
         if (fieldName == null)
             return false;
-        // 在这里配置：表格里不需要显示的列名
-        return !(keyName.equalsIgnoreCase(fieldName));
+        // 在这里配置：编辑窗口里需要显示，但是只读的列名
+        return ((keyName != null && keyName.equalsIgnoreCase(fieldName)) ||
+                "createDate".equalsIgnoreCase(fieldName) ||
+                "updateDate".equalsIgnoreCase(fieldName) ||
+                "create_date".equalsIgnoreCase(fieldName) ||
+                "update_date".equalsIgnoreCase(fieldName) ||
+                "createTime".equalsIgnoreCase(fieldName) ||
+                "updateTime".equalsIgnoreCase(fieldName) ||
+                "create_time".equalsIgnoreCase(fieldName) ||
+                "update_time".equalsIgnoreCase(fieldName));
     }
 }
