@@ -39,9 +39,17 @@ public class {{entity_name}}Controller {
     }
 
     @PostMapping("/{{low_entity_name}}")
-    // @EventLog(subType = SubType.{{entity_name}}_EDIT)
-    public ResponseData<Long> save(@NonNull @RequestBody {{entity_name}}Dto item) {
-        return ResponseData.ok(service.save{{entity_name}}(item));
+    // 要区分新增还是更新，因此这里不能用注解@EventLog
+    public ResponseData<Long> save(@NonNull @RequestBody {{entity_name}}Dto dto) {
+        // 获取事件上报的类型
+        //SubType type = (dto.get{{up_key_field}}() != null) ? SubType.{{entity_name}}_EDIT : SubType.{{entity_name}}_ADD;
+
+        long newId = service.save{{entity_name}}(dto);
+
+        dto.set{{up_key_field}}(newId);
+        //LogUtils.reportLog(type, dto); // 事件上报代码
+
+        return ResponseData.ok(newId);
     }
 {{end-modify_content}}
 }
