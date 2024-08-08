@@ -7,12 +7,12 @@ import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.FileHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -74,42 +74,34 @@ public class MybatisPlusCodeGenerateService {
         return "Long";
     }
 
-
     private String saveFile(String fileName, String content) {
         String writeFileName = new File(basePath, fileName).getAbsolutePath();
-        try {
-            FileHelper.saveFile(writeFileName, content);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        FileHelper.saveFile(writeFileName, content);
         return writeFileName;
     }
 
+    @SneakyThrows
     private String doZip(Collection<String> files) {
-        try {
-            File zipFile = new File(basePath, "model.zip");
-            if (zipFile.exists()) {
-                zipFile.delete();
-            }
-            zipFile.createNewFile();
-            try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
-                for (String file : files) {
-                    File itemFile = new File(file);
-                    try (FileInputStream fis = new FileInputStream(itemFile)) {
-                        String inFileName = getFileNameWithLastDir(file, basePath);
-                        zos.putNextEntry(new ZipEntry(inFileName)); // 带目录和文件名压缩
-                        int len;
-                        byte[] b = new byte[1024];
-                        while ((len = fis.read(b)) > 0) {
-                            zos.write(b, 0, len);
-                        }
+        File zipFile = new File(basePath, "model.zip");
+        if (zipFile.exists()) {
+            zipFile.delete();
+        }
+        zipFile.createNewFile();
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
+            for (String file : files) {
+                File itemFile = new File(file);
+                try (FileInputStream fis = new FileInputStream(itemFile)) {
+                    String inFileName = getFileNameWithLastDir(file, basePath);
+                    zos.putNextEntry(new ZipEntry(inFileName)); // 带目录和文件名压缩
+                    int len;
+                    byte[] b = new byte[1024];
+                    while ((len = fis.read(b)) > 0) {
+                        zos.write(b, 0, len);
                     }
                 }
             }
-            return zipFile.getAbsolutePath();
-        } catch (Exception exp) {
-            throw new RuntimeException(exp);
         }
+        return zipFile.getAbsolutePath();
     }
 
     /**

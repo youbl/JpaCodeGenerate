@@ -7,6 +7,7 @@ import cn.beinet.codegenerate.rpc.dto.NacosFiles;
 import cn.beinet.codegenerate.rpc.dto.NacosNameSpaces;
 import cn.beinet.codegenerate.rpc.dto.NacosToken;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
@@ -35,42 +36,36 @@ public class NacosService {
         return getNamespaces(dto.getUrl());
     }
 
+    @SneakyThrows
     public List<String> getNamespaces(String url) {
-        try {
-            NacosNameSpaces nameSpaces = feignNacos.getNamespaces(new URI(url));
-            List<String> ret = new ArrayList<>();
-            for (NacosNameSpaces.NameSpace item : nameSpaces.getData()) {
-                String nameShow = item.getNamespaceShowName();
-                String name = item.getNamespace();
-                if (StringUtils.hasLength(nameShow) && !nameShow.equalsIgnoreCase(name))
-                    name = nameShow + '|' + name;
-                ret.add(name);
-            }
-            return ret;
+        NacosNameSpaces nameSpaces = feignNacos.getNamespaces(new URI(url));
+        List<String> ret = new ArrayList<>();
+        for (NacosNameSpaces.NameSpace item : nameSpaces.getData()) {
+            String nameShow = item.getNamespaceShowName();
+            String name = item.getNamespace();
+            if (StringUtils.hasLength(nameShow) && !nameShow.equalsIgnoreCase(name))
+                name = nameShow + '|' + name;
+            ret.add(name);
+        }
+        return ret;
 //            return nameSpaces.getData().stream()
 //                    .map(NacosNameSpaces.NameSpace::getNamespace)
 //                    .sorted()
 //                    .collect(Collectors.toList());
-        } catch (Exception exp) {
-            throw new RuntimeException(exp);
-        }
     }
 
     // 获取指定命名空间的文件列表
+    @SneakyThrows
     public List<String> getFiles(NacosDto dto) {
         linkInfoService.fillLinkInfo(dto);
-        try {
-            URI uri = new URI(dto.getUrl());
-            NacosToken token = feignNacos.login(uri, dto.getUser(), dto.getPwd());
-            String realNs = filterNamespace(dto.getNameSpace());
-            NacosFiles files = feignNacos.getConfigFiles(uri, realNs, token.getAccessToken());
-            return files.getPageItems().stream()
-                    .map(NacosFiles.File::getDataId)
-                    .sorted()
-                    .collect(Collectors.toList());
-        } catch (Exception exp) {
-            throw new RuntimeException(exp);
-        }
+        URI uri = new URI(dto.getUrl());
+        NacosToken token = feignNacos.login(uri, dto.getUser(), dto.getPwd());
+        String realNs = filterNamespace(dto.getNameSpace());
+        NacosFiles files = feignNacos.getConfigFiles(uri, realNs, token.getAccessToken());
+        return files.getPageItems().stream()
+                .map(NacosFiles.File::getDataId)
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     private String filterNamespace(String ns) {
@@ -84,16 +79,13 @@ public class NacosService {
     }
 
     // 获取文件内容
+    @SneakyThrows
     public String getFile(NacosDto dto) {
         linkInfoService.fillLinkInfo(dto);
-        try {
-            URI uri = new URI(dto.getUrl());
-            NacosToken token = feignNacos.login(uri, dto.getUser(), dto.getPwd());
-            String realNs = filterNamespace(dto.getNameSpace());
-            return feignNacos.getConfig(uri, dto.getDataId(), realNs, dto.getGroup(), token.getAccessToken());
-        } catch (Exception exp) {
-            throw new RuntimeException(exp);
-        }
+        URI uri = new URI(dto.getUrl());
+        NacosToken token = feignNacos.login(uri, dto.getUser(), dto.getPwd());
+        String realNs = filterNamespace(dto.getNameSpace());
+        return feignNacos.getConfig(uri, dto.getDataId(), realNs, dto.getGroup(), token.getAccessToken());
     }
 
     /**
@@ -103,6 +95,7 @@ public class NacosService {
      * @param yml yml格式的字符串
      * @return map
      */
+    @SneakyThrows
     public Map<String, Object> parseYmlToMap(String yml) {
         try (InputStream inputStream = new ByteArrayInputStream(yml.getBytes())) {
             InputStreamResource resource = new InputStreamResource(inputStream);
@@ -111,8 +104,6 @@ public class NacosService {
             yamlMapFactoryBean.afterPropertiesSet();
             Map<String, Object> object = yamlMapFactoryBean.getObject();
             return object;
-        } catch (Exception exp) {
-            throw new RuntimeException(exp);
         }
     }
 
@@ -123,6 +114,7 @@ public class NacosService {
      * @param hidePwd 是否隐藏密码
      * @return prop
      */
+    @SneakyThrows
     public Properties parseYmlToKV(String yml, boolean hidePwd) {
         try (InputStream inputStream = new ByteArrayInputStream(yml.getBytes())) {
             InputStreamResource resource = new InputStreamResource(inputStream);
@@ -134,9 +126,6 @@ public class NacosService {
                 hidePwd(ret);
             }
             return ret;
-        } catch (Exception exp) {
-            log.error("错误:{} {}", exp.getMessage(), yml);
-            throw new RuntimeException(exp);
         }
     }
 

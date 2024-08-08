@@ -26,7 +26,8 @@ public final class FileHelper {
      * @param content  内容
      * @throws IOException 写入异常
      */
-    public static void saveFile(String filePath, String content) throws IOException {
+    @SneakyThrows
+    public static void saveFile(String filePath, String content) {
         ensureDirectory(filePath);
 
         try (FileOutputStream fos = new FileOutputStream(filePath);
@@ -67,12 +68,11 @@ public final class FileHelper {
      * @param fileName 相对路径, 如 "static/template/dto.template"
      * @return 内容
      */
+    @SneakyThrows
     public static String readFileFromResources(String fileName) {
         ClassPathResource resource = new ClassPathResource(fileName);
         try (InputStream stream = resource.getInputStream()) {
             return IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
