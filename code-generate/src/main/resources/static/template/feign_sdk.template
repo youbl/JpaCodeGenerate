@@ -1,0 +1,32 @@
+package {{package_name}}.sdk;
+
+import {{package_name}}.dto.{{entity_name}}Dto;
+import {{package_name}}.ResponseData;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
+/**
+ *
+ * @author youbl.blog.csdn.net
+ * @since {{date_time}}
+ */
+@FeignClient(name = "{{low_entity_name}}-client", url = "${microservice.url.{{low_entity_name}}:{{low_entity_name}}}")
+public interface {{entity_name}}Client {
+
+    @GetMapping("/{{low_entity_name}}/all")
+    ResponseData<List<{{entity_name}}Dto>> findAll({{entity_name}}Dto dto);
+
+    @GetMapping("/{{low_entity_name}}")
+    ResponseData<{{entity_name}}Dto> findById(@RequestParam Long {{low_key_field}});
+
+{{start-modify_content}}
+    @DeleteMapping("/{{low_entity_name}}")
+    ResponseData<Boolean> delById(@RequestParam Long {{low_key_field}});
+
+    @PostMapping("/{{low_entity_name}}")
+    ResponseData<Long> save(@RequestBody {{entity_name}}Dto dto);
+{{end-modify_content}}
+}
