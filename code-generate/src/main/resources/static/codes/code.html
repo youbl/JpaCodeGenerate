@@ -359,7 +359,21 @@
                     alert('请选择库和表');
                     return false;
                 }
+                if (this.codeCond.oldForReplace && this.codeCond.newForReplace) {
+                    let regex = /[,;\s]/;
+                    let oldArr = this.splitStr(this.codeCond.oldForReplace);
+                    let newArr = this.splitStr(this.codeCond.newForReplace);
+                    if (oldArr.length !== newArr.length) {
+                        alert('文件名替换，前后项的数量不一致');
+                        return false;
+                    }
+                }
                 return true;
+            },
+            splitStr: function (str) {
+                return str.split(/[ ,;]/)
+                    .map(item => item.trim())
+                    .filter(item => item !== "");
             },
             generateCodeJpa: function () {
                 if (!this.initAndCheck())

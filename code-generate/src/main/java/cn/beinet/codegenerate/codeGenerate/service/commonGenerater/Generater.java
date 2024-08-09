@@ -74,11 +74,9 @@ public interface Generater {
         String replaceNew = generateDto.getNewForReplace();
         if (StringUtils.hasLength(replaceOld) && StringUtils.hasLength(replaceNew)) {
             String regex = "[,;\\s]";
-            String[] oldArr = replaceOld.split(regex);
-            String[] newArr = replaceNew.split(regex);
-            if (oldArr.length == newArr.length) {
-                table = StringHelper.replaceBatch(table, oldArr, newArr);
-            }
+            List<String> oldArr = StringHelper.splitAndRemoveEmpty(replaceOld, regex);
+            List<String> newArr = StringHelper.splitAndRemoveEmpty(replaceNew, regex);
+            table = StringHelper.replaceBatch(table, oldArr, newArr);
         }
         return StringHelper.castToPascal(table);
     }

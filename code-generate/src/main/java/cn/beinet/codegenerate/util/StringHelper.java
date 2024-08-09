@@ -3,6 +3,8 @@ package cn.beinet.codegenerate.util;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -148,6 +150,26 @@ public final class StringHelper {
     }
 
     /**
+     * 拆分字符串，并剔除空项
+     *
+     * @param str   要拆分的字符串
+     * @param regex 拆分正则
+     * @return 拆分后数组
+     */
+    public static List<String> splitAndRemoveEmpty(String str, String regex) {
+        if (str == null)
+            return new ArrayList<>();
+        String[] arr = str.split(regex);
+        List<String> list = new ArrayList<String>();
+        for (String item : arr) {
+            String tmp = item.trim();
+            if (!tmp.isEmpty())
+                list.add(tmp);
+        }
+        return list;
+    }
+
+    /**
      * 对orgin字符串进行批量替换
      *
      * @param origin     要替换的源字符串
@@ -155,15 +177,15 @@ public final class StringHelper {
      * @param replaceNew 替换后的内容
      * @return 替换结果
      */
-    public static String replaceBatch(String origin, String[] replaceOld, String[] replaceNew) {
+    public static String replaceBatch(String origin, List<String> replaceOld, List<String> replaceNew) {
         if (!StringUtils.hasLength(origin)) {
             return "";
         }
-        if (replaceOld == null || replaceNew == null || replaceOld.length != replaceNew.length) {
+        if (replaceOld == null || replaceNew == null || replaceOld.size() != replaceNew.size()) {
             return origin;
         }
-        for (int i = 0, j = replaceOld.length; i < j; i++) {
-            origin = origin.replace(replaceOld[i], replaceNew[i]);
+        for (int i = 0, j = replaceOld.size(); i < j; i++) {
+            origin = origin.replace(replaceOld.get(i), replaceNew.get(i));
         }
         return origin;
     }
