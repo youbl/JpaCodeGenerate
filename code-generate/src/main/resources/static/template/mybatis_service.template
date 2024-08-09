@@ -17,18 +17,25 @@ import org.springframework.util.StringUtils;
  */
 @Service
 public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {{entity_name}}> {
+    private final {{entity_name}}EntityMapper entityMapper = {{entity_name}}EntityMapper.INSTANCE;
+
     public List<{{entity_name}}Dto> search({{entity_name}}Dto dto) {
-        LambdaQueryWrapper<{{entity_name}}> wrapper = new QueryWrapper().lambda();
+        LambdaQueryWrapper<{{entity_name}}> wrapper = new LambdaQueryWrapper<>();
         if (dto != null) {
             {{service_cond_fields}}
         }
         wrapper.orderByDesc({{entity_name}}::get{{up_key_field}}).last(" LIMIT 123");
-        return {{entity_name}}EntityMapper.INSTANCE.entity2dto(list(wrapper));
+        return entityMapper.entity2dto(list(wrapper));
+    }
+
+    // find by primary key
+    public {{entity_name}}Dto findById(Long id) {
+        return entityMapper.entity2dto(service.getById(id));
     }
 
     // insert or update data
     public Long save{{entity_name}}({{entity_name}}Dto dto) {
-        {{entity_name}} entity = {{entity_name}}EntityMapper.INSTANCE.dto2entity(dto);
+        {{entity_name}} entity = entityMapper.dto2entity(dto);
         boolean result;
         if (entity.get{{up_key_field}}() != null) {
             result = updateById(entity);

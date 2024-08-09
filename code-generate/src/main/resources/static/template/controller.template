@@ -4,8 +4,8 @@ import {{package_name}}.sdk.{{entity_name}}Client;
 import {{package_name}}.service.{{entity_name}}Service;
 import {{package_name}}.dto.{{entity_name}}Dto;
 import {{package_name}}.ResponseData;
-import {{package_name}}.mapstruct.{{entity_name}}EntityMapper;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.Assert;
 import lombok.RequiredArgsConstructor;
 import lombok.NonNull;
 
@@ -28,7 +28,7 @@ public class {{entity_name}}Controller implements {{entity_name}}Client {
 
     @Override
     public ResponseData<{{entity_name}}Dto> findById(@NonNull @RequestParam Long {{low_key_field}}) {
-        return ResponseData.ok({{entity_name}}EntityMapper.INSTANCE.entity2dto(service.getById({{low_key_field}})));
+        return ResponseData.ok(service.findById({{low_key_field}}));
     }
 
 {{start-modify_content}}
@@ -39,16 +39,22 @@ public class {{entity_name}}Controller implements {{entity_name}}Client {
     }
 
     @Override
-    // 要区分新增还是更新，因此这里不能用注解@EventLog
-    public ResponseData<Long> save(@NonNull @RequestBody {{entity_name}}Dto dto) {
-        // 获取事件上报的类型
-        //SubType type = (dto.get{{up_key_field}}() != null) ? SubType.{{entity_name}}_EDIT : SubType.{{entity_name}}_ADD;
+    // @EventLog(subType = SubType.{{entity_name}}_UPDATE)
+    public ResponseData<Long> updateById(@NonNull @RequestBody {{entity_name}}Dto dto) {
+        Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
+        long newId = service.save{{entity_name}}(dto);
+        return ResponseData.ok(newId);
+    }
+
+    @Override
+    // 要上报新增的主键，因此这里不能用注解@EventLog
+    public ResponseData<Long> insert(@NonNull @RequestBody {{entity_name}}Dto dto) {
+        // clear primary key before insert
+        dto.set{{up_key_field}}(null);
 
         long newId = service.save{{entity_name}}(dto);
-
         dto.set{{up_key_field}}(newId);
-        //LogUtils.reportLog(type, dto); // 事件上报代码
-
+        //LogUtils.reportLog(SubType.{{entity_name}}_ADD, dto); // 事件上报代码
         return ResponseData.ok(newId);
     }
 {{end-modify_content}}
