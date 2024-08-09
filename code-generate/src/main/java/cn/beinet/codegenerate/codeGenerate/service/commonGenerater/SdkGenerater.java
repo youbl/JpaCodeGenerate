@@ -54,6 +54,7 @@ public class SdkGenerater implements Generater {
         String entityName = getEntityName(table, generateDto.getRemovePrefix());
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, StringHelper.lowFirstChar(entityName));
+        replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
 
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
