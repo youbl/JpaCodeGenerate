@@ -47,7 +47,7 @@ public class MybatisEntityGenerater implements Generater {
         replaceSymbol(sb, Vars.DATE_TIME, now);
 
         String table = columns.get(0).getTable();
-        String entityName = getEntityName(table, generateDto.getRemovePrefix());
+        String entityName = getEntityName(table, generateDto);
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
         replaceSymbol(sb, Vars.TABLE_NAME, table);
 

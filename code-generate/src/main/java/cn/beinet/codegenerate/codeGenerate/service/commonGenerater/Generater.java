@@ -61,13 +61,25 @@ public interface Generater {
      * 根据表名，获取代码中使用的Entity名称.
      * Pascal格式返回
      *
-     * @param table        表名
-     * @param removePrefix 要移除的表名前缀
+     * @param table       表名
+     * @param generateDto 要对表名做处理的条件
      * @return Entity名
      */
-    default String getEntityName(String table, String removePrefix) {
+    default String getEntityName(String table, GenerateDto generateDto) {
+        String removePrefix = generateDto.getRemovePrefix();
         if (StringUtils.hasLength(removePrefix))
             table = table.replace(removePrefix, "");
+
+        String replaceOld = generateDto.getOldForReplace();
+        String replaceNew = generateDto.getNewForReplace();
+        if (StringUtils.hasLength(replaceOld) && StringUtils.hasLength(replaceNew)) {
+            String regex = "[,;\\s]";
+            String[] oldArr = replaceOld.split(regex);
+            String[] newArr = replaceNew.split(regex);
+            if (oldArr.length == newArr.length) {
+                table = StringHelper.replaceBatch(table, oldArr, newArr);
+            }
+        }
         return StringHelper.castToPascal(table);
     }
 

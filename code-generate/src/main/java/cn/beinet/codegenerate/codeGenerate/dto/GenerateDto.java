@@ -22,6 +22,9 @@ public class GenerateDto {
     private String removePrefix;
     private Boolean modify;
 
+    private String oldForReplace;
+    private String newForReplace;
+
     public Map<String, List<ColumnDto>> getTableMap() {
         if (columnArr == null || columnArr.length == 0)
             return new HashMap<>();

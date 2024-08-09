@@ -42,7 +42,7 @@ public class MybatisServiceGenerater implements Generater {
         String now = TimeHelper.getNow();
         replaceSymbol(sb, Vars.DATE_TIME, now);
 
-        String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
+        String entityName = getEntityName(columns.get(0).getTable(), generateDto);
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
         replaceSymbol(sb, Vars.SERVICE_COND_FIELDS, getBody(columns, entityName));

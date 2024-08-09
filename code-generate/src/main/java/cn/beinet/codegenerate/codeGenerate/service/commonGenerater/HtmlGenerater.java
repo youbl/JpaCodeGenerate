@@ -50,7 +50,7 @@ public class HtmlGenerater implements Generater {
         String now = TimeHelper.getNow();
         replaceSymbol(sb, Vars.DATE_TIME, now);
 
-        String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
+        String entityName = getEntityName(columns.get(0).getTable(), generateDto);
         String lowEntityName = StringHelper.lowFirstChar(entityName);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, lowEntityName);
 

@@ -60,7 +60,7 @@ public class ServiceGenerater implements Generater {
 
     private String getClassBody(String table, String keyType) {
         StringBuilder sb = new StringBuilder();
-        String entityName = getEntityName(table, "");
+        String entityName = null;//getEntityName(table, dto);
 
         // 仓储层变量定义
         sb.append("    private final ").append(table).append("Repository ").append(entityName).append("Repository;\n\n");

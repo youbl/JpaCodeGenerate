@@ -42,47 +42,49 @@
 <div id="divApp">
     <div class="tab-content">
         <div>
-            <div style="float: left;">
-                <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
-                         style="text-align: left">
-                    <el-form-item label="数据库连接信息" style="font-weight: bold;">
-                        <el-select v-model="selectDbName" filterable placeholder="请选择环境" @change="dbSelected">
-                            <el-option
-                                    v-for="item in sqlConns"
-                                    :key="item.configName"
-                                    :label="item.configName"
-                                    :value="item.configName">
-                            </el-option>
-                        </el-select>
-                        <el-form-item label="IP">
-                            <input type="text" v-model="searchCond.dbTestIp" style="width:240px" :readonly="!isCustom"/>
-                        </el-form-item>
-                        <el-form-item label="用户名">
-                            <input type="text" v-model="searchCond.dbTestUser" style="width:60px"
-                                   :readonly="!isCustom"/>
-                        </el-form-item>
-                        <el-form-item label="密码">
-                            <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"
-                                   :readonly="!isCustom"/>
-                        </el-form-item>
-                    </el-form-item>
-                </el-form>
-                <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:150px; text-align: right">数据库：</span>
-                    <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库"
-                               @change="dbChange">
+            <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+                     style="text-align: left">
+                <el-form-item label="数据库连接信息" style="font-weight: bold;">
+                    <el-select v-model="selectDbName" filterable placeholder="请选择环境" @change="dbSelected">
                         <el-option
-                                v-for="item in dbsTest"
-                                :key="item"
-                                :label="item"
-                                :value="item">
+                                v-for="item in sqlConns"
+                                :key="item.configName"
+                                :label="item.configName"
+                                :value="item.configName">
                         </el-option>
                     </el-select>
-                    <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
-                </div>
+                    <el-form-item label="IP">
+                        <input type="text" v-model="searchCond.dbTestIp" style="width:240px" :readonly="!isCustom"/>
+                    </el-form-item>
+                    <el-form-item label="用户名">
+                        <input type="text" v-model="searchCond.dbTestUser" style="width:60px"
+                               :readonly="!isCustom"/>
+                    </el-form-item>
+                    <el-form-item label="密码">
+                        <input type="password" v-model="searchCond.dbTestPwd" style="width:60px"
+                               :readonly="!isCustom"/>
+                    </el-form-item>
+                </el-form-item>
+            </el-form>
+        </div>
+        <div>
+            <div style="float: left;">
                 <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:150px; text-align: right">表(多选)：</span>
-                    <div style="width: 680px; display: inline-block;">
+                    <span style="display: inline-block;width:110px; text-align: right">数据库：</span>
+                    <span style="display: inline-block;width:200px;">
+                        <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库"
+                                   @change="dbChange">
+                            <el-option
+                                    v-for="item in dbsTest"
+                                    :key="item"
+                                    :label="item"
+                                    :value="item">
+                            </el-option>
+                        </el-select>
+                    </span>
+                    <el-button type="primary" icon="el-icon-refresh" circle @click="loadDbs"></el-button>
+                    <span style="display: inline-block;width:110px; text-align: right">表(多选)：</span>
+                    <div style="width: 200px; display: inline-block;">
                         <el-select v-model="searchCond.tables" filterable placeholder="请选择表" multiple
                                    @change="tableChange">
                             <el-option
@@ -95,22 +97,22 @@
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:150px;text-align: right">包名：</span>
-                    <span style="display: inline-block;width:400px;">
+                    <span style="display: inline-block;width:110px; text-align: right">包名：</span>
+                    <span style="display: inline-block;width:560px;">
                         <el-input v-model="codeCond.packageName" placeholder="请输入"/>
                     </span>
                 </div>
                 <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:150px;text-align: right">表名前缀移除：</span>
-                    <span style="display: inline-block;width:150px;">
+                    <span style="display: inline-block;width:110px; text-align: right">表前缀移除：</span>
+                    <span style="display: inline-block;width:110px; ">
                         <el-input v-model="codeCond.removePrefix" placeholder="请输入"/>
                     </span>
                     <span style="color:blue;">生成的entity类名，不包含这个前缀</span>
                 </div>
                 <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:150px;text-align: right">增删改代码生成：</span>
-                    <span style="display: inline-block;width:150px;">
-                        <el-checkbox v-model="codeCond.modify"></el-checkbox>
+                    <span style="display: inline-block;width:110px; text-align: right">代码生成：</span>
+                    <span style="display: inline-block;width:110px; ">
+                        <el-checkbox v-model="codeCond.modify">生成代码包含增删改</el-checkbox>
                     </span>
                 </div>
                 <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
@@ -122,13 +124,22 @@
                         下载MybatisPlus文件
                     </el-button>
                     <a v-show="codeLink" :href="codeLink">如未自动下载，点这里</a>
-                    <span v-show="codeGenerateTime">生成时间:{{codeGenerateTime}}</span>&nbsp;
                     <el-button @click="location.reload()" size="medium" icon="el-icon-refresh">
                         刷新
                     </el-button>
                 </div>
                 <div v-show="codeDesc" style="color:red;text-align: center; vertical-align: bottom; margin-top: 10px;">
                     {{codeDesc}}
+                </div>
+            </div>
+            <div style="float: left;  padding-left: 10px;">
+                <div style="margin-top: 10px;">
+                    <span style="display: inline-block;width:110px; text-align: right; vertical-align: top;">文件名进行部分替换：</span>
+                    <span style="display: inline-block;width:560px;">
+                        <div><el-input v-model="codeCond.oldForReplace" placeholder="请输入"/></div>
+                        <div><el-input v-model="codeCond.newForReplace" placeholder="请输入"/></div>
+                        <div>注：类名也会同步替换，比如把 networkobj 替换为 networkObj</div>
+                    </span>
                 </div>
             </div>
             <div style="clear: both;"></div>
@@ -193,6 +204,8 @@
                 removePrefix: 't_cb_',
                 modify: true,
                 columnArr: [],
+                oldForReplace: '旧文件名1;旧文件名2',
+                newForReplace: '新文件名1;新文件名2',
             },
             databaseArr: [], // 用于下拉列表
             tableArr: [],

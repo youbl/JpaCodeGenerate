@@ -148,6 +148,27 @@ public final class StringHelper {
     }
 
     /**
+     * 对orgin字符串进行批量替换
+     *
+     * @param origin     要替换的源字符串
+     * @param replaceOld 替换前的内容
+     * @param replaceNew 替换后的内容
+     * @return 替换结果
+     */
+    public static String replaceBatch(String origin, String[] replaceOld, String[] replaceNew) {
+        if (!StringUtils.hasLength(origin)) {
+            return "";
+        }
+        if (replaceOld == null || replaceNew == null || replaceOld.length != replaceNew.length) {
+            return origin;
+        }
+        for (int i = 0, j = replaceOld.length; i < j; i++) {
+            origin = origin.replace(replaceOld[i], replaceNew[i]);
+        }
+        return origin;
+    }
+
+    /**
      * 忽略大小写，从源串中查找位置
      *
      * @param str       源串

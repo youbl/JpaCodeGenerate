@@ -44,7 +44,7 @@ public class DtoGenerater implements Generater {
         String now = TimeHelper.getNow();
         replaceSymbol(sb, Vars.DATE_TIME, now);
 
-        String entityName = getEntityName(columns.get(0).getTable(), generateDto.getRemovePrefix());
+        String entityName = getEntityName(columns.get(0).getTable(), generateDto);
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
         // class的成员字段
