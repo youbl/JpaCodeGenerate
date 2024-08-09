@@ -18,28 +18,27 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-//@RequestMapping("{{entity_name}}")
 public class {{entity_name}}Controller implements {{entity_name}}Client {
     private final {{entity_name}}Service service;
 
-    @GetMapping("/{{low_entity_name}}/all")
+    @Override
     public ResponseData<List<{{entity_name}}Dto>> findAll({{entity_name}}Dto dto) {
         return ResponseData.ok(service.search(dto));
     }
 
-    @GetMapping("/{{low_entity_name}}")
+    @Override
     public ResponseData<{{entity_name}}Dto> findById(@NonNull @RequestParam Long {{low_key_field}}) {
         return ResponseData.ok({{entity_name}}EntityMapper.INSTANCE.entity2dto(service.getById({{low_key_field}})));
     }
 
 {{start-modify_content}}
-    @DeleteMapping("/{{low_entity_name}}")
+    @Override
     // @EventLog(subType = SubType.{{entity_name}}_DEL)
     public ResponseData<Boolean> delById(@NonNull @RequestParam Long {{low_key_field}}) {
         return ResponseData.ok(service.removeById({{low_key_field}}));
     }
 
-    @PostMapping("/{{low_entity_name}}")
+    @Override
     // 要区分新增还是更新，因此这里不能用注解@EventLog
     public ResponseData<Long> save(@NonNull @RequestBody {{entity_name}}Dto dto) {
         // 获取事件上报的类型
