@@ -1,7 +1,9 @@
 package {{package_name}}.dal;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import {{package_name}}.dal.entity.*;
+import {{package_name}}.dal.entity.{{entity_name}};
+import org.apache.ibatis.annotations.Select;
+import java.util.List;
 
 /**
  *

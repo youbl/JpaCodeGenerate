@@ -1,0 +1,60 @@
+package {{package_name}}.controller;
+
+import {{package_name}}.service.{{entity_name}}Service;
+import {{package_name}}.dto.{{entity_name}}Dto;
+import {{package_name}}.ResponseData;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.util.Assert;
+import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
+
+import java.util.List;
+
+/**
+ *
+ * @author youbl.blog.csdn.net
+ * @since {{date_time}}
+ */
+@RestController
+@RequiredArgsConstructor
+public class {{entity_name}}Controller {
+    private final {{entity_name}}Service service;
+
+    @GetMapping("/{{low_entity_name}}/all")
+    public ResponseData<List<{{entity_name}}Dto>> findAll({{entity_name}}Dto dto) {
+        return ResponseData.ok(service.search(dto));
+    }
+
+    @GetMapping("/{{low_entity_name}}")
+    public ResponseData<{{entity_name}}Dto> findById(@NonNull Long {{low_key_field}}) {
+        return ResponseData.ok(service.findById({{low_key_field}}));
+    }
+
+{{start-modify_content}}
+    @DeleteMapping("/{{low_entity_name}}")
+    // @EventLog(subType = SubType.{{entity_name}}_DEL)
+    public ResponseData<Boolean> delById(@NonNull Long {{low_key_field}}) {
+        return ResponseData.ok(service.removeById({{low_key_field}}));
+    }
+
+    @PutMapping("/{{low_entity_name}}")
+    // @EventLog(subType = SubType.{{entity_name}}_UPDATE)
+    public ResponseData<Long> updateById(@NonNull {{entity_name}}Dto dto) {
+        Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
+        long newId = service.save{{entity_name}}(dto);
+        return ResponseData.ok(newId);
+    }
+
+    @PostMapping("/{{low_entity_name}}")
+    // 要上报新增的主键，因此这里不能用注解@EventLog
+    public ResponseData<Long> insert(@NonNull {{entity_name}}Dto dto) {
+        // clear primary key before insert
+        dto.set{{up_key_field}}(null);
+
+        long newId = service.save{{entity_name}}(dto);
+        dto.set{{up_key_field}}(newId);
+        //LogUtils.reportLog(SubType.{{entity_name}}_ADD, dto); // 事件上报代码
+        return ResponseData.ok(newId);
+    }
+{{end-modify_content}}
+}

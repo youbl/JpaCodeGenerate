@@ -17,12 +17,17 @@ import java.util.List;
 @Component
 public class SdkGenerater implements Generater {
     @Override
+    public boolean need(GenerateDto generateDto) {
+        return generateDto.getFeignSdk();
+    }
+
+    @Override
     public GenerateType getType() {
         return GenerateType.COMMON;
     }
 
     @Override
-    public String getTemplateName() {
+    public String getTemplateName(GenerateDto generateDto) {
         return "static/template/feign_sdk.template";
     }
 
@@ -38,7 +43,7 @@ public class SdkGenerater implements Generater {
 
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
-        StringBuilder sb = new StringBuilder(getTemplate());
+        StringBuilder sb = new StringBuilder(getTemplate(generateDto));
         // 开启or关闭增删改代码
         if (generateDto.getModify() != null && !generateDto.getModify()) {
             replaceSymbolAndInner(sb, Vars.MODIFY_CONTENT, "");

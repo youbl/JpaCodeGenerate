@@ -21,6 +21,7 @@ public class GenerateDto {
     private ColumnDto[] columnArr;
     private String removePrefix;
     private Boolean modify;
+    private Boolean feignSdk;
 
     private String oldForReplace;
     private String newForReplace;

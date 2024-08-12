@@ -22,7 +22,7 @@ public class DtoGenerater implements Generater {
     }
 
     @Override
-    public String getTemplateName() {
+    public String getTemplateName(GenerateDto generateDto) {
         return "static/template/dto.template";
     }
 
@@ -38,7 +38,7 @@ public class DtoGenerater implements Generater {
 
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
-        StringBuilder sb = new StringBuilder(getTemplate());
+        StringBuilder sb = new StringBuilder(getTemplate(generateDto));
         replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageName());
 
         String now = TimeHelper.getNow();

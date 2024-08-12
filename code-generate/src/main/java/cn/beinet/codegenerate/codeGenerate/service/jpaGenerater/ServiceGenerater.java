@@ -17,7 +17,7 @@ public class ServiceGenerater implements Generater {
     }
 
     @Override
-    public String getTemplateName() {
+    public String getTemplateName(GenerateDto generateDto) {
         return "static/template/jpa-service.template";
     }
 

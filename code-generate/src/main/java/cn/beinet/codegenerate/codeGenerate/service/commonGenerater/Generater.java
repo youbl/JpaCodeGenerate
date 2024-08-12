@@ -20,6 +20,16 @@ import java.util.List;
  */
 public interface Generater {
     /**
+     * 是否需要生成
+     *
+     * @param generateDto 生成对象
+     * @return 是否要生成
+     */
+    default boolean need(GenerateDto generateDto) {
+        return true;
+    }
+
+    /**
      * 实现类的生成类型
      *
      * @return 类型
@@ -31,7 +41,7 @@ public interface Generater {
      *
      * @return 文件名
      */
-    String getTemplateName();
+    String getTemplateName(GenerateDto generateDto);
 
     /**
      * 返回当前生成器的目标文件写入目录
@@ -115,10 +125,10 @@ public interface Generater {
      *
      * @return 内容
      */
-    default String getTemplate() {
-        String template = getTemplateName();
+    default String getTemplate(GenerateDto generateDto) {
+        String template = getTemplateName(generateDto);
         if (StringUtils.hasLength(template)) {
-            return FileHelper.readFileFromResources(getTemplateName());
+            return FileHelper.readFileFromResources(template);
         }
         return "";
     }

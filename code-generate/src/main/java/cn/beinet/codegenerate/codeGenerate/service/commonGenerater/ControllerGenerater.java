@@ -19,8 +19,10 @@ public class ControllerGenerater implements Generater {
     }
 
     @Override
-    public String getTemplateName() {
-        return "static/template/controller.template";
+    public String getTemplateName(GenerateDto generateDto) {
+        if (generateDto.getFeignSdk())
+            return "static/template/controller_sdk.template";
+        return "static/template/controller_nosdk.template";
     }
 
     @Override
@@ -35,7 +37,7 @@ public class ControllerGenerater implements Generater {
 
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
-        StringBuilder sb = new StringBuilder(getTemplate());
+        StringBuilder sb = new StringBuilder(getTemplate(generateDto));
         // 开启or关闭增删改代码
         if (generateDto.getModify() != null && !generateDto.getModify()) {
             replaceSymbolAndInner(sb, Vars.MODIFY_CONTENT, "");

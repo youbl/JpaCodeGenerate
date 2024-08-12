@@ -112,7 +112,10 @@
                 <div style="margin-top: 10px;">
                     <span style="display: inline-block;width:110px; text-align: right">代码生成：</span>
                     <span style="display: inline-block;width:110px; ">
-                        <el-checkbox v-model="codeCond.modify">生成代码包含增删改</el-checkbox>
+                        <el-checkbox v-model="codeCond.modify">含增删改代码</el-checkbox>
+                    </span>
+                    <span style="display: inline-block;width:110px; ">
+                        <el-checkbox v-model="codeCond.feignSdk">含feign-SDK代码</el-checkbox>
                     </span>
                 </div>
                 <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
@@ -203,6 +206,7 @@
                 packageName: '',
                 removePrefix: 't_cb_',
                 modify: true,
+                feignSdk: true,
                 columnArr: [],
                 oldForReplace: '旧文件名1;旧文件名2',
                 newForReplace: '新文件名1;新文件名2',

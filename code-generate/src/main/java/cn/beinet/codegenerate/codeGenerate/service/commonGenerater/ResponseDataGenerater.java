@@ -20,7 +20,7 @@ public class ResponseDataGenerater implements Generater {
     }
 
     @Override
-    public String getTemplateName() {
+    public String getTemplateName(GenerateDto generateDto) {
         return "static/template/responsedata.template";
     }
 
@@ -36,7 +36,7 @@ public class ResponseDataGenerater implements Generater {
 
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
-        StringBuilder sb = new StringBuilder(getTemplate());
+        StringBuilder sb = new StringBuilder(getTemplate(generateDto));
         replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageName());
         return new GenerateResult(getFullFileName(""), sb.toString());
     }

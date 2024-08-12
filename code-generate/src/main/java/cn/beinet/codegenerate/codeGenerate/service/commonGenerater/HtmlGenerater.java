@@ -22,7 +22,7 @@ public class HtmlGenerater implements Generater {
     }
 
     @Override
-    public String getTemplateName() {
+    public String getTemplateName(GenerateDto generateDto) {
         return "static/template/list_html.template";
     }
 
@@ -38,7 +38,7 @@ public class HtmlGenerater implements Generater {
 
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
-        StringBuilder sb = new StringBuilder(getTemplate());
+        StringBuilder sb = new StringBuilder(getTemplate(generateDto));
 
         // 开启or关闭增删改代码
         if (generateDto.getModify() != null && !generateDto.getModify()) {

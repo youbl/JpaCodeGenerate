@@ -30,7 +30,7 @@ public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {
 
     // find by primary key
     public {{entity_name}}Dto findById(Long id) {
-        return entityMapper.entity2dto(service.getById(id));
+        return entityMapper.entity2dto(getById(id));
     }
 
     // insert or update data

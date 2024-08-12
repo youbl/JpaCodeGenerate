@@ -40,6 +40,9 @@ public class MybatisPlusCodeGenerateService {
             List<ColumnDto> columns = item.getValue();
 
             for (Generater generater : generaterList) {
+                if (!generater.need(dto))
+                    continue;
+
                 if (!generater.getType().equals(GenerateType.MYBATIS) &&
                         !generater.getType().equals(GenerateType.COMMON))
                     continue;
