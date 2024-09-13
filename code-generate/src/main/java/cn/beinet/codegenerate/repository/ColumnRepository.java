@@ -47,7 +47,7 @@ public class ColumnRepository {
         if (!StringUtils.hasLength(db))
             db = "information_schema";
         this.url = "jdbc:mysql://" + ip + ":" + port + "/" + db +
-                "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=1000&connectTimeout=1000";
+                "?characterEncoding=utf8&allowMultiQueries=false&serverTimezone=Asia/Shanghai&useSSL=false&socketTimeout=10000&connectTimeout=10000";
         // ?allowMultiQueries=true&useUnicode=true&characterEncoding=utf8&socketTimeout=2000&connectTimeout=2000&rewriteBatchedStatements=true&useSSL=false&serverTimezone=Asia/Shanghai&useSSL=false
         this.userName = userName;
         this.pwd = pwd;

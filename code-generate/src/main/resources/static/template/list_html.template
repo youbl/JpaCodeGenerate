@@ -185,7 +185,8 @@
                         return false;
 
                     let url = $$BASE_URL + '{{low_entity_name}}';
-                    return axios.post(url, this.editRow).then(response => {
+                    let httpMethod = this.editRow.{{low_key_field}} ? axios.put : axios.post;
+                    return httpMethod(url, this.editRow).then(response => {
                         if (!response.data || response.data.code !== 0) {
                             return alert('保存失败:' + getErrorMsg(response));
                         }

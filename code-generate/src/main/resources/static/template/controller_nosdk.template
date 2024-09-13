@@ -39,7 +39,7 @@ public class {{entity_name}}Controller {
 
     @PutMapping("/{{low_entity_name}}")
     // @EventLog(subType = SubType.{{entity_name}}_UPDATE)
-    public ResponseData<Long> updateById(@NonNull {{entity_name}}Dto dto) {
+    public ResponseData<Long> updateById(@RequestBody @NonNull {{entity_name}}Dto dto) {
         Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
         long newId = service.save{{entity_name}}(dto);
         return ResponseData.ok(newId);
@@ -47,7 +47,7 @@ public class {{entity_name}}Controller {
 
     @PostMapping("/{{low_entity_name}}")
     // 要上报新增的主键，因此这里不能用注解@EventLog
-    public ResponseData<Long> insert(@NonNull {{entity_name}}Dto dto) {
+    public ResponseData<Long> insert(@RequestBody @NonNull {{entity_name}}Dto dto) {
         // clear primary key before insert
         dto.set{{up_key_field}}(null);
 
