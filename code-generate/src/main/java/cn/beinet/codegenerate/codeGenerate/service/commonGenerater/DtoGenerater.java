@@ -51,6 +51,9 @@ public class DtoGenerater implements Generater {
         String fieldsBody = getClassBody(columns);
         replaceSymbol(sb, Vars.DTO_FIELDS, "\n" + fieldsBody);
 
+        // 替换对应的jdk版本代码
+        replaceJDK(sb, generateDto.getJdkVer());
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 
@@ -65,6 +68,12 @@ public class DtoGenerater implements Generater {
         return sb.toString();
     }
 
+    private void replaceJDK(StringBuilder sb, String jdkVer) {
+        String code = jdkVer.equals("8") ?
+                "import javax.validation.constraints.*;" :
+                "import jakarta.validation.constraints.*;";
+        replaceSymbol(sb, Vars.JDK_CONTENT, code);
+    }
 
     /**
      * 生成字段注释

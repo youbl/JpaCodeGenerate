@@ -97,9 +97,15 @@
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
-                    <span style="display: inline-block;width:110px; text-align: right">包名：</span>
+                    <span style="display: inline-block;width:110px; text-align: right">代码包名：</span>
                     <span style="display: inline-block;width:560px;">
                         <el-input v-model="codeCond.packageName" placeholder="请输入"/>
+                    </span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <span style="display: inline-block;width:110px; text-align: right;font-size: 10px">ResponseData包名：</span>
+                    <span style="display: inline-block;width:560px;">
+                        <el-input v-model="codeCond.packageResponseData" placeholder="为空时，自动使用上面的代码包名"/>
                     </span>
                 </div>
                 <div style="margin-top: 10px;">
@@ -111,11 +117,17 @@
                 </div>
                 <div style="margin-top: 10px;">
                     <span style="display: inline-block;width:110px; text-align: right">代码生成：</span>
-                    <span style="display: inline-block;width:110px; ">
+                    <span style="display: inline-block;width:120px; ">
                         <el-checkbox v-model="codeCond.modify">含增删改代码</el-checkbox>
                     </span>
-                    <span style="display: inline-block;width:110px; ">
+                    <span style="display: inline-block;width:140px; ">
                         <el-checkbox v-model="codeCond.feignSdk">含feign-SDK代码</el-checkbox>
+                    </span>
+                    <span style="display: inline-block;width:210px; ">
+                        <el-radio-group v-model="codeCond.jdkVer">
+                            <el-radio label="8">JDK8</el-radio>
+                            <el-radio label="21">JDK21</el-radio>
+                        </el-radio-group>
                     </span>
                 </div>
                 <div style="text-align: center; vertical-align: bottom; margin-top: 10px;">
@@ -207,6 +219,7 @@
                 removePrefix: 't_cb_',
                 modify: true,
                 feignSdk: true,
+                jdkVer: '21',
                 columnArr: [],
                 oldForReplace: '旧文件名1;旧文件名2',
                 newForReplace: '新文件名1;新文件名2',

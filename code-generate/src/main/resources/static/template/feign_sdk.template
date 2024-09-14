@@ -1,7 +1,7 @@
 package {{package_name}}.sdk;
 
 import {{package_name}}.dto.{{entity_name}}Dto;
-import {{package_name}}.ResponseData;
+import {{response_package_name}}.ResponseData;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;

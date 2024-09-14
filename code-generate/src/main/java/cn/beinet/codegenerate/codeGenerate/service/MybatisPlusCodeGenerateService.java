@@ -9,6 +9,7 @@ import cn.beinet.codegenerate.util.FileHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +32,10 @@ public class MybatisPlusCodeGenerateService {
     private final String basePath = FileHelper.getResourceBasePath();
 
     public List<GenerateResult> generateCode(GenerateDto dto) {
+        if (!StringUtils.hasLength(dto.getPackageResponseData())) {
+            dto.setPackageResponseData(dto.getPackageName());
+        }
+
         Map<String, List<ColumnDto>> tableMap = dto.getTableMap();
         if (tableMap.isEmpty())
             return new ArrayList<>();

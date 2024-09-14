@@ -166,8 +166,9 @@ public interface Generater {
     /**
      * 替换模板里的开始到结束部分的内容
      *
-     * @param builder
-     * @param symbol
+     * @param builder 模板内容
+     * @param symbol 占位符
+     * @param replace 把占位符替换为什么内容
      */
     default void replaceSymbolAndInner(StringBuilder builder, Vars symbol, String replace) {
         if (!StringUtils.hasLength(replace))
@@ -182,8 +183,8 @@ public interface Generater {
     /**
      * 替换模板里的开始标志 和 结束标志，中间内容不处理
      *
-     * @param builder
-     * @param symbol
+     * @param builder 模板内容
+     * @param symbol 占位符
      */
     default void removeSymbol(StringBuilder builder, Vars symbol) {
         String startStr = "{{start-" + symbol.getVal() + "}}";

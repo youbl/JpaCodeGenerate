@@ -4,8 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.format.annotation.DateTimeFormat;
 
-// <groupId>org.hibernate.validator</groupId><artifactId>hibernate-validator</artifactId>
-import javax.validation.constraints.*;
+{{jdk_content}}
 
 /**
  *

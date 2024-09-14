@@ -3,7 +3,7 @@ package {{package_name}}.controller;
 import {{package_name}}.sdk.{{entity_name}}Client;
 import {{package_name}}.service.{{entity_name}}Service;
 import {{package_name}}.dto.{{entity_name}}Dto;
-import {{package_name}}.ResponseData;
+import {{response_package_name}}.ResponseData;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.Assert;
 import lombok.RequiredArgsConstructor;

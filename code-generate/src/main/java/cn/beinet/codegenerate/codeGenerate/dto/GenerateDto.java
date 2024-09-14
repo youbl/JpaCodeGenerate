@@ -22,9 +22,11 @@ public class GenerateDto {
     private String removePrefix;
     private Boolean modify;
     private Boolean feignSdk;
+    private String packageResponseData;
 
     private String oldForReplace;
     private String newForReplace;
+    private String jdkVer;
 
     public Map<String, List<ColumnDto>> getTableMap() {
         if (columnArr == null || columnArr.length == 0)

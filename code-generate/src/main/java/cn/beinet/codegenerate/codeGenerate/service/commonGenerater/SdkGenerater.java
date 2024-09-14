@@ -51,6 +51,7 @@ public class SdkGenerater implements Generater {
             removeSymbol(sb, Vars.MODIFY_CONTENT);
         }
         replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageName());
+        replaceSymbol(sb, Vars.RESPONSE_PACKAGE_NAME, generateDto.getPackageResponseData());
 
         String now = TimeHelper.getNow();
         replaceSymbol(sb, Vars.DATE_TIME, now);

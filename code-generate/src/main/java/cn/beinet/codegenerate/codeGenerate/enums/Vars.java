@@ -12,9 +12,18 @@ public enum Vars {
      */
     MODIFY_CONTENT("modify_content"),
     /**
+     * 适配jdk的代码块
+     */
+    JDK_CONTENT("jdk_content"),
+
+    /**
      * 生成文件所在的包名
      */
     PACKAGE_NAME("package_name"),
+    /**
+     * 依赖的ResponseData归属的包名
+     */
+    RESPONSE_PACKAGE_NAME("response_package_name"),
     /**
      * 实际的表名，用于实体类映射到数据库
      */

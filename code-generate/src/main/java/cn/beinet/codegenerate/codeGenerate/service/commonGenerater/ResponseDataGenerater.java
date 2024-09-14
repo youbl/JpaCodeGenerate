@@ -37,7 +37,7 @@ public class ResponseDataGenerater implements Generater {
     @Override
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
         StringBuilder sb = new StringBuilder(getTemplate(generateDto));
-        replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageName());
+        replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageResponseData());
         return new GenerateResult(getFullFileName(""), sb.toString());
     }
 }
