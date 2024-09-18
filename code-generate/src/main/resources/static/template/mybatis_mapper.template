@@ -3,6 +3,7 @@ package {{package_name}}.dal;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import {{package_name}}.dal.entity.{{entity_name}};
 import org.apache.ibatis.annotations.Select;
+
 import java.util.List;
 
 /**
@@ -11,7 +12,7 @@ import java.util.List;
  * @since {{date_time}}
  */
 public interface {{entity_name}}Mapper extends BaseMapper<{{entity_name}}> {
-    static final String TABLE = "{{table_name}}";
+    String TABLE = "{{table_name}}";
 
     @Select("<script>" +
             "SELECT * FROM " + TABLE + " a " +

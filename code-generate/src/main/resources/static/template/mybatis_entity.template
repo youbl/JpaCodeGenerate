@@ -3,6 +3,7 @@ package {{package_name}}.dal.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
+
 import java.io.Serializable;
 
 {{jdk_content}}
@@ -16,5 +17,5 @@ import java.io.Serializable;
 @Accessors(chain = true)
 @TableName("{{table_name}}")
 public class {{entity_name}} implements Serializable {
-    {{entity_fields}}
+{{entity_fields}}
 }

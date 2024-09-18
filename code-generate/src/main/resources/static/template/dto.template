@@ -14,5 +14,5 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Data
 @Accessors(chain = true)
 public class {{entity_name}}Dto {
-    {{dto_fields}}
+{{dto_fields}}
 }

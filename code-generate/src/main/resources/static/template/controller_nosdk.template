@@ -1,10 +1,10 @@
 package {{package_name}}.controller;
 
 import {{response_package_name}}.ResponseData;
-import {{package_name}}.service.{{entity_name}}Service;
 import {{package_name}}.dto.{{entity_name}}Dto;
-import lombok.RequiredArgsConstructor;
+import {{package_name}}.service.{{entity_name}}Service;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
