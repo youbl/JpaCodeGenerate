@@ -82,7 +82,8 @@ public interface Generater {
 
         String replaceOld = generateDto.getOldForReplace();
         String replaceNew = generateDto.getNewForReplace();
-        if (StringUtils.hasLength(replaceOld) && StringUtils.hasLength(replaceNew)) {
+        if (StringUtils.hasLength(replaceOld) && StringUtils.hasLength(replaceNew) &&
+                !replaceOld.equals(replaceNew)) {
             String regex = "[,;\\s]";
             List<String> oldArr = StringHelper.splitAndRemoveEmpty(replaceOld, regex);
             List<String> newArr = StringHelper.splitAndRemoveEmpty(replaceNew, regex);

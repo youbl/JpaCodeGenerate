@@ -145,9 +145,11 @@ public class HtmlGenerater implements Generater {
                     .append("\" :width=\"flexColumnWidth('")
                     .append(colName)
                     .append("', dataList)\">\n")
-                    .append("            <template slot-scope=\"scope\">{{scope.row['")
+                    .append("            <template slot-scope=\"scope\">\n")
+                    .append("                <div>{{scope.row['")
                     .append(colName)
-                    .append("']}}</template>\n")
+                    .append("']}}</div>\n")
+                    .append("            </template>\n")
                     .append("        </el-table-column>");
         }
         return sb.toString();

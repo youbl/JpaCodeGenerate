@@ -344,6 +344,10 @@
             },
             tableChange: function () {
                 this.loadColumns();
+
+                let tbs = this.searchCond.tables.join(';');
+                this.codeCond.oldForReplace = tbs;
+                this.codeCond.newForReplace = tbs;
             },
             loadColumns: function () {
                 this.codeFiles = [];
@@ -377,12 +381,16 @@
                     return false;
                 }
                 if (this.codeCond.oldForReplace && this.codeCond.newForReplace) {
-                    let regex = /[,;\s]/;
-                    let oldArr = this.splitStr(this.codeCond.oldForReplace);
-                    let newArr = this.splitStr(this.codeCond.newForReplace);
-                    if (oldArr.length !== newArr.length) {
-                        alert('文件名替换，前后项的数量不一致');
-                        return false;
+                    if (this.codeCond.oldForReplace === this.codeCond.newForReplace) {
+                        // 清空避免替换
+                    } else {
+                        let regex = /[,;\s]/;
+                        let oldArr = this.splitStr(this.codeCond.oldForReplace);
+                        let newArr = this.splitStr(this.codeCond.newForReplace);
+                        if (oldArr.length !== newArr.length) {
+                            alert('文件名替换，前后项的数量不一致');
+                            return false;
+                        }
                     }
                 }
                 return true;
