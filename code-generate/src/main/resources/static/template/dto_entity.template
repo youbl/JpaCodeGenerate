@@ -3,8 +3,13 @@ package {{package_name}}.mapstruct;
 import {{package_name}}.dal.entity.{{entity_name}};
 import {{package_name}}.dto.{{entity_name}}Dto;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,11 +24,30 @@ import java.util.List;
 public interface {{entity_name}}EntityMapper {
     {{entity_name}}EntityMapper INSTANCE = Mappers.getMapper({{entity_name}}EntityMapper.class);
 
+    {{dto_timestamp_to_localdatetime}}
     {{entity_name}} dto2entity({{entity_name}}Dto dto);
 
+    {{dto_localdatetime_to_timestamp}}
     {{entity_name}}Dto entity2dto({{entity_name}} entity);
 
     List<{{entity_name}}> dto2entity(List<{{entity_name}}Dto> dto);
 
     List<{{entity_name}}Dto> entity2dto(List<{{entity_name}}> entity);
+
+    @Named("mapTime")
+    default LocalDateTime mapTime(Long millisTs) {
+        if (millisTs != null) {
+            return Timestamp.from(Instant.ofEpochMilli(millisTs)).toLocalDateTime();
+        }
+        return null;
+    }
+
+    // convert to millis timestamp
+    @Named("mapTimestamp")
+    default Long mapTimestamp(LocalDateTime value) {
+        if (value != null) {
+            return Timestamp.valueOf(value).getTime();
+        }
+        return null;
+    }
 }

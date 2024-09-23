@@ -80,7 +80,18 @@ public enum Vars {
     /**
      * HTML文件的编辑区域内容
      */
-    HTML_EDIT_CONTENT("html_edit_content");
+    HTML_EDIT_CONTENT("html_edit_content"),
+
+    /**
+     * MapStruct里，需要从ts时间戳转换为LocalDateTime的注解内容
+     */
+    DTO_TIMESTAMP_TO_LOCALDATETIME("dto_timestamp_to_localdatetime"),
+
+    /**
+     * MapStruct里，需要从LocalDateTime转换为ts时间戳的注解内容
+     */
+    DTO_LOCALDATETIME_TO_TIMESTAMP("dto_localdatetime_to_timestamp"),
+    ;
 
     private String val;
 

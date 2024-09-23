@@ -48,7 +48,7 @@ public class DtoGenerater implements Generater {
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
         // class的成员字段
-        String fieldsBody = getClassBody(columns);
+        String fieldsBody = getClassBody(columns, generateDto.getDtoUseTs());
         replaceSymbol(sb, Vars.DTO_FIELDS, "\n" + fieldsBody);
 
         // 替换对应的jdk版本代码
@@ -57,15 +57,32 @@ public class DtoGenerater implements Generater {
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }
 
-    private String getClassBody(List<ColumnDto> columns) {
+    private String getClassBody(List<ColumnDto> columns, Boolean dtoUseTs) {
         StringBuilder sb = new StringBuilder();
         for (ColumnDto column : columns) {
             sb.append(getColumnComment(column));
             sb.append(getSizeAnnotate(column));
-            sb.append(getDateFormatAnnotate(column));
-            sb.append(getColumnDefine(column));
+            String colDefine;
+            if (dtoUseTs != null && dtoUseTs && column.isLocalDateTime()) {
+                colDefine = getColumnDefineInner(column);
+            } else {
+                sb.append(getDateFormatAnnotate(column));
+                colDefine = getColumnDefine(column);
+            }
+            sb.append(colDefine);
         }
         return sb.toString();
+    }
+
+    /**
+     * 重写，把LocalDateTime转换为Long类型的时间戳
+     * @param column 对应的列
+     * @return 字段在DTO里的定义
+     */
+    //@Override
+    private String getColumnDefineInner(ColumnDto column) {
+        String colName = getFieldName(column.getColumn(), true);
+        return "    private Long " + colName + ";\n\n";
     }
 
     private void replaceJDK(StringBuilder sb, String jdkVer) {
@@ -97,7 +114,7 @@ public class DtoGenerater implements Generater {
      * @return 注解字符串
      */
     private String getDateFormatAnnotate(ColumnDto column) {
-        if (column.getManagerType().contains("LocalDateTime")) {
+        if (column.isLocalDateTime()) {
             return "    @DateTimeFormat(pattern = \"yyyy-MM-dd HH:mm:ss\")\n";
         }
         return "";

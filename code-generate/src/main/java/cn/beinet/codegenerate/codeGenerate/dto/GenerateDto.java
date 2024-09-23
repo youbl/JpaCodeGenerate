@@ -22,6 +22,7 @@ public class GenerateDto {
     private String removePrefix;
     private Boolean modify;
     private Boolean feignSdk;
+    private Boolean dtoUseTs;
     private String packageResponseData;
 
     private String oldForReplace;

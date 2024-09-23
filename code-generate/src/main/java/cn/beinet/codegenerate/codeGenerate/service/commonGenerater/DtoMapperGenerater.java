@@ -46,6 +46,41 @@ public class DtoMapperGenerater implements Generater {
         String entityName = getEntityName(columns.get(0).getTable(), generateDto);
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
+        if (generateDto.getDtoUseTs() != null && generateDto.getDtoUseTs()) {
+            // 选中了“DTO使用时间戳”，要添加相应时间字段的映射转换函数
+            mapLocalDateTime(sb, columns);
+        } else {
+            replaceSymbol(sb, Vars.DTO_TIMESTAMP_TO_LOCALDATETIME, "");
+            replaceSymbol(sb, Vars.DTO_LOCALDATETIME_TO_TIMESTAMP, "");
+        }
+
         return new GenerateResult(getFullFileName(entityName), sb.toString());
+    }
+
+    private void mapLocalDateTime(StringBuilder sb, List<ColumnDto> columns) {
+        StringBuilder ts2time = new StringBuilder();
+        StringBuilder time2ts = new StringBuilder();
+
+        for (ColumnDto column : columns) {
+            if (column.isLocalDateTime()) {
+                String colName = getFieldName(column.getColumn(), true);
+                if (ts2time.length() > 0) {
+                    ts2time.append("\r\n    ");
+                    time2ts.append("\r\n    ");
+                }
+                ts2time.append("@Mapping(source = \"")
+                        .append(colName)
+                        .append("\", target = \"")
+                        .append(colName)
+                        .append("\", qualifiedByName = \"mapTime\")");
+                time2ts.append("@Mapping(source = \"")
+                        .append(colName)
+                        .append("\", target = \"")
+                        .append(colName)
+                        .append("\", qualifiedByName = \"mapTimestamp\")");
+            }
+        }
+        replaceSymbol(sb, Vars.DTO_TIMESTAMP_TO_LOCALDATETIME, ts2time.toString());
+        replaceSymbol(sb, Vars.DTO_LOCALDATETIME_TO_TIMESTAMP, time2ts.toString());
     }
 }

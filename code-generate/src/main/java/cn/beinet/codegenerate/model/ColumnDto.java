@@ -177,6 +177,14 @@ public class ColumnDto {
     }
 
     /**
+     * 当前字段对应Java类型是否LocalDateTime
+     * @return true false
+     */
+    public boolean isLocalDateTime() {
+        return (getManagerType().contains("LocalDateTime"));
+    }
+
+    /**
      * 当前字段是否虚拟字段
      *
      * @return true false

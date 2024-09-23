@@ -118,10 +118,32 @@
                 <div style="margin-top: 10px;">
                     <span style="display: inline-block;width:110px; text-align: right">代码生成：</span>
                     <span style="display: inline-block;width:120px; ">
-                        <el-checkbox v-model="codeCond.modify">含增删改代码</el-checkbox>
+                        <el-tooltip class="item" effect="dark" placement="top-start">
+                              <div slot="content">
+                                  选中时，生成的RestController类和html前台文件<br>
+                                  会包含新增、更新、删除的代码
+                              </div>
+                            <el-checkbox v-model="codeCond.modify">含增删改代码</el-checkbox>
+                        </el-tooltip>
                     </span>
                     <span style="display: inline-block;width:140px; ">
-                        <el-checkbox v-model="codeCond.feignSdk">含feign-SDK代码</el-checkbox>
+                        <el-tooltip class="item" effect="dark" placement="top-start">
+                              <div slot="content">
+                                  选中时，会生成FeignClient类，<br>
+                                  生成的RestController会继承于该FeignClient类<br>
+                                  该FeignClient类可以给其它模块，或其它团队使用
+                              </div>
+                            <el-checkbox v-model="codeCond.feignSdk">含feign-SDK代码</el-checkbox>
+                        </el-tooltip>
+                    </span>
+                    <span style="display: inline-block;width:140px; ">
+                        <el-tooltip class="item" effect="dark" placement="top-start">
+                              <div slot="content">
+                                  选中时，如果Entity类包含LocalDateTime字段，<br>
+                                  对应的Dto类会转换为Long类型的时间戳
+                              </div>
+                            <el-checkbox v-model="codeCond.dtoUseTs">DTO使用时间戳</el-checkbox>
+                        </el-tooltip>
                     </span>
                     <span style="display: inline-block;width:210px; ">
                         <el-radio-group v-model="codeCond.jdkVer">
@@ -219,6 +241,7 @@
                 removePrefix: 't_cb_',
                 modify: true,
                 feignSdk: true,
+                dtoUseTs: true,
                 jdkVer: '21',
                 columnArr: [],
                 oldForReplace: '旧文件名1;旧文件名2',
