@@ -9,6 +9,7 @@ import cn.beinet.codegenerate.util.FileHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -32,8 +33,12 @@ public class MybatisPlusCodeGenerateService {
     private final String basePath = FileHelper.getResourceBasePath();
 
     public List<GenerateResult> generateCode(GenerateDto dto) {
+        Assert.isTrue(dto.getPackageName() != null && dto.getPackageName().length() > 2, "代码包名长度必须大于2");
+        dto.setPackageName(trimPackage(dto.getPackageName()));
         if (!StringUtils.hasLength(dto.getPackageResponseData())) {
             dto.setPackageResponseData(dto.getPackageName());
+        } else {
+            dto.setPackageResponseData(trimPackage(dto.getPackageResponseData()));
         }
 
         Map<String, List<ColumnDto>> tableMap = dto.getTableMap();
@@ -134,4 +139,21 @@ public class MybatisPlusCodeGenerateService {
         return file;
     }
 
+    /**
+     * 移除头尾的 . ; 和空格
+     * @param packageName 包名
+     * @return 包名
+     */
+    private String trimPackage(String packageName) {
+        if (packageName == null)
+            return "";
+        packageName = packageName.trim();
+        while (packageName.endsWith(".") || packageName.endsWith(";")) {
+            packageName = packageName.substring(0, packageName.length() - 1).trim();
+        }
+        while (packageName.startsWith(".") || packageName.startsWith(";")) {
+            packageName = packageName.substring(1).trim();
+        }
+        return packageName;
+    }
 }
