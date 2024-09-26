@@ -16,8 +16,8 @@ import java.util.List;
 @FeignClient(name = "{{low_entity_name}}-client", url = "${microservice.url.{{low_entity_name}}:{{low_entity_name}}}")
 public interface {{entity_name}}Client {
 
-    @GetMapping("/{{low_entity_name}}/all")
-    ResponseData<List<{{entity_name}}Dto>> findAll({{entity_name}}Dto dto);
+    @PostMapping("/{{low_entity_name}}/all")
+    ResponseData<List<{{entity_name}}Dto>> findAll(@RequestBody {{entity_name}}Dto dto);
 
     @GetMapping("/{{low_entity_name}}")
     ResponseData<{{entity_name}}Dto> findById(@RequestParam Long {{low_key_field}});

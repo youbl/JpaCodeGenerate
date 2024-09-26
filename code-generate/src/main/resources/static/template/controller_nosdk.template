@@ -25,8 +25,8 @@ import java.util.List;
 public class {{entity_name}}Controller {
     private final {{entity_name}}Service service;
 
-    @GetMapping("/{{low_entity_name}}/all")
-    public ResponseData<List<{{entity_name}}Dto>> findAll({{entity_name}}Dto dto) {
+    @PostMapping("/{{low_entity_name}}/all")
+    public ResponseData<List<{{entity_name}}Dto>> findAll(@RequestBody {{entity_name}}Dto dto) {
         return ResponseData.ok(service.search(dto));
     }
 

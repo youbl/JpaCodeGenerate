@@ -129,7 +129,7 @@
                 this.dataList = [];
                 let url = $$BASE_URL + '{{low_entity_name}}/all';
                 let para = {'params': this.searchCondition};
-                return axios.get(url, para).then(response => {
+                return axios.post(url, para).then(response => {
                     this.loading = false;
                     if (!response.data || response.data.code !== 0) {
                         return alert('获取数据列表失败:' + getErrorMsg(response));
