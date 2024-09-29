@@ -7,6 +7,8 @@ import cn.beinet.codegenerate.codeGenerate.enums.Vars;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.StringHelper;
 import cn.beinet.codegenerate.util.TimeHelper;
+import lombok.Data;
+import lombok.experimental.Accessors;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -57,7 +59,11 @@ public class HtmlGenerater implements Generater {
         String keyName = getKeyName(columns, true);
         replaceSymbol(sb, Vars.LOW_KEY_FIELD, keyName);
 
-        replaceSymbol(sb, Vars.HTML_SEARCH_CONTENT, getSearchContent(columns));
+        SearchCond searchContent = getSearchContent(columns);
+        replaceSymbol(sb, Vars.HTML_SEARCH_CONTENT, searchContent.getSearchHtmlContent());
+        replaceSymbol(sb, Vars.HTML_SEARCH_DATE_VAR, searchContent.getSearchDateVueVar());
+        replaceSymbol(sb, Vars.HTML_SEARCH_DATE_COMBINE, searchContent.getCombineSearchDateVar());
+
         replaceSymbol(sb, Vars.HTML_TABLE_CONTENT, getTableContent(columns));
         replaceSymbol(sb, Vars.HTML_EDIT_CONTENT, getEditContent(columns, keyName));
 
@@ -84,25 +90,63 @@ public class HtmlGenerater implements Generater {
      * @param columns 列数组
      * @return 搜索条件html
      */
-    private String getSearchContent(List<ColumnDto> columns) {
-        StringBuilder sb = new StringBuilder();
+    private SearchCond getSearchContent(List<ColumnDto> columns) {
+        // html里搜索区域的html文本
+        StringBuilder sbHtmlContent = new StringBuilder();
+        // vue定义里，data区域的时间字段，用于收集el-date-picker的值
+        StringBuilder sbSearchDateVueVar = new StringBuilder();
+        // vue检索方法里，把data区域的时间字段，转换为搜索条件的代码
+        StringBuilder sbCombineSearchDateVar = new StringBuilder();
+
         for (ColumnDto dto : columns) {
             if (!isSearchKey(dto.getColumn())) {
                 continue;
             }
-            if (sb.length() > 0) {
-                sb.append("\n");
+            if (sbHtmlContent.length() > 0) {
+                sbHtmlContent.append("\n");
             }
             String colName = getFieldName(dto.getColumn(), true);
-            sb.append("        <el-form-item label=\"")
+            String dom;
+            if (dto.isLocalDateTime()) {
+                String varName = "searchDates" + colName;
+                if (sbSearchDateVueVar.length() > 0) {
+                    sbSearchDateVueVar.append("                ");
+                    sbCombineSearchDateVar.append("                ");
+                }
+                sbSearchDateVueVar.append(varName).append(": [],\n");
+                sbCombineSearchDateVar.append("this.searchCondition['")
+                        .append(colName)
+                        .append("Begin'] = this.")
+                        .append(varName)
+                        .append("[0];\n                this.searchCondition['")
+                        .append(colName)
+                        .append("End'] = this.")
+                        .append(varName)
+                        .append("[1];\n");
+
+                dom = "            <el-date-picker size=\"mini\"\n" +
+                        "                :picker-options=\"globalPickOptions\"\n" +
+                        "                v-model=\"" + varName + "\"\n" +
+                        "                format=\"yyyy-MM-dd HH:mm:ss\"\n" +
+                        "                value-format=\"yyyy-MM-dd HH:mm:ss\"\n" +
+                        "                type=\"datetimerange\"\n" +
+                        "                range-separator=\"至\"\n" +
+                        "                start-placeholder=\"开始日期\"\n" +
+                        "                end-placeholder=\"结束日期\">\n" +
+                        "            </el-date-picker>\n";
+            } else {
+                dom = "            <el-input placeholder=\"请输入\" v-model.trim=\"searchCondition['" + colName + "']\"></el-input>\n";
+            }
+            sbHtmlContent.append("        <el-form-item label=\"")
                     .append(colName)
                     .append("\">\n")
-                    .append("            <el-input placeholder=\"请输入\" v-model.trim=\"searchCondition['")
-                    .append(colName)
-                    .append("']\"></el-input>\n")
+                    .append(dom)
                     .append("        </el-form-item>");
         }
-        return sb.toString();
+        return new SearchCond()
+                .setSearchHtmlContent(sbHtmlContent.toString())
+                .setSearchDateVueVar(sbSearchDateVueVar.toString())
+                .setCombineSearchDateVar(sbCombineSearchDateVar.toString());
     }
 
     /**
@@ -111,15 +155,11 @@ public class HtmlGenerater implements Generater {
      * @param fieldName 字段名
      * @return 是否显示
      */
-    private boolean isSearchKey(String fieldName) {
+    public static boolean isSearchKey(String fieldName) {
         // 在这里配置：搜索条件里不需要显示的列名
-        return !("createDate".equalsIgnoreCase(fieldName) ||
-                "updateDate".equalsIgnoreCase(fieldName) ||
-                "create_date".equalsIgnoreCase(fieldName) ||
+        return !("updateDate".equalsIgnoreCase(fieldName) ||
                 "update_date".equalsIgnoreCase(fieldName) ||
-                "createTime".equalsIgnoreCase(fieldName) ||
                 "updateTime".equalsIgnoreCase(fieldName) ||
-                "create_time".equalsIgnoreCase(fieldName) ||
                 "update_time".equalsIgnoreCase(fieldName)
         );
     }
@@ -229,5 +269,13 @@ public class HtmlGenerater implements Generater {
                 "updateTime".equalsIgnoreCase(fieldName) ||
                 "create_time".equalsIgnoreCase(fieldName) ||
                 "update_time".equalsIgnoreCase(fieldName));
+    }
+
+    @Data
+    @Accessors(chain = true)
+    private static class SearchCond {
+        private String searchHtmlContent;
+        private String searchDateVueVar;
+        private String combineSearchDateVar;
     }
 }

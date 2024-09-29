@@ -81,7 +81,7 @@
                 tableFields: [{{html_fields}}],
                 statusTxt: '',
                 loading: false,
-
+                {{search-date_var}}
                 searchCondition: {},
                 dataList: [],
 {{start-modify_content}}
@@ -125,11 +125,10 @@
                         delete (this.searchCondition[att]);
                     }
                 }
-
+                {{search-date_combine}}
                 this.dataList = [];
                 let url = $$BASE_URL + '{{low_entity_name}}/all';
-                let para = {'params': this.searchCondition};
-                return axios.post(url, para).then(response => {
+                return axios.post(url, this.searchCondition).then(response => {
                     this.loading = false;
                     if (!response.data || response.data.code !== 0) {
                         return alert('获取数据列表失败:' + getErrorMsg(response));

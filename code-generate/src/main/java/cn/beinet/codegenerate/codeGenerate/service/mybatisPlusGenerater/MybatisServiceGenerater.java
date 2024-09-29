@@ -5,6 +5,7 @@ import cn.beinet.codegenerate.codeGenerate.dto.GenerateResult;
 import cn.beinet.codegenerate.codeGenerate.enums.GenerateType;
 import cn.beinet.codegenerate.codeGenerate.enums.Vars;
 import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.Generater;
+import cn.beinet.codegenerate.codeGenerate.service.commonGenerater.HtmlGenerater;
 import cn.beinet.codegenerate.model.ColumnDto;
 import cn.beinet.codegenerate.util.TimeHelper;
 import org.springframework.stereotype.Component;
@@ -69,6 +70,17 @@ public class MybatisServiceGenerater implements Generater {
                     ", dto.get" + colName +
                     "());";
             sb.append("            ").append(cond).append("\n");
+
+            if (HtmlGenerater.isSearchKey(colName) && item.isLocalDateTime()) {
+                // 时间字段要增加 开始和结束的区间搜索
+                String condBegin = "wrapper.ge(dto.get" + colName + "Begin() != null, " + entityName + "::get" + colName +
+                        ", dto.get" + colName + "Begin());";
+                sb.append("            ").append(condBegin).append("\n");
+
+                String condEnd = "wrapper.le(dto.get" + colName + "End() != null, " + entityName + "::get" + colName +
+                        ", dto.get" + colName + "End());";
+                sb.append("            ").append(condEnd).append("\n");
+            }
         }
         return sb.toString();
     }

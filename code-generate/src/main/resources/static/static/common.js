@@ -633,6 +633,23 @@ function downloadJson(jsonStr, downFilename) {
 }
 
 /**
+ * 把给定的json字符串，进行格式化后返回
+ * @param str 未格式化的json串
+ * @returns {string} 格式化好的字符串
+ */
+function formatJsonStr(str) {
+    if (str === null || str === undefined || str.length === 0) {
+        return '';
+    }
+    try {
+        let json = JSON.parse(str);
+        return JSON.stringify(json, null, 4);
+    } catch (e) {
+        return '';
+    }
+}
+
+/**
  * 获取文件名的扩展名，没有扩展名返回空
  *
  * @param filename 文件名
@@ -696,6 +713,112 @@ function jsonp(url) {
     });
 }
 
+/**
+ * 把 x.x.x.x形式的IP地址，转换为整数返回
+ * 注：转换为无符号整型，如 '255.255.255.255'转为4294967295
+ * 即： (255*256*256*256) + (255*256*256) + (255*256) + 255
+ * @param ip 字符串格式的ip
+ * @returns {number} 无符号整数
+ */
+function ipaddrToNumber(ip) {
+    //return (ip.split('.').reduce((acc, cur) => (acc << 8) + parseInt(cur), 0)) >>> 0;
+    const ipArr = ip.split('.');
+    if (ipArr.length !== 4)
+        throw new Error('IP地址格式不对，应该有3个小数点');
+    let ret = 0;
+    // 验证每个项是否小于等于255
+    for (let i = 0; i < 4; i++) {
+        const number = parseInt(ipArr[i], 10);
+        if (isNaN(number) || number > 255 || number < 0)
+            throw new Error('IP地址中的每个项都应在0~255之间');
+        ret = (ret << 8) + number;
+    }
+    // 转无符号数，避免负数返回
+    return ret >>> 0;
+}
+
+/**
+ * 把一个无符号整数，转换为ip地址返回
+ * @param number ipaddrToNumber方法计算得出的无符号整数
+ * @returns {string} ip地址
+ */
+function numberToIpAddr(number) {
+    if (number < 0 || number > 4294967295) {
+        throw new Error('参数应在0~4294967295之间');
+    }
+    const ipArr = [];
+    for (let i = 3; i >= 0; i--) {
+        ipArr[i] = (number >>> (8 * (3 - i))) & 255;
+    }
+    return ipArr.join('.');
+}
+
+/**
+ * 给定的ip，是否在给定的ip起止范围内
+ * @param ip 要判断的ip
+ * @param startIP ip范围起始值
+ * @param endIp ip范围结束值
+ * @returns {boolean} 是否在范围内
+ */
+function inIpAddrRange(ip, startIP, endIp) {
+    const ipNum = ipaddrToNumber(ip);
+    const startIPNum = ipaddrToNumber(startIP);
+    const endIPNum = ipaddrToNumber(endIp);
+    return ipNum >= startIPNum && ipNum <= endIPNum;
+}
+
+/**
+ * 给定的ip，是否在给定的CIDR ip地址范围内
+ * CIDR是用ip网址+子网掩码的表示法，如 192.168.0.0/16
+ * @param ip 要判断的ip
+ * @param startIP ip网址起始值
+ * @param ipMaskNum 子网掩码
+ * @returns {boolean} 是否在范围内
+ */
+function inIpAddrCIDR(ip, startIP, ipMaskNum) {
+    const ipMask = parseInt(ipMaskNum, 10);
+    if (isNaN(ipMask) || ipMask < 1 || ipMask > 32)
+        throw new Error('子网掩码应在1~32之间');
+    const ipNum = ipaddrToNumber(ip);
+    const startIPNum = ipaddrToNumber(startIP);
+    const endIPNum = startIPNum + (Math.pow(2, 32 - ipMask) - 1);
+    console.log(startIPNum + ':' + endIPNum);
+    return ipNum >= startIPNum && ipNum <= endIPNum;
+}
+
+/**
+ * 判断给定的ip，是否属于 IANA定义的保留地址（即私有地址）
+ * @param ip 给定的ip
+ * @returns {boolean} 是否私有地址
+ */
+function isPrivateIpAddr(ip) {
+    const privateIp = [
+        ['0.0.0.0', '0.255.255.255'],  // 0.0.0.0/8
+        ['10.0.0.0', '10.255.255.255'],  // 10.0.0.0/8
+        ['100.64.0.0', '100.127.255.255'],  // 100.64.0.0/10
+        ['127.0.0.0', '127.255.255.255'],  // 127.0.0.0/8
+        ['169.254.0.0', '169.254.255.255'],  // 169.254.0.0/16
+        ['172.16.0.0', '172.31.255.255'],  // 172.16.0.0/12
+        ['192.0.0.0', '192.0.0.255'],  // 192.0.0.0/24
+        ['192.0.2.0', '192.0.2.255'],  // 192.0.2.0/24
+        ['192.88.99.0', '192.88.99.255'],  // 192.88.99.0/24
+        ['192.168.0.0', '192.168.255.255'],  // 192.168.0.0/16
+        ['198.18.0.0', '198.19.255.255'],  // 198.18.0.0/15
+        ['198.51.100.0', '198.51.100.255'],  // 198.51.100.0/24
+        ['203.0.113.0', '203.0.113.255'],  // 203.0.113.0/24
+        ['224.0.0.0', '239.255.255.255'],  // 224.0.0.0/4
+        ['233.252.0.0', '233.252.0.255'],  // 233.252.0.0/24
+        ['240.0.0.0', '255.255.255.254'],  // 240.0.0.0/4
+        ['255.255.255.255', '255.255.255.254'],  // 255.255.255.255/32
+    ];
+    for (const [startIP, endIP] of privateIp) {
+        if (inIpAddrRange(ip, startIP, endIP)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function ajaxSuccessCheck(response) {
     let vueApp = getVueInstance();
     // 外部业务，使用了loading作为ajax加载防重复逻辑
@@ -730,11 +853,7 @@ function ajaxError(error) {
 
     if (error.response && error.response.data) {
         console.log(JSON.stringify(error.response.data));
-        let msg = error.response.data['error'];
-        if (!msg) msg = error.response.data['error'];
-        if (!msg) msg = error.response.data['errMsg'];
-        if (!msg) msg = error.response.data['msg'];
-        if (!msg) msg = error.response.data['Msg'];
+        let msg = getErrorMsg(error.response);
         if (msg && msg === 'Unauthorized') {
             goLoginPage();
         } else {
@@ -748,11 +867,27 @@ function ajaxError(error) {
     }
 }
 
+function getErrorMsg(response) {
+    if (!response) return '';
+    if (response.msg) return response.msg;
+    if (!response.data) return '';
+    console.log(JSON.stringify(response.data));
+    let msg = response.data['error'];
+    if (!msg) msg = response.data['error'];
+    if (!msg) msg = response.data['errMsg'];
+    if (!msg) msg = response.data['msg'];
+    if (!msg) msg = response.data['Msg'];
+    return msg ? msg : '';
+}
+
 function goLoginPage() {
     top.location.href = $$BASE_URL + 'login.html?url=' + encodeURIComponent(location.href);
 }
 
-var globalPickOptions = {
+/**
+ * 使用举例 <el-date-picker :picker-options="globalPickOptions"
+ */
+window.globalPickOptions = {
     shortcuts: [
         {
             text: '最近3天',

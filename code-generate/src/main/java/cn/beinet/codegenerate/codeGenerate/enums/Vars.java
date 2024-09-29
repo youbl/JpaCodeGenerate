@@ -71,6 +71,14 @@ public enum Vars {
      * HTML文件的搜索条件区域内容
      */
     HTML_SEARCH_CONTENT("html_search_content"),
+    /**
+     * HTML文件里的日期搜索控件框使用的vue变量
+     */
+    HTML_SEARCH_DATE_VAR("search-date_var"),
+    /**
+     * HTML文件里的搜索方法提交前，对上面的日期vue变量进行合并
+     */
+    HTML_SEARCH_DATE_COMBINE("search-date_combine"),
 
     /**
      * HTML文件的表格区域内容

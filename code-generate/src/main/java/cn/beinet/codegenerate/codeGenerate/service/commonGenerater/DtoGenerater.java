@@ -62,14 +62,26 @@ public class DtoGenerater implements Generater {
         for (ColumnDto column : columns) {
             sb.append(getColumnComment(column));
             sb.append(getSizeAnnotate(column));
+
+            boolean isTime = (column.isLocalDateTime());
             String colDefine;
-            if (dtoUseTs != null && dtoUseTs && column.isLocalDateTime()) {
+            if (dtoUseTs != null && dtoUseTs && isTime) {
+                // 把LocalDateTime转换为时间戳返回
                 colDefine = getColumnDefineInner(column);
             } else {
                 sb.append(getDateFormatAnnotate(column));
                 colDefine = getColumnDefine(column);
             }
             sb.append(colDefine);
+
+            String colName = getFieldName(column.getColumn(), true);
+            if (isTime && HtmlGenerater.isSearchKey(column.getColumn())) {
+                // 搜索字段增加Begin和End区间条件字段
+                sb.append("    @DateTimeFormat(pattern = \"yyyy-MM-dd HH:mm:ss\")\n")
+                        .append("    private java.time.LocalDateTime ").append(colName).append("Begin;\n");
+                sb.append("    @DateTimeFormat(pattern = \"yyyy-MM-dd HH:mm:ss\")\n")
+                        .append("    private java.time.LocalDateTime ").append(colName).append("End;\n\n");
+            }
         }
         return sb.toString();
     }
