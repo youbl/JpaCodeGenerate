@@ -6,6 +6,14 @@ script引用下载地址：
     https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js
     https://unpkg.com/axios@1.6.7/dist/axios.min.js
 
+- base32
+base32编码、解码的库
+开源地址：
+    https://github.com/agnoster/base32-js
+script引用下载地址:
+    https://cdn.bootcdn.net/ajax/libs/base32/0.0.7/base32.min.js
+    https://cdn.bootcdn.net/ajax/libs/base32/0.0.7/base32.js
+
 - elemeIndex
 基于VUE的组件库，官网：
     https://element.eleme.cn/#/zh-CN/component/installation
@@ -31,6 +39,14 @@ script引用下载地址在：https://www.bootcdn.cn/otpauth/
 也可以去这里下载：https://cdnjs.com/libraries/otpauth
     https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.3.2/otpauth.umd.js
     https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.3.2/otpauth.umd.min.js
+
+- protobufjs
+基于javascript的protobuf序列化反序列化库。
+开源地址：
+    https://github.com/protobufjs/protobuf.js
+script引用下载地址：
+    https://cdn.bootcdn.net/ajax/libs/protobufjs/7.3.2/protobuf.js
+    https://cdn.bootcdn.net/ajax/libs/protobufjs/7.3.2/protobuf.min.js
 
 - qs
 把对象转换为url里的queryString，或把queryString转换为对象的库。
