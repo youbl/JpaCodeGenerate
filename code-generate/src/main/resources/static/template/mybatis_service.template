@@ -29,12 +29,12 @@ public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {
     }
 
     // find by primary key
-    public {{entity_name}}Dto findById(Long id) {
+    public {{entity_name}}Dto findById({{primary_key_type}} id) {
         return entityMapper.entity2dto(getById(id));
     }
 
     // insert or update data
-    public Long save{{entity_name}}({{entity_name}}Dto dto) {
+    public {{primary_key_type}} save{{entity_name}}({{entity_name}}Dto dto) {
         {{entity_name}} entity = entityMapper.dto2entity(dto);
         boolean result = (entity.get{{up_key_field}}() != null) ?
                 updateById(entity) : save(entity);

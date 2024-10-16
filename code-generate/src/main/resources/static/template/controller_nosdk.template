@@ -31,32 +31,32 @@ public class {{entity_name}}Controller {
     }
 
     @GetMapping("/{{low_entity_name}}")
-    public ResponseData<{{entity_name}}Dto> findById(@NonNull Long {{low_key_field}}) {
+    public ResponseData<{{entity_name}}Dto> findById(@NonNull {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.findById({{low_key_field}}));
     }
 
 {{start-modify_content}}
     @DeleteMapping("/{{low_entity_name}}")
     // @EventLog(subType = SubType.{{entity_name}}_DEL)
-    public ResponseData<Boolean> delById(@NonNull Long {{low_key_field}}) {
+    public ResponseData<Boolean> delById(@NonNull {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.removeById({{low_key_field}}));
     }
 
     @PutMapping("/{{low_entity_name}}")
     // @EventLog(subType = SubType.{{entity_name}}_UPDATE)
-    public ResponseData<Long> updateById(@RequestBody @NonNull {{entity_name}}Dto dto) {
+    public ResponseData<{{primary_key_type}}> updateById(@RequestBody @NonNull {{entity_name}}Dto dto) {
         Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
-        long newId = service.save{{entity_name}}(dto);
+        {{primary_key_type}} newId = service.save{{entity_name}}(dto);
         return ResponseData.ok(newId);
     }
 
     @PostMapping("/{{low_entity_name}}")
     // 要上报新增的主键，因此这里不能用注解@EventLog
-    public ResponseData<Long> insert(@RequestBody @NonNull {{entity_name}}Dto dto) {
+    public ResponseData<{{primary_key_type}}> insert(@RequestBody @NonNull {{entity_name}}Dto dto) {
         // clear primary key before insert
         dto.set{{up_key_field}}(null);
 
-        long newId = service.save{{entity_name}}(dto);
+        {{primary_key_type}} newId = service.save{{entity_name}}(dto);
         dto.set{{up_key_field}}(newId);
         //LogUtils.reportLog(SubType.{{entity_name}}_ADD, dto); // 事件上报代码
         return ResponseData.ok(newId);

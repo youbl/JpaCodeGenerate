@@ -49,6 +49,7 @@ public class MybatisMapperGenerater implements Generater {
         replaceSymbol(sb, Vars.TABLE_NAME, table);
 
         replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
+        replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
 
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }

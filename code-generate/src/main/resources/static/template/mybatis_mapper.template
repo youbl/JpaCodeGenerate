@@ -22,5 +22,5 @@ public interface {{entity_name}}Mapper extends BaseMapper<{{entity_name}}> {
             "</foreach> " +
             "ORDER BY a.{{low_key_field}} DESC" +
             "</script>")
-    List<{{entity_name}}> getListByIds(List<Long> idList);
+    List<{{entity_name}}> getListByIds(List<{{primary_key_type}}> idList);
 }

@@ -61,6 +61,7 @@ public class SdkGenerater implements Generater {
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, StringHelper.lowFirstChar(entityName));
         replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
+        replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
 
         return new GenerateResult(getFullFileName(entityName), sb.toString());
     }

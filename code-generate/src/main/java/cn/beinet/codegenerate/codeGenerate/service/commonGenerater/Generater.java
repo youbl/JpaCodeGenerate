@@ -122,6 +122,20 @@ public interface Generater {
     }
 
     /**
+     * 返回主键的数据类型
+     * @param columns 字段列表
+     * @return 数据类型
+     */
+    default String getKeyType(List<ColumnDto> columns) {
+        for (ColumnDto column : columns) {
+            if (column.isPrimaryKey()) {
+                return column.getManagerType();
+            }
+        }
+        return "Long";
+    }
+
+    /**
      * 获取程序包里的模板文件内容
      *
      * @return 内容

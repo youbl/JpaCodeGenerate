@@ -49,6 +49,10 @@ public enum Vars {
      */
     LOW_KEY_FIELD("low_key_field"),
     /**
+     * 主键的数据类型
+     */
+    KEY_TYPE("primary_key_type"),
+    /**
      * 生成文件的注释里的时间
      */
     DATE_TIME("date_time"),
