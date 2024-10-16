@@ -38,7 +38,13 @@ public class MybatisPlusCodeGenerateService {
         if (!StringUtils.hasLength(dto.getPackageResponseData())) {
             dto.setPackageResponseData(dto.getPackageName());
         } else {
-            dto.setPackageResponseData(trimPackage(dto.getPackageResponseData()));
+            String trimedPkg = trimPackage(dto.getPackageResponseData());
+
+            String endResponseData = ".ResponseData";
+            if (trimedPkg.endsWith(endResponseData)) {
+                trimedPkg = trimedPkg.substring(0, trimedPkg.length() - endResponseData.length());
+            }
+            dto.setPackageResponseData(trimedPkg);
         }
 
         Map<String, List<ColumnDto>> tableMap = dto.getTableMap();
@@ -133,7 +139,7 @@ public class MybatisPlusCodeGenerateService {
 
     private String hidePath(String file) {
         file = file.replace(basePath, "");
-        if (file.length() > 0 && (file.charAt(0) == '/' || file.charAt(0) == '\\')) {
+        if (!file.isEmpty() && (file.charAt(0) == '/' || file.charAt(0) == '\\')) {
             file = file.substring(1);
         }
         return file;
