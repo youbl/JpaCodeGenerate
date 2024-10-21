@@ -441,6 +441,9 @@
                     return;
                 let url = $$BASE_URL + 'codeMybatis/generatePreview';
                 axios.post(url, this.codeCond).then((response) => {
+                    if (!response.data || response.data.code) {
+                        return alert(getErrorMsg(response));
+                    }
                     this.codeFiles = response.data;
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dal.**"})';
@@ -454,6 +457,9 @@
                 // 用Qs库，避免 tables[0]这种传输语法
                 let url = $$BASE_URL + 'codeMybatis/generateAndZip?';// + Qs.stringify(this.codeCond, {arrayFormat: 'repeat'});
                 axios.post(url, this.codeCond).then((response) => {
+                    if (!response.data || response.data.code) {
+                        return alert(getErrorMsg(response));
+                    }
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeLink = $$BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     window.open(this.codeLink);
