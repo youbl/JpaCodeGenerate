@@ -10,13 +10,13 @@
     <script src="../res/elemeIndex.js" type="text/javascript"></script>
     <link href="../res/elemeIndex.css" rel="stylesheet">
 </head>
-<body style="overflow: hidden;"><!-- 禁用浏览器的纵向滚动条 -->
+<body style="overflow: hidden;margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f9fc;"><!-- 禁用浏览器的纵向滚动条 -->
 <h1>
 1、请修改页面上面的script和link的src，确保引用正确；<br>
 2、请确认common.js文件里定义的$$BASE_URL 根路径是正确的。
 </h1>
-<div id="divApp" style="text-align: center;width: 98%; height: 100vh; overflow: hidden;"> <!-- 设置容器高度 -->
-    <el-form :inline="true" class="demo-form-inline" style="text-align: left">
+<div id="divApp" style="text-align: center;width: 98%; height: 100vh; overflow: hidden; padding: 10px; box-sizing: border-box;"> <!-- 设置容器高度 -->
+    <el-form :inline="true" class="demo-form-inline" style="text-align: left;margin-bottom: 5px;padding-left: 5px;width: 100%; background-color: #ffffff;border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
 {{html_search_content}}
         <el-form-item>
             <el-button @click="loadDatas()" type="primary" size="mini">查询</el-button>
