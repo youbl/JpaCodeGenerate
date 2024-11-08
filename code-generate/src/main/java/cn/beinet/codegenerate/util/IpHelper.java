@@ -45,7 +45,7 @@ public class IpHelper {
      */
     public static String getOuterIp(String ipUrl) {
         if (!StringUtils.hasLength(ipUrl)) {
-            ipUrl = "https://www.taobao.com/help/getip.php";
+            ipUrl = "https://tools01.ziniao.com/get_ip";
         }
         HttpURLConnection conn = null;
         try {

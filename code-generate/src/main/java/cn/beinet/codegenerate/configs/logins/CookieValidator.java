@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequiredArgsConstructor
 @Slf4j
 public class CookieValidator implements Validator {
-    // 登录token有效时长，【604,800】是7天的秒数
+    // 登录token有效时长, 超过要重新登录
     @Value("${login.keepSecond:604800}")
     private long loginSecond;
 
@@ -53,6 +53,9 @@ public class CookieValidator implements Validator {
     }
 
     private boolean isSuccess(TokenHelper.Token loginUser) {
-        return loginUser != null && loginUser.getSeconds() < loginSecond;
+        if (loginUser == null) {
+            return false;
+        }
+        return loginUser.getSeconds() < loginSecond;
     }
 }

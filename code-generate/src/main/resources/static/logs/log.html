@@ -78,8 +78,9 @@
 
         当前登录用户: {{loginuser}}
         <el-button icon="el-icon-refresh" @click="location.reload()" size="mini">刷新</el-button>
-        <span style="padding-left:20px;"
+        <span style="padding-left:20px;color: blue;"
               v-show="resultData.length">请求耗时: {{costTime}}ms, 数据条数: {{resultData.length}}</span>
+        <span>请求信息: {{serverInfo}}</span>
     </el-form>
     <br>
 
@@ -121,6 +122,7 @@
     const vueApp = new Vue({
         el: '#divApp',
         data: {
+            serverInfo: '',
             loginuser: '',
             loading: false,
 
@@ -145,12 +147,22 @@
             selectedFieldValue: '',
         },
         created: function () {
+            this.getServerInfo();
             this.getLoginUser();
             this.getConditions();
             this.getLogs();
         },
         computed: {},
         methods: {
+            getServerInfo: function () {
+                let url = $$BASE_URL + 'test/sip';
+                return axios.get(url).then(response => {
+                    this.serverInfo = response.data;
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
             handleTabClick: function (tab, event) {
             },
             getConditions: function () {

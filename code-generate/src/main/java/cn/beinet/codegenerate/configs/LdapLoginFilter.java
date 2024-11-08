@@ -36,6 +36,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Order(-999) // 需要设置登录信息，所以filter的顺序要高一些
 public class LdapLoginFilter extends BaseFilter {
+    // 要不要登录
+    @Value("${login.needLogin:1}")
+    private int needLogin;
 
     @Value("${spring.ldap.email-domain}")
     private String emailDomain;
@@ -49,8 +52,6 @@ public class LdapLoginFilter extends BaseFilter {
 
     // 登录认证地址
     private static final String loginActionPage = "/login";
-    // 第三方认证回调地址
-    private static final String loginCallbackPage = "/authCallback";
 
     private final List<Validator> validatorList;
     private final ImgCodeService codeService;
@@ -62,6 +63,11 @@ public class LdapLoginFilter extends BaseFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (needLogin == 0) {
+            request.setAttribute(LOGIN_INFO, "匿名");
+            filterChain.doFilter(request, response);
+            return;
+        }
         //request.getRequestURL() 带有域名，所以不用
         //request.getRequestURI() 带有ContextPath，所以不用
         String url = request.getServletPath();
