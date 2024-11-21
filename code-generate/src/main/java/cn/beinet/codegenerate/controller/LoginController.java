@@ -31,7 +31,7 @@ public class LoginController {
 
     private final LdapLoginFilter ldapLoginFilter;
 
-    @Value("${spring.ldap.email-domain:}")
+    @Value("${login.emailDomain:}")
     private String emailDomain;
 
 

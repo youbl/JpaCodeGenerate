@@ -29,8 +29,9 @@ spring:
     email-domain: "beinet.cn"  # 登录ldap时，如果配置了此域名，会在用户名后添加@域名
 
 login:
-  needLogin: 0       # 1表示要登录，0表示不需要登录即可使用系统
+  needLogin: 1       # 1表示要登录，0表示不需要登录即可使用系统
   keepSecond: 86400  # 登录token有效时长, 超过要重新登录
+  emailDomain: "beinet.cn"
 
 logging:
   level:

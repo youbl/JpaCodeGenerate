@@ -2,9 +2,7 @@ package cn.beinet.codegenerate.service;
 
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * 生成随机盐值的服务类。
@@ -35,11 +33,15 @@ public class SaltService {
      */
     public String getSalt(int keepDays) {
         LocalDateTime now = LocalDateTime.now();
-        if (salt == null || Duration.between(saltTime, now).toDays() > keepDays) {
-            // 多实例部署，必须把生成的salt存入Redis或数据库，还要考虑乐观锁，避免冲突
-            salt = UUID.randomUUID().toString();
-            saltTime = now;
-        }
-        return salt;
+        int tmp = now.getDayOfMonth() % keepDays;
+        long ret = now.getYear() * 10000L + now.getMonthValue() * 100 + tmp;
+        return String.valueOf(ret);
+        // 下面代码重启会导致要重新登录
+//        if (salt == null || Duration.between(saltTime, now).toDays() > keepDays) {
+//            // 多实例部署，必须把生成的salt存入Redis或数据库，还要考虑乐观锁，避免冲突
+//            salt = UUID.randomUUID().toString();
+//            saltTime = now;
+//        }
+//        return salt;
     }
 }
