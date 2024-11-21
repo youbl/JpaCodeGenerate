@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring配置对比</title>
+    <script src="../static/common.js?v=1"></script>
+    <script src="../static/vue.min.js"></script>
+    <script src="../static/axios.min.js"></script>
+    <script src="../static/elemeIndex.js"></script>
+    <link rel="stylesheet" href="../static/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+<div style="font-size:12px;padding-bottom: 5px;">
+    <a href="https://docs.spring.io/spring-cloud-config/docs/current/reference/html/" target="_blank">Spring Cloud
+        Config Server访问参考</a>
+    格式：/{spring.application.name}/{spring.profile.active}/{spring.cloud.config.label} 注：lable就是git分支名，默认master
+</div>
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <el-form-item label="对比的源" style="font-weight: bold;">
+            <el-form-item label="spring-config-server.url">
+                <input type="text" v-model.trim="searchCond.configTestUrl" style="width:240px"
+                       :readonly="!isTestCustom"/>
+            </el-form-item>
+            <el-form-item label="应用名">
+                <input type="text" v-model.trim="searchCond.configTestApp" style="width:60px"
+                       :readonly="!isTestCustom"/>
+            </el-form-item>
+            <el-form-item label="profile">
+                <input type="text" v-model.trim="searchCond.configTestProfile" style="width:60px"
+                       :readonly="!isTestCustom"/>
+            </el-form-item>
+            <el-form-item label="label">
+                <input type="text" v-model.trim="searchCond.configTestLabel" style="width:60px"
+                       :readonly="!isTestCustom"/>
+            </el-form-item>
+        </el-form-item>
+        <br>
+
+        <el-form-item label="对比目标" style="font-weight: bold;">
+            <el-form-item label="spring-config-server.url">
+                <input type="text" v-model.trim="searchCond.configProdUrl" style="width:240px"
+                       :readonly="!isProdCustom"/>
+            </el-form-item>
+            <el-form-item label="应用名">
+                <input type="text" v-model.trim="searchCond.configProdApp" style="width:60px"
+                       :readonly="!isProdCustom"/>
+            </el-form-item>
+            <el-form-item label="profile">
+                <input type="text" v-model.trim="searchCond.configProdProfile" style="width:60px"
+                       :readonly="!isProdCustom"/>
+            </el-form-item>
+            <el-form-item label="label">
+                <input type="text" v-model.trim="searchCond.configProdLabel" style="width:60px"
+                       :readonly="!isProdCustom"/>
+            </el-form-item>
+        </el-form-item>
+        <br>
+
+        <el-form-item>
+            <el-button type="primary" icon="el-icon-search" @click="compareConfig('searchForm')">对 比</el-button>
+            显示：
+            <el-radio-group v-model="searchCond.onlyDiff">
+                <el-radio :label="0">全部</el-radio>
+                <el-radio :label="1">仅差异项</el-radio>
+                <el-radio :label="2">仅忽略项</el-radio>
+            </el-radio-group>&nbsp;&nbsp;&nbsp;&nbsp;
+            <el-button icon="el-icon-edit" @click="restoreAllIgnore()">恢复所有忽略项</el-button>
+
+            <el-button type="primary" icon="el-icon-edit" @click="doGenerateYml">差异项yml生成</el-button>
+
+            <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
+            <a href="javascript:void(0)" @click="switchConfig()">源<=>目标</a>
+            |
+            <a href="javascript:void(0)" @click="copyToTarget()">源=>目标</a>
+            |
+            <a href="javascript:void(0)" @click="copyToSource()">目标=>源</a>
+        </el-form-item>
+        <div>
+            <span style="padding-left:20px;">共{{attData.length}}个配置项，{{filteredTableData.length}}个差异项</span>
+            <span style="color:red;"></span>
+        </div>
+    </el-form>
+    <br>
+
+    <el-table v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              :data="filteredTableData"
+              :header-row-class-name="'tableHeader'"
+              style="width: 100%">
+        <el-table-column
+                prop="key"
+                label="键名"
+                width="420">
+        </el-table-column>
+        <el-table-column
+                label="对比源"
+                width="660">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.test"></el-input>
+            </template>
+        </el-table-column>
+        <el-table-column
+                label="对比目标"
+                width="660">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.prod"></el-input>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-dialog title="YML配置生成" :visible.sync="generateYmlShow">
+        <template>
+            <span style="border: #66b1ff solid 1px;">
+                <label><input type="radio" value="test" name="radGenYml" v-model="generateYmlTarget"
+                              @change="doGenerateYml">以源为准</label>
+                <label><input type="radio" value="prod" name="radGenYml" v-model="generateYmlTarget"
+                              @change="doGenerateYml">以目标为准</label>
+            </span>
+            &nbsp;&nbsp;
+            <span style="border: #66b1ff solid 1px;">
+                <label><input type="radio" value="diff" name="radYmlType" v-model="generateYmlType"
+                              @change="doGenerateYml">仅生成差异项</label>
+                <label><input type="radio" value="all" name="radYmlType" v-model="generateYmlType"
+                              @change="doGenerateYml">生成全部配置</label>
+            </span>
+            &nbsp;&nbsp;
+            <el-checkbox v-model="generateExceptIgnore" @change="doGenerateYml">生成时不含忽略项</el-checkbox>
+            <el-checkbox v-model="generateSplitYml" @change="doGenerateYml">YML多行格式</el-checkbox>
+        </template>
+        <div>
+            <el-input
+                    type="textarea"
+                    :rows="20"
+                    v-model="generateYml">
+            </el-input>
+        </div>
+    </el-dialog>
+</div>
+<script>
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            searchCond: {
+                configTestUrl: 'https://config-dev.beinet.cn/',
+                configTestApp: 'beinet-app',
+                configTestProfile: 'dev',
+                configTestLabel: 'test',
+
+                configProdUrl: 'https://config-dev.beinet.cn/',
+                configProdApp: 'beinet-app',
+                configProdProfile: 'test',
+                configProdLabel: 'test',
+
+                onlyDiff: 1,
+            },
+
+            loading: false,
+            configTest: {},         // 左边的配置明细
+            configProd: {},         // 右边的配置明细
+            attData: [],            // 左右合并的所有配置key和左值、右值列表
+            ignoreKeys: {  // 不加载的key列表，不作对比和展示. 注：下面的“1”无具体意义
+                'spring.datasource.url': 1,
+                'spring.datasource.username': 1,
+                'spring.datasource.password': 1,
+                'spring.jpa.show_sql': 1,
+                //'spring.jpa.hibernate.ddl-auto': 1,
+                'spring.redis.host': 1,
+                'spring.redis.port': 1,
+                'spring.redis.database': 1,
+                'spring.redis.password': 1,
+                //'spring.redis.timeout': 1,
+                'spring.rabbitmq.host': 1,
+                'spring.rabbitmq.username': 1,
+                'spring.rabbitmq.password': 1,
+                'spring.rabbitmq.port': 1,
+            },
+            ignoreKeyByProject: {},// 每个项目要忽略的key列表
+
+            generateYmlShow: false,
+            generateYmlTarget: 'test',
+            generateYml: '',
+            generateSplitYml: true,
+            generateExceptIgnore: true,
+            generateYmlType: 'diff',
+
+            defaultName: '',
+        },
+        created: function () {
+            this.defaultName = getQueryString('name');
+            if (!this.defaultName)
+                this.defaultName = 'beinet-prod';
+        },
+        computed: {
+            // 用于展示的内容
+            filteredTableData: function () {
+                if (this.searchCond.onlyDiff === 1) {
+                    // 过滤掉不相等的项，也过滤掉只有环境差异的url
+                    return this.attData.filter(item => {
+                        if (this.isIgnoreKeyByProj(item.key))
+                            return false;
+                        if (item.test === item.prod)
+                            return false;
+                        let testVal = this.removeEnvStr(item.test);
+                        return (item.test !== item.prod
+                            && testVal !== item.prod
+                            && testVal !== this.removeEnvStr(item.prod));
+                    });
+                }
+
+                if (this.searchCond.onlyDiff === 2) {
+                    // 只展示过滤项
+                    return this.attData.filter(item => {
+                        if (this.isIgnoreKeyByProj(item.key))
+                            return true;
+                        return false;
+                    });
+                }
+
+                return this.attData;
+            },
+            isTestCustom: function () {
+                return true;
+            },
+            isProdCustom: function () {
+                return true;
+            },
+        },
+        methods: {
+            switchConfig: function () {
+                let url = this.searchCond.configTestUrl;
+                let app = this.searchCond.configTestApp;
+                let profile = this.searchCond.configTestProfile;
+                let label = this.searchCond.configTestLabel;
+
+                this.searchCond.configTestUrl = this.searchCond.configProdUrl;
+                this.searchCond.configTestApp = this.searchCond.configProdApp;
+                this.searchCond.configTestProfile = this.searchCond.configProdProfile;
+                this.searchCond.configTestLabel = this.searchCond.configProdLabel;
+
+                this.searchCond.configProdUrl = url;
+                this.searchCond.configProdApp = app;
+                this.searchCond.configProdProfile = profile;
+                this.searchCond.configProdLabel = label;
+            },
+            copyToTarget: function () {
+                this.searchCond.configProdUrl = this.searchCond.configTestUrl;
+                this.searchCond.configProdApp = this.searchCond.configTestApp;
+                this.searchCond.configProdProfile = this.searchCond.configTestProfile;
+                this.searchCond.configProdLabel = this.searchCond.configTestLabel;
+            },
+            copyToSource: function () {
+                this.searchCond.configTestUrl = this.searchCond.configProdUrl;
+                this.searchCond.configTestApp = this.searchCond.configProdApp;
+                this.searchCond.configTestProfile = this.searchCond.configProdProfile;
+                this.searchCond.configTestLabel = this.searchCond.configProdLabel;
+            },
+
+            init: function () {
+                this.attData = [];
+            },
+
+            // 从配置的值里移除env因素后，再对比
+            removeEnvStr: function (str) {
+                return str.replace(/dev/g, '')
+                    .replace(/test/g, '')
+                    .replace(/pre/g, '')
+                    .replace(/prod/g, '');
+            },
+
+            // 拼接spring cloud config server的访问url
+            getPara: function (isProd) {
+                let ip = isProd ? this.searchCond.configProdUrl : this.searchCond.configTestUrl;
+                if (!ip)
+                    return '';
+                if (!ip.endsWith('/')) {
+                    ip += '/';
+                    if (isProd)
+                        this.searchCond.configProdUrl = ip;
+                    else
+                        this.searchCond.configTestUrl = ip;
+                }
+
+                let url = isProd ? this.searchCond.configProdUrl : this.searchCond.configTestUrl;
+                let app = isProd ? this.searchCond.configProdApp : this.searchCond.configTestApp;
+                let profile = isProd ? this.searchCond.configProdProfile : this.searchCond.configTestProfile;
+                let label = isProd ? this.searchCond.configProdLabel : this.searchCond.configTestLabel;
+
+                return {url: ip, application: app, profile: profile, label: label};
+            },
+
+            filterGenerateData: function () {
+                return this.attData.filter(item => {
+                    // 生成时不含忽略项
+                    if (this.generateExceptIgnore && this.isIgnoreKeyByProj(item.key))
+                        return false;
+
+                    if (this.generateYmlType === 'all')
+                        return true;
+
+                    // 仅差异项时判断
+                    if (item.test === item.prod)
+                        return false;
+
+                    let testVal = this.removeEnvStr(item.test);
+                    return (item.test !== item.prod
+                        && testVal !== item.prod
+                        && testVal !== this.removeEnvStr(item.prod));
+                });
+            },
+
+            doGenerateYml: function () {
+                if (!this.attData || this.attData.length <= 0) {
+                    return alert('请先对比');
+                }
+                let diffData = this.filterGenerateData();
+                if (!diffData) {
+                    return alert('未找到配置差异');
+                }
+
+                this.generateYmlShow = true;
+                // 允许横向滚动条
+                setTimeout(function () {
+                    document.getElementsByTagName('textarea')[0].wrap = 'off';
+                }, 100);
+
+                if (!this.generateSplitYml) {
+                    this.generateYml = this.generateLine(diffData);
+                } else {
+                    let jobj = {};
+                    for (let i = 0, j = diffData.length; i < j; i++) {
+                        let item = diffData[i];
+                        let val = '';
+                        if (this.generateYmlTarget === 'test') {
+                            val = item.test;
+                        } else {
+                            val = item.prod;
+                        }
+                        this.generateJsonObj(jobj, item.key, val);
+                    }
+                    this.generateYml = this.generateYmlByJsonObj(jobj, '');
+                }
+                if (this.generateYml.indexOf('******') > 0) {
+                    alert('包含被隐藏的密码，请勿直接使用');
+                }
+            },
+            generateLine: function (diffData) {
+                let ret = '';
+                for (let i = 0, j = diffData.length; i < j; i++) {
+                    let item = diffData[i];
+                    ret += item.key + ': "';
+                    if (this.generateYmlTarget === 'test') {
+                        ret += item.test;
+                    } else {
+                        ret += item.prod;
+                    }
+                    ret += '"\n';
+                }
+                return ret;
+            },
+            // 拆分key，并插入jobj对象属性
+            generateJsonObj: function (jobj, key, val) {
+                let splitCh = '.';
+                let idx = key.indexOf(splitCh);
+                if (idx > 0) {
+                    let leftKey = key.substring(0, idx);
+                    key = key.substring(idx + 1);
+                    if (!jobj.hasOwnProperty(leftKey)) {
+                        jobj[leftKey] = {};
+                    }
+                    this.generateJsonObj(jobj[leftKey], key, val);
+                } else {
+                    jobj[key] = val;
+                }
+            },
+            generateYmlByJsonObj: function (jobj, tab) {
+                if (jobj === null || typeof (jobj) === 'string')
+                    return '"' + jobj + '"';
+
+                let ret = '';
+                // if (tab.length > 0)
+                //     ret += '\n';
+                for (let att in jobj) {
+                    if (jobj.hasOwnProperty(att)) {
+                        ret += '\n' + tab + att + ': ' + this.generateYmlByJsonObj(jobj[att], tab + '  ');
+                    }
+                }
+                return ret;
+            },
+
+            setByDefault: function (prop, arr) {
+                if (arr.length <= 0) {
+                    this.searchCond[prop] = '';
+                    return;
+                }
+                if (this.defaultName) {
+                    for (let i = 0, j = arr.length; i < j; i++) {
+                        if (arr[i].indexOf(this.defaultName) >= 0) {
+                            this.searchCond[prop] = arr[i];
+                            return;
+                        }
+                    }
+                }
+                this.searchCond[prop] = arr[0];
+            },
+            compareConfig: function (formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (!valid) {
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.init();
+                    this.loadConfigs(false)
+                        .then(this.loadIgnoreKeyByProj)
+                        .then(() => {
+                            this.loadConfigs(true).then(this.compareDo)
+                        });
+                });
+            },
+
+            // 展示忽略按钮的文字
+            getBtnTxt: function (key) {
+                if (this.isIgnoreKeyByProj(key))
+                    return '恢复';
+                return '忽略';
+            },
+            operateIgnoreKey: function (key) {
+                if (this.isIgnoreKeyByProj(key))
+                    return this.delIgnoreKey(key);
+                return this.addIgnoreKey(key);
+            },
+            // 保存忽略的key
+            addIgnoreKey: function (key) {
+                let appNam = this.getCompareKey();
+                Vue.set(this.ignoreKeyByProject[appNam], key, 1);
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                return axios.post(url).then((response) => {
+                }).catch((error) => {
+                    this.ajaxError(error);
+                });
+            },
+            // 移除已忽略的key，就是不忽略
+            delIgnoreKey: function (key) {
+                let appNam = this.getCompareKey();
+                Vue.delete(this.ignoreKeyByProject[appNam], key);
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=' + encodeURIComponent(key);
+                return axios.delete(url).then((response) => {
+                }).catch((error) => {
+                    this.ajaxError(error);
+                });
+            },
+            restoreAllIgnore: function () {
+                let msg = '当前源和目标，所有忽略差异项，都将重新提示，是否确认？';
+                if (!confirm(msg)) {
+                    return;
+                }
+                let appNam = this.getCompareKey();
+                Vue.set(this.ignoreKeyByProject, appNam, {});
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam) + '&key=all';
+                return axios.delete(url).then((response) => {
+                }).catch((error) => {
+                    this.ajaxError(error);
+                });
+            },
+            // 加载当前项目忽略的key列表
+            loadIgnoreKeyByProj: function () {
+                let appNam = this.getCompareKey();
+                if (this.ignoreKeyByProject[appNam]) {
+                    return new Promise(resolve => {
+                        resolve();
+                    });
+                }
+                let url = $$BASE_URL + 'v1/nacos/ignore?app=' + encodeURIComponent(appNam);
+                return axios.get(url).then((response) => {
+                    if (!response.data || response.data.length <= 0) {
+                        Vue.set(this.ignoreKeyByProject, appNam, {});
+                    } else {
+                        let obj = {};
+                        for (let i = 0, j = response.data.length; i < j; i++) {
+                            let item = response.data[i].trim();
+                            if (item.length <= 0)
+                                continue;
+                            obj[item] = 1;
+                        }
+                        Vue.set(this.ignoreKeyByProject, appNam, obj);
+                    }
+                }).catch((error) => {
+                    this.ajaxError(error);
+                });
+            },
+            isIgnoreKeyGlobal: function (att) {
+                if (this.ignoreKeys[att]) {
+                    return true;
+                }
+                if (att.indexOf('logging.level.') === 0) {
+                    return true; // 忽略 日志配置
+                }
+                return false;
+            },
+            isIgnoreKeyByProj: function (att) {
+                let appNam = this.getCompareKey();
+                if (this.ignoreKeyByProject[appNam] && this.ignoreKeyByProject[appNam][att]) {
+                    return true;
+                }
+                return false;
+            },
+            getCompareKey: function () {
+                return this.searchCond.configProdUrl + '-' +
+                    this.searchCond.configProdApp + '-' +
+                    this.searchCond.configProdProfile + '-' +
+                    this.searchCond.configProdLabel + '-' +
+                    this.searchCond.configTestUrl + '-' +
+                    this.searchCond.configTestApp + '-' +
+                    this.searchCond.configTestProfile + '-' +
+                    this.searchCond.configTestLabel;
+            },
+            loadConfigs: function (isProd) {
+                let configServerDto = this.getPara(isProd);
+                let urlConfig = $$BASE_URL + 'v1/configServer/config';
+                return axios.post(urlConfig, configServerDto).then(response => {
+                    let resultData = {};
+                    let txt = isProd ? '目标' : '源';
+                    if (!response.data) {
+                        return alert(txt + '环境配置加载有误');
+                    }
+
+                    for (let att in response.data) {
+                        if (this.isIgnoreKeyGlobal(att)) {
+                            continue;
+                        }
+                        if (resultData[att]) {
+                            continue;// 以最前面的att为准
+                        }
+                        resultData[att] = response.data[att] + '';
+                    }
+                    // 为空也要比较
+                    //if (!hasAnyProperty(resultData)) {
+                    //    return alert(txt + '环境配置为空');
+                    //}
+                    if (isProd) {
+                        this.configProd = resultData;
+                    } else {
+                        this.configTest = resultData;
+                    }
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            compareDo: function () {
+                if (!this.configProd) {
+                    this.loading = false;
+                    return alert('目标配置加载失败，请重试');
+                }
+                if (!this.configTest) {
+                    this.loading = false;
+                    return alert('源配置加载失败，请重试');
+                }
+                let loadedAtt = {};
+                for (let att in this.configTest) {
+                    loadedAtt[att] = 1;
+                    let test = this.configTest[att];
+                    let prod = this.configProd[att];
+                    let row = {
+                        key: att,
+                        test: test === undefined ? '' : test,
+                        prod: prod === undefined ? '' : prod,
+                    };
+                    this.attData.push(row);
+                }
+                for (let att in this.configProd) {
+                    if (loadedAtt[att]) {
+                        continue;
+                    }
+                    let test = this.configTest[att];
+                    let prod = this.configProd[att];
+                    let row = {
+                        key: att,
+                        test: test === undefined ? '' : test,
+                        prod: prod === undefined ? '' : prod,
+                    };
+                    this.attData.push(row);
+                }
+                this.loading = false;
+            },
+            ajaxError: function (error) {
+                window.ajaxError(error, vueApp);
+            },
+        },
+    });
+</script>
+</body>
+</html>
