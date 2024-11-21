@@ -125,10 +125,10 @@ public class ConfigServerDiffService {
 
         // 按从低到高，添加配置
         List<Map<String, Object>> ret = new ArrayList<>();
-        if (applicationBase != null) {
+        if (!dto.isIgnoreGlobal() && applicationBase != null) {
             ret.add(applicationBase);
         }
-        if (applicationProfile != null) {
+        if (!dto.isIgnoreGlobal() && applicationProfile != null) {
             ret.add(applicationProfile);
         }
         if (appBase != null) {

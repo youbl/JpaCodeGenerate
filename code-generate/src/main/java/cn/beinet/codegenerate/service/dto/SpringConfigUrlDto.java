@@ -13,6 +13,7 @@ public class SpringConfigUrlDto {
     private String application;
     private String profile;
     private String label;
+    private boolean ignoreGlobal;
 
     public String getUrl() {
         if (url == null) {

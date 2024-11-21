@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.logins.Validator;
 import cn.beinet.codegenerate.configs.thirdLogin.ThirdLoginService;
 import cn.beinet.codegenerate.service.SaltService;
+import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.TokenHelper;
 import lombok.RequiredArgsConstructor;
@@ -167,9 +168,9 @@ public class LdapLoginFilter extends BaseFilter {
 
         // 需要注意的是，在nginx里转发，要配置 proxy_set_header Host $host;
         // 否则这里拿到的只会是 localhost
-        //String baseDomain = RequestHelper.getBaseDomain(request);
+        String baseDomain = RequestHelper.getBaseDomain(request);
         // 设置为二级域名用，便于跨域统一登录
-        //loginCookie.setDomain(baseDomain);
+        loginCookie.setDomain(baseDomain);
         response.addCookie(loginCookie);
     }
 

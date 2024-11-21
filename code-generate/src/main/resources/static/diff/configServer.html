@@ -72,6 +72,8 @@
         <br>
 
         <el-form-item>
+            <el-checkbox v-model="searchCond.ignoreGlobal">忽略applicaion全局配置</el-checkbox>
+
             <el-button type="primary" icon="el-icon-search" @click="compareConfig('searchForm')">对 比</el-button>
             显示：
             <el-radio-group v-model="searchCond.onlyDiff">
@@ -170,6 +172,7 @@
                 configProdLabel: 'test',
 
                 onlyDiff: 1,
+                ignoreGlobal: true,
             },
 
             loading: false,
@@ -303,7 +306,13 @@
                 let profile = isProd ? this.searchCond.configProdProfile : this.searchCond.configTestProfile;
                 let label = isProd ? this.searchCond.configProdLabel : this.searchCond.configTestLabel;
 
-                return {url: ip, application: app, profile: profile, label: label};
+                return {
+                    url: ip,
+                    application: app,
+                    profile: profile,
+                    label: label,
+                    ignoreGlobal: this.searchCond.ignoreGlobal
+                };
             },
 
             filterGenerateData: function () {
