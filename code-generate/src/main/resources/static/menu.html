@@ -164,6 +164,8 @@
         },
         mounted: function () {
             let saasId = getQueryString('id');
+            if (!saasId)
+                saasId = getQueryString('saasId');
             this.loadMenus(saasId);
         },
         computed: {},

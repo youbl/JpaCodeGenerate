@@ -62,7 +62,7 @@ function vueAlert(msg, duration) {
 
 /**
  * 获取url里的变量值
- * @param {string} name 变量名
+ * @param {string} name 变量名, 忽略大小写
  * @return {string} 变量值
  */
 function getQueryString(name) {
@@ -73,7 +73,7 @@ function getQueryString(name) {
     if (name.length === 0) {
         return '';
     }
-    let localSearch = location.search.toLocaleLowerCase();
+    let localSearch = location.search.toLowerCase();
     name = name.toLowerCase() + '=';
     let tmpName = '?' + name;
     let idx = localSearch.indexOf(tmpName);
