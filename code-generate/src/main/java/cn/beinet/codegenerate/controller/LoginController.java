@@ -38,7 +38,7 @@ public class LoginController {
     /**
      * 获取图形验证码
      *
-     * @return
+     * @return 图形验证码的图片和序号
      */
     @GetMapping("login/imgcode")
     public ImgCodeService.ImgCodeDto getImgCode() {
@@ -46,7 +46,11 @@ public class LoginController {
     }
 
 
-    // 返回当前登录用户
+    /**
+     * 返回当前登录用户
+     * @param authDetails 当前登录上下文
+     * @return 登录用户名
+     */
     @GetMapping("currentuser")
     public String getLoginUser(AuthDetails authDetails) {
         return authDetails.getAccount();

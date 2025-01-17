@@ -11,6 +11,9 @@ import cn.beinet.codegenerate.util.SpringUtil;
 public final class Consts {
     public static final String SDK_HEADER_NAME = "simple-auth";
 
+    // 登录Cookie有效时长， 秒
+    public static final int LOGIN_KEEP_SECOND = 30 * 24 * 3600;
+
     public static String getSdkAppKey() {
         return SpringUtil.getEnv().getProperty("sdk.app-key");
     }

@@ -160,7 +160,7 @@ public class LdapLoginFilter extends BaseFilter {
         if (username.isEmpty()) {
             loginCookie.setMaxAge(0);
         } else {
-            loginCookie.setMaxAge(7 * 24 * 3600);
+            loginCookie.setMaxAge(Consts.LOGIN_KEEP_SECOND);
             String token = TokenHelper.buildNewToken(username, saltService.getSalt());
             log.debug("登录成功:{}", token);
             loginCookie.setValue(token);

@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.configs.logins;
 
+import cn.beinet.codegenerate.configs.Consts;
 import cn.beinet.codegenerate.service.SaltService;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.TokenHelper;
@@ -22,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 public class CookieValidator implements Validator {
     // 登录token有效时长, 超过要重新登录
-    @Value("${login.keepSecond:604800}")
+    @Value("${login.keepSecond:" + Consts.LOGIN_KEEP_SECOND + "}")
     private long loginSecond;
 
     // 用于获取token的md5加密随机盐值，确保安全性

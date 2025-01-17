@@ -39,7 +39,7 @@ logging:
 
 getip-url: https://tools01.ziniao.com/get_ip
 
-default-saas: eb
+default-saas: ml
 
 ip-filter:
   white-ip: # 客户端IP，以这些IP为前缀时，才允许访问
