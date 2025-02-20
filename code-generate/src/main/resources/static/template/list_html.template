@@ -58,7 +58,7 @@
 {{start-modify_content}}
     <!-- 编辑窗口 -->
     <el-dialog :visible.sync="statusEditDialog" :title="(editRow.{{low_key_field}}?'编辑界面':'新增界面')">
-        <el-form size="mini" :model="editRow" ref="editRowForm" style="width:700px">
+        <el-form size="mini" :model="editRow" ref="editRowForm" :rules="ruleEditForm" style="width:700px">
 {{html_edit_content}}
         </el-form>
         <div class="dialog-footer" slot="footer">
@@ -87,6 +87,12 @@
 {{start-modify_content}}
                 statusEditDialog: false,
                 editRow: {},
+                ruleEditForm: {
+                    id: [
+                        {required: true, message: '必填项请输入', trigger: 'blur'},
+                        //{pattern: /^\d+$/, message: '只能是数字', trigger: 'blur'}
+                    ]
+                }
 {{end-modify_content}}
                 multipleSelection: [],
             }
@@ -156,7 +162,7 @@
                         return alert('删除失败:' + getErrorMsg(response));
                     }
                     alert('删除成功');
-                    location.reload();
+                    this.loadDatas();
                 }).catch(error => this.ajaxError(error));
             },
             openEditDialog: function (row, isClone) {
@@ -195,7 +201,8 @@
                             return alert('保存失败:' + getErrorMsg(response));
                         }
                         alert('保存成功');
-                        location.reload();
+                        this.loadDatas();
+                        this.hideEditDialog();
                     }).catch(error => this.ajaxError(error));
                 });
             },

@@ -11,12 +11,9 @@ import java.time.format.DateTimeFormatter;
  * Token生成和校验辅助类
  *
  * @author youbl
- * @date 2023/3/27 15:45
+ * @since 2023/3/27 15:45
  */
 public final class TokenHelper {
-    // token 名
-    public static final String TOKEN_NAME = "token";
-
     // token校验md5的盐值
     private static String TOKEN_SALT = "beinet.cn.";
 

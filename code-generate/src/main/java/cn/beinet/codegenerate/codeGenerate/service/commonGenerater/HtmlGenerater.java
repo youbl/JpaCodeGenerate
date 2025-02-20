@@ -236,6 +236,8 @@ public class HtmlGenerater implements Generater {
             String vif = dto.isPrimaryKey() ? " v-if=\"editRow['" + colName + "']\"" : "";
             sb.append("            <el-form-item label=\"")
                     .append(colName)
+                    .append("\" prop=\"")
+                    .append(colName)
                     .append("\" label-width=\"150px\"")
                     .append(vif)
                     .append(">\n")
