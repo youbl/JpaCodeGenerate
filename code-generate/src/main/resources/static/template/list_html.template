@@ -92,7 +92,7 @@
                         {required: true, message: '必填项请输入', trigger: 'blur'},
                         //{pattern: /^\d+$/, message: '只能是数字', trigger: 'blur'}
                     ]
-                }
+                },
 {{end-modify_content}}
                 multipleSelection: [],
             }
