@@ -185,6 +185,21 @@ public class ColumnDto {
     }
 
     /**
+     * 当前字段是否0或1这种bool值字段,
+     * 用于在html页面显示select下拉框
+     * @return true false
+     */
+    public boolean isBool() {
+        if (!getManagerType().contains("Integer")) {
+            return false;
+        }
+        String colName = getColumn().toLowerCase();
+        return (colName.equals("status") ||
+                colName.equals("state") ||
+                colName.equals("enabled"));
+    }
+
+    /**
      * 当前字段是否虚拟字段
      *
      * @return true false

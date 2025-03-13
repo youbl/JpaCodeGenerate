@@ -134,6 +134,11 @@ public class HtmlGenerater implements Generater {
                         "                start-placeholder=\"开始日期\"\n" +
                         "                end-placeholder=\"结束日期\">\n" +
                         "            </el-date-picker>\n";
+            } else if (dto.isBool()) {
+                dom = "            <el-select clearable filterable placeholder=\"请选择\" v-model=\"searchCondition['" + colName + "']\">\n" +
+                        "                <el-option label=\"是\" :value=\"1\"></el-option>\n" +
+                        "                <el-option label=\"否\" :value=\"0\"></el-option>\n" +
+                        "            </el-select>\n";
             } else {
                 dom = "            <el-input placeholder=\"请输入\" v-model.trim=\"searchCondition['" + colName + "']\"></el-input>\n";
             }
@@ -231,9 +236,19 @@ public class HtmlGenerater implements Generater {
                 sb.append("\n");
             }
             String colName = getFieldName(dto.getColumn(), true);
-            String disable = isDisableEditKey(colName, keyName) ? " disabled" : "";
+            boolean disabled = isDisableEditKey(colName, keyName);
             // 主键在新建时，要隐藏
             String vif = dto.isPrimaryKey() ? " v-if=\"editRow['" + colName + "']\"" : "";
+            String editContent;
+            if (disabled) {
+                editContent = "<span>{{editRow['" + colName + "']}}</span>";
+            } else if (dto.isBool()) {
+                editContent = getSelectEditContent(colName);
+            } else if (dto.isLocalDateTime()) {
+                editContent = getDateTimeEditContent(colName);
+            } else {
+                editContent = getInputEditContent(colName);
+            }
             sb.append("            <el-form-item label=\"")
                     .append(colName)
                     .append("\" prop=\"")
@@ -241,14 +256,35 @@ public class HtmlGenerater implements Generater {
                     .append("\" label-width=\"150px\"")
                     .append(vif)
                     .append(">\n")
-                    .append("                <el-input placeholder=\"请输入\" v-model.trim=\"editRow['")
-                    .append(colName)
-                    .append("']\"")
-                    .append(disable)
-                    .append("></el-input>\n")
+                    .append("                ")
+                    .append(editContent)
+                    .append("\n")
                     .append("            </el-form-item>");
         }
         return sb.toString();
+    }
+
+    private String getSelectEditContent(String colName) {
+        return "<el-select clearable filterable placeholder=\"请选择\" v-model=\"editRow['" + colName + "']\">\n" +
+                "                <el-option label=\"是\" :value=\"1\"></el-option>\n" +
+                "                <el-option label=\"否\" :value=\"0\"></el-option>\n" +
+                "            </el-select>";
+    }
+
+    private String getDateTimeEditContent(String colName) {
+        return "<el-date-picker size=\"mini\"\n" +
+                "                            v-model=\"editRow['" + colName + "']\"\n" +
+                "                            format=\"yyyy-MM-dd HH:mm:ss\"\n" +
+                "                            value-format=\"yyyy-MM-dd HH:mm:ss\"\n" +
+                "                            placeholder=\"请选择\"\n" +
+                "                            type=\"datetime\">\n" +
+                "            </el-date-picker>";
+    }
+
+    private String getInputEditContent(String colName) {
+        return "<el-input placeholder=\"请输入\" v-model.trim=\"editRow['" +
+                colName +
+                "']\"></el-input>";
     }
 
     /**
