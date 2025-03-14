@@ -34,17 +34,13 @@ public class MybatisPlusCodeGenerateService {
 
     public List<GenerateResult> generateCode(GenerateDto dto) {
         Assert.isTrue(dto.getPackageName() != null && dto.getPackageName().length() > 2, "代码包名长度必须大于2");
+
         dto.setPackageName(trimPackage(dto.getPackageName()));
         if (!StringUtils.hasLength(dto.getPackageResponseData())) {
             dto.setPackageResponseData(dto.getPackageName());
         } else {
-            String trimedPkg = trimPackage(dto.getPackageResponseData());
-
-            String endResponseData = ".ResponseData";
-            if (trimedPkg.endsWith(endResponseData)) {
-                trimedPkg = trimedPkg.substring(0, trimedPkg.length() - endResponseData.length());
-            }
-            dto.setPackageResponseData(trimedPkg);
+            String trimPkg = trimPackage(dto.getPackageResponseData());
+            dto.setPackageResponseData(trimPkg);
         }
 
         Map<String, List<ColumnDto>> tableMap = dto.getTableMap();
@@ -154,11 +150,24 @@ public class MybatisPlusCodeGenerateService {
         if (packageName == null)
             return "";
         packageName = packageName.trim();
+        String importStr = "import ";
+        if (packageName.startsWith(importStr)) {
+            packageName = packageName.substring(importStr.length()).trim();
+        }
         while (packageName.endsWith(".") || packageName.endsWith(";")) {
             packageName = packageName.substring(0, packageName.length() - 1).trim();
         }
         while (packageName.startsWith(".") || packageName.startsWith(";")) {
             packageName = packageName.substring(1).trim();
+        }
+
+        String endResponseData = ".ResponseData";
+        if (packageName.endsWith(endResponseData)) {
+            packageName = packageName.substring(0, packageName.length() - endResponseData.length());
+        }
+        String endController = ".controller";
+        if (packageName.endsWith(endController)) {
+            packageName = packageName.substring(0, packageName.length() - endController.length());
         }
         return packageName;
     }
