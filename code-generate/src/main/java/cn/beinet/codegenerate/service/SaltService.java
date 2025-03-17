@@ -13,28 +13,14 @@ import java.time.LocalDateTime;
  */
 @Service
 public class SaltService {
-    private LocalDateTime saltTime = LocalDateTime.MIN;
-    private String salt;
-
     /**
-     * 每10天, 生成一个新的盐值
+     * 每个月, 生成一个新的盐值
      *
      * @return 盐值
      */
     public String getSalt() {
-        return getSalt(10);
-    }
-
-    /**
-     * 每keepDays天, 生成一个新的盐值
-     *
-     * @param keepDays 盐值保留天数
-     * @return 盐值
-     */
-    public String getSalt(int keepDays) {
         LocalDateTime now = LocalDateTime.now();
-        int tmp = now.getDayOfMonth() % keepDays;
-        long ret = now.getYear() * 10000L + now.getMonthValue() * 100 + tmp;
+        long ret = now.getYear() * 10000L + now.getMonthValue() * 100 + 1;
         return String.valueOf(ret);
         // 下面代码重启会导致要重新登录
 //        if (salt == null || Duration.between(saltTime, now).toDays() > keepDays) {
