@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -68,6 +69,9 @@ public class MybatisPlusCodeGenerateService {
 
     public String generateAndZip(GenerateDto dto) {
         List<GenerateResult> results = generateCode(dto);
+        if (CollectionUtils.isEmpty(results)) {
+            throw new RuntimeException("未生成内容");
+        }
 
         // 一次生成多个表时，ResponseData会出现重复，因此改用HashSet
         Set<String> files = new HashSet<>();
@@ -97,7 +101,11 @@ public class MybatisPlusCodeGenerateService {
 
     @SneakyThrows
     private String doZip(Collection<String> files) {
-        File zipFile = new File(basePath, "model.zip");
+        if (CollectionUtils.isEmpty(files)) {
+            return "";
+        }
+        String zipName = getZipName(files);
+        File zipFile = new File(basePath, zipName);
         if (zipFile.exists()) {
             zipFile.delete();
         }
@@ -139,6 +147,23 @@ public class MybatisPlusCodeGenerateService {
             file = file.substring(1);
         }
         return file;
+    }
+
+    private String getZipName(Collection<String> files) {
+        String zipName = files.iterator().next();
+        if (!StringUtils.hasLength(zipName)) {
+            return "model.zip";
+        }
+        zipName = zipName.replaceAll("\\\\", "/");
+        int idx = zipName.lastIndexOf("/");
+        if (idx >= 0) {
+            zipName = zipName.substring(idx + 1);
+        }
+        idx = zipName.lastIndexOf(".");
+        if (idx > 0) {
+            zipName = zipName.substring(0, idx);
+        }
+        return zipName + ".zip";
     }
 
     /**
