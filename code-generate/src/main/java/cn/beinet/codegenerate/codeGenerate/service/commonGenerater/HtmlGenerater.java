@@ -195,7 +195,9 @@ public class HtmlGenerater implements Generater {
                     .append(colName)
                     .append("']\">{{scope.row['")
                     .append(colName)
-                    .append("']}}</div>\n")
+                    .append("'] ? scope.row['")
+                    .append(colName)
+                    .append("'] : '-'}}</div>\n")
                     .append("            </template>\n")
                     .append("        </el-table-column>");
         }
@@ -253,7 +255,7 @@ public class HtmlGenerater implements Generater {
                     .append(colName)
                     .append("\" prop=\"")
                     .append(colName)
-                    .append("\" label-width=\"150px\"")
+                    .append("\" label-width=\"150px\" style=\"text-align: left\"")
                     .append(vif)
                     .append(">\n")
                     .append("                ")

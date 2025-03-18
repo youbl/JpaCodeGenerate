@@ -90,8 +90,8 @@
                 ruleEditForm: {
                     id: [
                         {required: true, message: '必填项请输入', trigger: 'blur'},
-                        //{pattern: /^\d+$/, message: '只能是数字', trigger: 'blur'}
-                    ]
+                        //{pattern: /^\d+$/, message: '只能是数字', trigger: 'blur'},
+                    ],
                 },
 {{end-modify_content}}
                 multipleSelection: [],
@@ -179,6 +179,9 @@
                         Vue.set(this.editRow, this.tableFields[i], '');
                     }
                 }
+                //if (this.editRow.enabled === '' || this.editRow.enabled === null || this.editRow.enabled === undefined) {
+                //    Vue.set(this.editRow, 'enabled', 1);
+                //}
                 this.statusEditDialog = true;
             },
             hideEditDialog: function () {

@@ -248,7 +248,6 @@
                 newForReplace: '新文件名1;新文件名2',
             },
             databaseArr: [], // 用于下拉列表
-            tableArr: [],
 
             codeFiles: [],
 
@@ -318,6 +317,7 @@
                 }
             },
             dbChange: function () {
+                this.searchCond.tables = [];
                 this.loadTables();
             },
             loadDbs: function () {
@@ -348,11 +348,6 @@
                     '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd) +
                     '&name=' + encodeURIComponent(this.searchCond.configName) +
                     '&db=' + encodeURIComponent(this.searchCond.dbTestName);
-            },
-
-            databaseChange: function () {
-                this.tableArr = [];
-                this.loadTables();
             },
             loadTables: function () {
                 if (!this.searchCond.dbTestName)
