@@ -114,15 +114,32 @@ public class HtmlGenerater implements Generater {
                     sbCombineSearchDateVar.append("                ");
                 }
                 sbSearchDateVueVar.append(varName).append(": [],\n");
-                sbCombineSearchDateVar.append("this.searchCondition['")
+                sbCombineSearchDateVar
+                        .append("if (this.")
+                        .append(varName)
+                        .append(" && this.")
+                        .append(varName)
+                        .append(".length && this.")
+                        .append(varName)
+                        .append(".length > 1) {\n                   ")
+                        .append("this.searchCondition['")
                         .append(colName)
                         .append("Begin'] = this.")
                         .append(varName)
-                        .append("[0];\n                this.searchCondition['")
+                        .append("[0];\n                   this.searchCondition['")
                         .append(colName)
                         .append("End'] = this.")
                         .append(varName)
-                        .append("[1];\n");
+                        .append("[1];\n               ")
+                        .append("} else {\n                   ")
+
+                        .append("this.searchCondition['")
+                        .append(colName)
+                        .append("Begin'] = null;\n                   this.searchCondition['")
+                        .append(colName)
+                        .append("End'] = null;\n")
+
+                        .append("               }\n");
 
                 dom = "            <el-date-picker size=\"mini\"\n" +
                         "                :picker-options=\"globalPickOptions\"\n" +
