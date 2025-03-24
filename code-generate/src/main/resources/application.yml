@@ -30,7 +30,7 @@ spring:
 
 login:
   needLogin: 1       # 1表示要登录，0表示不需要登录即可使用系统
-  keepSecond: 86400  # 登录token有效时长, 超过要重新登录
+  keepSecond: 2592000  # 登录token有效时长, 超过要重新登录，单位秒，这里配置为30天
   emailDomain: "beinet.cn"
 
 logging:

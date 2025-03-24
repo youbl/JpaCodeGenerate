@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
@@ -14,6 +15,7 @@ import java.util.Random;
  * @version 1.0
  * @since 2020/11/6 17:11
  */
+@Slf4j
 public final class StringHelper {
     private static final Random RANDOM = new Random();
 
@@ -146,7 +148,9 @@ public final class StringHelper {
         if (useStr.length() <= 0) {
             throw new RuntimeException("md5参数全部为空");
         }
-        return DigestUtils.md5DigestAsHex(useStr.getBytes());
+        String md5Str = DigestUtils.md5DigestAsHex(useStr.getBytes());
+        log.debug("{} md5:{}", useStr, md5Str);
+        return md5Str;
     }
 
     /**
