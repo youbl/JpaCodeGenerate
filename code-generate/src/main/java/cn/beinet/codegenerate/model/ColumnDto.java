@@ -196,7 +196,10 @@ public class ColumnDto {
         String colName = getColumn().toLowerCase();
         return (colName.equals("status") ||
                 colName.equals("state") ||
-                colName.equals("enabled"));
+                colName.equals("enabled") ||
+                colName.equals("isenable") ||
+                colName.equals("isdel") ||
+                colName.equals("delFlag"));
     }
 
     /**

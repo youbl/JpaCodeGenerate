@@ -114,10 +114,9 @@ public class TestController {
 
 
     /**
-     * 在本机测试与远端IP的网络连接性，模拟Telnet
+     * 在本机测试与远端IP的网络连接性，模拟ping
      *
      * @param ip      远端IP
-     * @param port    远端端口
      * @param timeout 超时时间，默认5000毫秒
      * @return 测试结果
      */

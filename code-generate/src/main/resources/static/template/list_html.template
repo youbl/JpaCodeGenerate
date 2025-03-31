@@ -98,7 +98,7 @@
             }
         },
         mounted: function () {
-            this.searchCondition['{{low_key_field}}'] = getQueryString('id');
+            Vue.set(this.searchCondition, '{{low_key_field}}', getQueryString('id'));
             this.loadDatas();
         },
         computed: {},

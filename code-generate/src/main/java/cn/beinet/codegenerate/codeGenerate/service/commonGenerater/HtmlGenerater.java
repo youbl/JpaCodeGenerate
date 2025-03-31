@@ -152,7 +152,7 @@ public class HtmlGenerater implements Generater {
                         "                end-placeholder=\"结束日期\">\n" +
                         "            </el-date-picker>\n";
             } else if (dto.isBool()) {
-                dom = "            <el-select clearable filterable placeholder=\"请选择\" v-model=\"searchCondition['" + colName + "']\">\n" +
+                dom = "            <el-select clearable filterable placeholder=\"请选择\" v-model=\"searchCondition['" + colName + "']\" style=\"width:60px\">\n" +
                         "                <el-option label=\"是\" :value=\"1\"></el-option>\n" +
                         "                <el-option label=\"否\" :value=\"0\"></el-option>\n" +
                         "            </el-select>\n";
@@ -284,7 +284,7 @@ public class HtmlGenerater implements Generater {
     }
 
     private String getSelectEditContent(String colName) {
-        return "<el-select clearable filterable placeholder=\"请选择\" v-model=\"editRow['" + colName + "']\">\n" +
+        return "<el-select clearable filterable placeholder=\"请选择\" v-model=\"editRow['" + colName + "']\" style=\"width:60px\">\n" +
                 "                <el-option label=\"是\" :value=\"1\"></el-option>\n" +
                 "                <el-option label=\"否\" :value=\"0\"></el-option>\n" +
                 "            </el-select>";
