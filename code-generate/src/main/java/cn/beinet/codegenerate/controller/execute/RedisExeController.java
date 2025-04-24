@@ -1,7 +1,7 @@
 package cn.beinet.codegenerate.controller.execute;
 
 import cn.beinet.codegenerate.ResponseData;
-import cn.beinet.codegenerate.configs.AuthDetails;
+import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.controller.dto.RedisDto;
 import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.model.RedisResultDto;

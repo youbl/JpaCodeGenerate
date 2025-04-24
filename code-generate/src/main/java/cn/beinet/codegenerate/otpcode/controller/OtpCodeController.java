@@ -1,7 +1,7 @@
 package cn.beinet.codegenerate.otpcode.controller;
 
 import cn.beinet.codegenerate.ResponseData;
-import cn.beinet.codegenerate.configs.AuthDetails;
+import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.otpcode.controller.dto.OtpCodeDto;
 import cn.beinet.codegenerate.otpcode.service.OtpCodeService;
 import cn.beinet.codegenerate.otpcode.service.proto.MigrationParser;

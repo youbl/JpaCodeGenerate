@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.requestLogs;
 
-import cn.beinet.codegenerate.configs.AuthDetails;
+import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.requestLogs.dto.SearchLogDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;

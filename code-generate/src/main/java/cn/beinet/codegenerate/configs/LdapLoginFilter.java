@@ -3,7 +3,9 @@ package cn.beinet.codegenerate.configs;
 import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.logins.Validator;
 import cn.beinet.codegenerate.configs.thirdLogin.ThirdLoginService;
+import cn.beinet.codegenerate.consts.Consts;
 import cn.beinet.codegenerate.service.SaltService;
+import cn.beinet.codegenerate.util.ContextUtil;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.TokenHelper;
@@ -29,7 +31,7 @@ import java.util.List;
  * Description:
  *
  * @author : youbl
- * @create: 2022/2/16 16:34
+ * @since 2022/2/16 16:34
  */
 @Component
 @Slf4j
@@ -63,6 +65,8 @@ public class LdapLoginFilter extends BaseFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        setStartRequestTime();
+        
         if (needLogin == 0) {
             request.setAttribute(LOGIN_INFO, "匿名");
             filterChain.doFilter(request, response);
@@ -204,5 +208,12 @@ public class LdapLoginFilter extends BaseFilter {
         Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);
         log.info(context.toString());
         return true;
+    }
+
+    private void setStartRequestTime() {
+        if (ContextUtil.getRequestTime() <= 0) {
+            // 有Order注解的排序，在没注解前面，所以在这里设置请求时间
+            ContextUtil.setRequestTime();
+        }
     }
 }

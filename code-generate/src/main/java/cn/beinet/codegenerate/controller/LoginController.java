@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.controller;
 
-import cn.beinet.codegenerate.configs.AuthDetails;
+import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.configs.LdapLoginFilter;
 import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.DingtalkService;

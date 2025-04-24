@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.controller;
 
-import cn.beinet.codegenerate.configs.AuthDetails;
+import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.util.ProcessHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;

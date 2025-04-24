@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.configs;
+package cn.beinet.codegenerate.configs.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

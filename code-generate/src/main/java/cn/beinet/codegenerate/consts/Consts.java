@@ -1,4 +1,4 @@
-package cn.beinet.codegenerate.configs;
+package cn.beinet.codegenerate.consts;
 
 import cn.beinet.codegenerate.util.SpringUtil;
 

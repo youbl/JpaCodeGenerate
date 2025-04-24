@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 新类
+ * filter基类
  *
  * @author youbl
  * @since 2023/12/8 16:27

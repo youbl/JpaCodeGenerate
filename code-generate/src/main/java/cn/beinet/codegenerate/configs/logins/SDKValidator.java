@@ -1,6 +1,6 @@
 package cn.beinet.codegenerate.configs.logins;
 
-import cn.beinet.codegenerate.configs.Consts;
+import cn.beinet.codegenerate.consts.Consts;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
