@@ -43,8 +43,6 @@ public class LdapLoginFilter extends BaseFilter {
     @Value("${spring.ldap.email-domain}")
     private String emailDomain;
 
-    private static final String LOGIN_INFO = "loginUser";
-
     // 登录用户名使用的字段名
     private static final String USER_PARA = "beinetUser";
     // 登录密码使用的字段名
@@ -66,7 +64,7 @@ public class LdapLoginFilter extends BaseFilter {
         setStartRequestTime();
 
         if (needLogin == 0) {
-            request.setAttribute(LOGIN_INFO, "匿名");
+            ContextUtil.setLoginUser("匿名");
             filterChain.doFilter(request, response);
             return;
         }
@@ -90,7 +88,7 @@ public class LdapLoginFilter extends BaseFilter {
             Validator.Result result = item.validated(request, response);
             if (result.isPassed()) {
                 // 添加登录后的信息
-                request.setAttribute(LOGIN_INFO, result.getAccount());
+                ContextUtil.setLoginUser(result.getAccount());
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -186,7 +184,7 @@ public class LdapLoginFilter extends BaseFilter {
     }
 
     private boolean validateFromLDAP(String username, String pwd) {
-        if (username.indexOf("@") < 0 && StringUtils.hasLength(emailDomain)) {
+        if (!username.contains("@") && StringUtils.hasLength(emailDomain)) {
             username += "@" + emailDomain;
         }
         Object context = SpringUtil.getBean(LdapTemplate.class).getContextSource().getContext(username, pwd);

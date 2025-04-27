@@ -36,6 +36,14 @@ public abstract class ContextUtil {
     }
 
     /**
+     * 设置当前登录用户名
+     * @param loginUser 登录用户
+     */
+    public static void setLoginUser(String loginUser) {
+        setAttribute(LOGIN_INFO, loginUser);
+    }
+
+    /**
      * 当前登录用户，是否管理员
      * @return bool
      */
