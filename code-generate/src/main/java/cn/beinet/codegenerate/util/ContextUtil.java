@@ -22,6 +22,26 @@ public abstract class ContextUtil {
      * 收到请求的时间，可以便于后端计算响应时长
      */
     public static final String HEADER_REQUEST_TIME = "x-request-time";
+    /**
+     * 保存在请求上下文里的用户名属性
+     */
+    public static final String LOGIN_INFO = "loginUser";
+
+    /**
+     * 获取当前登录用户名
+     * @return 用户名
+     */
+    public static String getLoginUser() {
+        return getAttribute(LOGIN_INFO);
+    }
+
+    /**
+     * 当前登录用户，是否管理员
+     * @return bool
+     */
+    public static boolean isAdmin() {
+        return (getLoginUser().startsWith("beiliang_you"));
+    }
 
     /**
      * 获取Web上下文里的请求对象

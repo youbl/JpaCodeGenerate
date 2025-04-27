@@ -1,6 +1,5 @@
 package cn.beinet.codegenerate.configs.arguments;
 
-import cn.beinet.codegenerate.configs.logins.RoleType;
 import lombok.Data;
 import org.springframework.util.StringUtils;
 
@@ -14,8 +13,6 @@ import org.springframework.util.StringUtils;
 public class AuthDetails {
     private String account;
 
-    private RoleType role;
-
     private String userAgent;
 
     public String getAccount() {
@@ -23,9 +20,5 @@ public class AuthDetails {
             return "匿名";
         }
         return account;
-    }
-
-    public boolean isAdmin() {
-        return role != null && role.equals(RoleType.ADMIN);
     }
 }

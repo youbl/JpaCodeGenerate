@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.configs;
 
 import cn.beinet.codegenerate.requestLogs.RequestLog;
 import cn.beinet.codegenerate.requestLogs.RequestLogService;
+import cn.beinet.codegenerate.util.ContextUtil;
 import cn.beinet.codegenerate.util.MultiReadHttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,7 +105,7 @@ public class ControllerLogFilter extends OncePerRequestFilter {
     private void readAndLog(HttpServletRequest request, HttpServletResponse response, long latency, Exception exception) {
         RequestLog logRec = new RequestLog();
         try {
-            logRec.setLoginUser(LdapLoginFilter.getLoginInfo(request));
+            logRec.setLoginUser(ContextUtil.getLoginUser());
             logRec.setCostMillis(latency);
             getRequestMsg(request, logRec);
             getResponseMsg(response, logRec);

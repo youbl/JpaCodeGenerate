@@ -4,11 +4,13 @@ import cn.beinet.codegenerate.controller.dto.NacosDto;
 import cn.beinet.codegenerate.controller.dto.RedisDto;
 import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.controller.dto.LinkInfoDto;
+import cn.beinet.codegenerate.linkinfo.enums.LinkTypeEnum;
 import cn.beinet.codegenerate.linkinfo.service.entity.LinkInfo;
 import cn.beinet.codegenerate.repository.ColumnRepository;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import cn.beinet.codegenerate.repository.RedisRepository;
 import cn.beinet.codegenerate.util.AESUtil;
+import cn.beinet.codegenerate.util.ContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,7 +42,7 @@ public class LinkInfoService {
 
         List<LinkInfoDto> ret = new ArrayList<>(infos.size());
         for (LinkInfo item : infos) {
-            LinkInfoDto dto = convertToDto(item, false); // 密码不返回
+            LinkInfoDto dto = LinkInfoDto.convertToDto(item, false); // 密码不返回
             ret.add(dto);
         }
         return ret;
@@ -53,32 +55,16 @@ public class LinkInfoService {
      * @return 清单
      */
     public List<LinkInfo> getLinkInfo(String type) {
-        String sql = "SELECT * FROM linkinfo a WHERE a.link_type=? ORDER BY name";
+        String sql = "SELECT * FROM linkinfo a WHERE a.link_type=?";
+        if (!ContextUtil.isAdmin()) {
+            sql += " AND a.type=" + LinkTypeEnum.NORMAL.getValue();
+        }
+        sql += " ORDER BY name";
         List<LinkInfo> infos = jdbcTemplate.query(sql, new Object[]{type}, new BeanPropertyRowMapper<>(LinkInfo.class));
-        if (infos == null)
-            return new ArrayList<>();
         for (LinkInfo info : infos) {
             info.setPwd(descrypt(info.getPwd()));
         }
         return infos;
-    }
-
-    private LinkInfoDto convertToDto(LinkInfo item, boolean fillPassword) {
-        LinkInfoDto ret = new LinkInfoDto()
-                .setAccount(item.getAccount())
-                .setAddress(item.getAddress())
-                .setCreate_time(item.getCreate_time())
-                .setUpdate_time(item.getUpdate_time())
-                .setId(item.getId())
-                .setInfo(item.getInfo())
-                .setLink_type(item.getLink_type())
-                .setName(item.getName())
-                .setPort(item.getPort())
-                .setPwd("");
-        if (fillPassword) {
-            ret.setPwd(item.getPwd());
-        }
-        return ret;
     }
 
     public ColumnRepository getRepository(SqlDto dto) {
@@ -164,7 +150,7 @@ public class LinkInfoService {
     public int saveInfo(LinkInfoDto dto) {
         String encryptedPwd = encrypt(dto.getPwd());
 
-        String insertSql = "INSERT INTO linkinfo(link_type, name, address, account, pwd, port, info)VALUES(?,?,?,?,?,?,?)";
+        String insertSql = "INSERT INTO linkinfo(link_type, name, address, account, pwd, port, type, info)VALUES(?,?,?,?,?,?,?,?)";
         return jdbcTemplate.update(insertSql, new Object[]{
                 dto.getLink_type(),
                 dto.getName(),
@@ -172,6 +158,7 @@ public class LinkInfoService {
                 dto.getAccount(),
                 encryptedPwd,
                 dto.getPort(),
+                dto.getType(),
                 dto.getInfo()
         });
     }

@@ -22,6 +22,11 @@ public class LinkInfo {
     private String pwd;// 登录密码
     private int port;// 连接端口信息
     private String info;// json结构，其它连接信息
+    /**
+     * 0正常；1危险要验证
+     */
+    private Integer type;
+
     private LocalDateTime create_time;
     private LocalDateTime update_time;
 }

@@ -2,6 +2,7 @@ package cn.beinet.codegenerate.requestLogs;
 
 import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.requestLogs.dto.SearchLogDto;
+import cn.beinet.codegenerate.util.ContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,7 @@ public class LogController {
     @GetMapping("logs")
     public List<RequestLog> getLogs(SearchLogDto dto, AuthDetails loginInfo) {
         Assert.isTrue(loginInfo != null, "不允许访问");
-        if (!loginInfo.isAdmin()) {
+        if (!ContextUtil.isAdmin()) {
             // 非管理员，只能查自己的日志
             dto.setLoginUser(loginInfo.getAccount());
         }
@@ -33,14 +34,12 @@ public class LogController {
 
     /**
      * 给前端用于过滤的人员列表和url列表
-     *
-     * @param loginInfo 登录信息
      * @return 条件
      */
     @GetMapping("logs/conditions")
-    public List<List<String>> getConditions(AuthDetails loginInfo) {
+    public List<List<String>> getConditions() {
         List<List<String>> ret = new ArrayList<>(2);
-        if (!loginInfo.isAdmin()) {
+        if (!ContextUtil.isAdmin()) {
             // 不是管理员，不让条件过滤
             return ret;
         }

@@ -16,11 +16,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.context.request.WebRequest;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -66,7 +64,7 @@ public class LdapLoginFilter extends BaseFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         setStartRequestTime();
-        
+
         if (needLogin == 0) {
             request.setAttribute(LOGIN_INFO, "匿名");
             filterChain.doFilter(request, response);
@@ -101,20 +99,6 @@ public class LdapLoginFilter extends BaseFilter {
         // 所有校验均失败，清空登录cookie
         addToken("", request, response);
         endResponse(request, response, "请重新登录", thirdLoginInfo.combineLoginUrl(request));
-    }
-
-    public static String getLoginInfo(WebRequest request) {
-        Object ret = request.getAttribute(LOGIN_INFO, 0);
-        if (ret == null)
-            return "";
-        return ret.toString();
-    }
-
-    public static String getLoginInfo(ServletRequest request) {
-        Object ret = request.getAttribute(LOGIN_INFO);
-        if (ret == null)
-            return "";
-        return ret.toString();
     }
 
     /**

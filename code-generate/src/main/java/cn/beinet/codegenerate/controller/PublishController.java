@@ -1,6 +1,7 @@
 package cn.beinet.codegenerate.controller;
 
 import cn.beinet.codegenerate.configs.arguments.AuthDetails;
+import cn.beinet.codegenerate.util.ContextUtil;
 import cn.beinet.codegenerate.util.ProcessHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
@@ -44,8 +45,7 @@ public class PublishController {
     public String upload(@RequestParam("file") MultipartFile file,
                          @PathVariable String serviceName,
                          AuthDetails loginInfo) throws IOException {
-        Assert.isTrue(loginInfo != null && loginInfo.isAdmin(),
-                "不允许访问");
+        Assert.isTrue(ContextUtil.isAdmin(), "不允许访问");
 
         if (file == null || file.isEmpty()) {
             return "文件内容为空";
@@ -65,8 +65,7 @@ public class PublishController {
     // 重启指定服务
     @PostMapping("publish/{serviceName}")
     public String publish(@PathVariable String serviceName, AuthDetails loginInfo) {
-        Assert.isTrue(loginInfo != null && loginInfo.isAdmin(),
-                "不允许访问");
+        Assert.isTrue(ContextUtil.isAdmin(), "不允许访问");
 
         String command = "/bin/supervisorctl restart '" + serviceName + "'";
         log.info("{} 执行命令 {} ", loginInfo.getAccount(), command);

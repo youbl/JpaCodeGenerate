@@ -6,6 +6,7 @@ import cn.beinet.codegenerate.controller.dto.RedisDto;
 import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.model.RedisResultDto;
 import cn.beinet.codegenerate.repository.RedisRepository;
+import cn.beinet.codegenerate.util.ContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpHeaders;
@@ -45,7 +46,7 @@ public class RedisExeController {
     @DeleteMapping("v1/redis/removeKey")
     public int removeKey(@RequestBody RedisDto cmd,
                          AuthDetails loginInfo) {
-        if (loginInfo == null || !loginInfo.isAdmin()) {
+        if (!ContextUtil.isAdmin()) {
             throw new RuntimeException("仅管理员允许操作");
         }
 
@@ -70,16 +71,14 @@ public class RedisExeController {
      * @param db        查询哪个db
      * @param ttl       是否查询ttl，默认不查询，为1时要查询
      * @param response  响应上下文
-     * @param loginInfo 登录信息
      */
     @GetMapping(value = "v1/redis/allkeys", produces = "application/unknown")
     @SneakyThrows
     public void GetAllKeys(@RequestParam String config,
                            @RequestParam int db,
                            @RequestParam(required = false) Integer ttl,
-                           HttpServletResponse response,
-                           AuthDetails loginInfo) {
-        if (loginInfo == null || !loginInfo.isAdmin()) {
+                           HttpServletResponse response) {
+        if (!ContextUtil.isAdmin()) {
             throw new RuntimeException("仅管理员允许操作");
         }
 

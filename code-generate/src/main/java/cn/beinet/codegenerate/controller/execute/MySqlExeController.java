@@ -1,11 +1,11 @@
 package cn.beinet.codegenerate.controller.execute;
 
 import cn.beinet.codegenerate.ResponseData;
-import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.controller.dto.SqlDto;
 import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.repository.MySqlExecuteRepository;
 import cn.beinet.codegenerate.service.MySqlService;
+import cn.beinet.codegenerate.util.ContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -76,9 +76,8 @@ public class MySqlExeController {
      * @return 影响行数（如果次数大于1，则是异步执行，返回-1）
      */
     @PostMapping("mysql/executeDml")
-    public ResponseData executeDML(@RequestBody SqlDto sql, AuthDetails loginInfo) {
-        Assert.isTrue(loginInfo != null && loginInfo.isAdmin(),
-                "不允许访问");
+    public ResponseData executeDML(@RequestBody SqlDto sql) {
+        Assert.isTrue(ContextUtil.isAdmin(), "不允许访问");
 
         if (sql.getTime() == 1) {
             int affectedRows = mySqlService.executeDml(sql);
