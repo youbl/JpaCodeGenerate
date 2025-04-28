@@ -168,11 +168,14 @@ public class LdapLoginFilter extends BaseFilter {
      * @return 是否正确
      */
     private boolean validateUser(String username, String pwd) {
-        if (!StringUtils.hasLength(username) || !StringUtils.hasLength(pwd)) {
+        if (username == null || pwd == null) {
             return false;
         }
         username = username.trim();
         pwd = pwd.trim();
+        if (username.isEmpty() || pwd.isEmpty()) {
+            return false;
+        }
         if (username.equalsIgnoreCase(Consts.getSdkAppKey()) &&
                 pwd.equals(Consts.getSdkSecurityKey())) {
             log.debug("使用SDK直接登录");

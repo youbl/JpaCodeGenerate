@@ -99,6 +99,9 @@ public class TestController {
                              @RequestParam int port,
                              @RequestParam(required = false) Integer timeout,
                              HttpServletRequest request) {
+        // 不允许操作内网IP，以防安全问题
+        validateIp(ip);
+
         String ret = "telnet " + ip + " " + port + "    连接";
         long start = System.currentTimeMillis();
         try {
@@ -125,6 +128,9 @@ public class TestController {
     public String testPing(@RequestParam String ip,
                            @RequestParam(required = false) Integer timeout,
                            HttpServletRequest request) {
+        // 不允许操作内网IP，以防安全问题
+        validateIp(ip);
+
         String ret = IpHelper.ping(ip, timeout, 3);
         return combinJsonp(ret, request);
     }
@@ -154,5 +160,22 @@ public class TestController {
                 return request.getParameter(paraName);
         }
         return "";
+    }
+
+    private void validateIp(String ip) {
+        if (ip == null) {
+            throw new RuntimeException("ip is null");
+        }
+        ip = ip.trim();
+        if (ip.isEmpty()) {
+            throw new RuntimeException("ip is null");
+        }
+        if (!IpHelper.isIPv4(ip)) {
+            // 不是IP，不判断
+            return;
+        }
+        if (IpHelper.isPrivateIpAddr(ip)) {
+            throw new RuntimeException("can't operate private ip");
+        }
     }
 }
