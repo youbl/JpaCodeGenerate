@@ -26,13 +26,13 @@ public class DtoMapperGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "mapstruct";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/mapstruct";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "EntityMapper.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "EntityMapper.java";
     }
 
     @Override
@@ -53,7 +53,7 @@ public class DtoMapperGenerater implements Generater {
             mapLocalDateTime(sb, columns);
         }
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 
     private void mapLocalDateTime(StringBuilder sb, List<ColumnDto> columns) {

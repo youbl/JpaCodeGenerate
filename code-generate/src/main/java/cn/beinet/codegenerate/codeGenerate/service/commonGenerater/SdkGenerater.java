@@ -32,13 +32,13 @@ public class SdkGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "sdk";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/sdk";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "Client.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "Client.java";
     }
 
     @Override
@@ -63,6 +63,6 @@ public class SdkGenerater implements Generater {
         replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
         replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 }

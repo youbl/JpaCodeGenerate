@@ -25,12 +25,12 @@ public class ResponseDataGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
+    public String getTargetDirName(GenerateDto generateDto) {
         return "";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
         return "ResponseData.java";
     }
 
@@ -38,6 +38,6 @@ public class ResponseDataGenerater implements Generater {
     public GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto) {
         StringBuilder sb = new StringBuilder(getTemplate(generateDto));
         replaceSymbol(sb, Vars.PACKAGE_NAME, generateDto.getPackageResponseData());
-        return new GenerateResult(getFullFileName(""), sb.toString());
+        return new GenerateResult(getFullFileName("", generateDto), sb.toString());
     }
 }

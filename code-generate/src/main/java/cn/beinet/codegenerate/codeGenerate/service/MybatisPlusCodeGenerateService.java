@@ -34,15 +34,7 @@ public class MybatisPlusCodeGenerateService {
     private final String basePath = FileHelper.getResourceBasePath();
 
     public List<GenerateResult> generateCode(GenerateDto dto) {
-        Assert.isTrue(dto.getPackageName() != null && dto.getPackageName().length() > 2, "代码包名长度必须大于2");
-
-        dto.setPackageName(trimPackage(dto.getPackageName()));
-        if (!StringUtils.hasLength(dto.getPackageResponseData())) {
-            dto.setPackageResponseData(dto.getPackageName());
-        } else {
-            String trimPkg = trimPackage(dto.getPackageResponseData());
-            dto.setPackageResponseData(trimPkg);
-        }
+        validAndFillField(dto);
 
         Map<String, List<ColumnDto>> tableMap = dto.getTableMap();
         if (tableMap.isEmpty())
@@ -91,6 +83,18 @@ public class MybatisPlusCodeGenerateService {
         }
         // todo:无主键？
         return "Long";
+    }
+
+    private void validAndFillField(GenerateDto dto) {
+        Assert.isTrue(dto.getPackageName() != null && dto.getPackageName().length() > 2, "代码包名长度必须大于2");
+
+        dto.setPackageName(trimPackage(dto.getPackageName()));
+        if (!StringUtils.hasLength(dto.getPackageResponseData())) {
+            dto.setPackageResponseData(dto.getPackageName());
+        } else {
+            String trimPkg = trimPackage(dto.getPackageResponseData());
+            dto.setPackageResponseData(trimPkg);
+        }
     }
 
     private String saveFile(String fileName, String content) {

@@ -22,13 +22,13 @@ public class ServiceGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
+    public String getTargetDirName(GenerateDto generateDto) {
         return "service";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "Service.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "Service.java";
     }
 
     @Override

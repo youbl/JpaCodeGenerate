@@ -20,7 +20,44 @@
 - 在服务器上启动，命令参考：  
 `/usr/java/jdk-11/bin/java -Dserver.port=8808 -Dspring.profiles.active=prod -Dloader.path=/data/app/lib -jar /data/app/code-generate-0.0.1-SNAPSHOT.jar`
 - 启动成功后，访问：`http://服务器IP:8808/sql/index.html` 即可
-- 注：建议前端增加nginx转发，nginx配置参考：
+- 注1：建议安装为系统服务，windows使用 nssm：
+```
+nssm install sqlCompare java -Dspring.profiles.active=prod -Dserver.port=8808 -Dloader.path=D:\lib\ -jar D:\app\code-generate-0.0.1-SNAPSHOT.jar 
+nssm set sqlCompare AppStdout d:\app\code-generate.log
+nssm set sqlCompare AppStderr d:\app\code-generate-err.log
+```
+Linux使用systemd：
+  - 1、编辑配置文件: vim /etc/systemd/system/sql-compare.service
+内容参考：
+```
+[Unit]
+Description=sql compare java service
+After=syslog.target network.target
+
+[Service]
+SuccessExitStatus=143
+User=ubuntu
+Type=simple
+
+Environment="JAVA_HOME=/usr/local/jdk-21.0.5"
+WorkingDirectory=/data/app/
+ExecStart=${JAVA_HOME}/bin/java -Dspring.profiles.active=prod -Dserver.port=8808 -Dloader.path=/data/app/lib -jar /data/app/code-generate-0.0.1-SNAPSHOT.jar
+ExecStop=/bin/kill -15 $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+```
+  - 2、重新加载配置，并启用服务：
+    systemctl daemon-reload
+    systemctl enable sql-compare.service
+  - 3、启动服务：
+    systemctl start sql-compare && systemctl status sql-compare
+  - 4、看状态：
+    systemctl status sql-compare.service
+    看日志  journalctl -f -n 1000 -u sql-compare
+  - 5、停止服务：
+    systemctl stop sql-compare && systemctl status sql-compare
+- 注2：建议前端增加nginx转发，nginx配置参考：
 ```
 server {
     listen       80;

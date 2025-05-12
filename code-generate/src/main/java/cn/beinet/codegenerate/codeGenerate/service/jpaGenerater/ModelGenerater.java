@@ -60,13 +60,13 @@ public class ModelGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
+    public String getTargetDirName(GenerateDto generateDto) {
         return "model";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + ".java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + ".java";
     }
 
     @Override

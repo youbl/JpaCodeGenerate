@@ -27,13 +27,13 @@ public class DtoGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "dto";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/dto";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "Dto.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "Dto.java";
     }
 
     @Override
@@ -54,7 +54,7 @@ public class DtoGenerater implements Generater {
         // 替换对应的jdk版本代码
         replaceJDK(sb, generateDto.getJdkVer());
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 
     private String getClassBody(List<ColumnDto> columns, Boolean dtoUseTs) {

@@ -25,13 +25,13 @@ public class MybatisMapperGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "dal";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/dal";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "Mapper.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "Mapper.java";
     }
 
     @Override
@@ -51,6 +51,6 @@ public class MybatisMapperGenerater implements Generater {
         replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
         replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 }

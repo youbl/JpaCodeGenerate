@@ -29,13 +29,13 @@ public class HtmlGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
+    public String getTargetDirName(GenerateDto generateDto) {
         return "html";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + StringHelper.lowFirstChar(entityName) + ".html";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + StringHelper.lowFirstChar(entityName) + ".html";
     }
 
     @Override
@@ -70,7 +70,7 @@ public class HtmlGenerater implements Generater {
         replaceSymbol(sb, Vars.HTML_FIELDS, getFieldListForJsVar(columns));
 
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 
     private String getFieldListForJsVar(List<ColumnDto> columns) {

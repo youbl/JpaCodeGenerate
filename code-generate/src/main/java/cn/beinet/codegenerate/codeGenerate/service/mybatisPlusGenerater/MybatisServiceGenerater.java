@@ -26,13 +26,13 @@ public class MybatisServiceGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "service";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/service";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "Service.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "Service.java";
     }
 
     @Override
@@ -52,7 +52,7 @@ public class MybatisServiceGenerater implements Generater {
 
         replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 
     private String getBody(List<ColumnDto> columns, String entityName) {

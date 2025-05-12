@@ -26,13 +26,13 @@ public class ControllerGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "controller";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/controller";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + "Controller.java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + "Controller.java";
     }
 
     @Override
@@ -59,6 +59,6 @@ public class ControllerGenerater implements Generater {
         replaceSymbol(sb, Vars.UP_KEY_FIELD, getKeyName(columns, false));
         replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
 
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 }

@@ -29,13 +29,13 @@ public class MybatisEntityGenerater implements Generater {
     }
 
     @Override
-    public String getTargetDirName() {
-        return "dal/entity";
+    public String getTargetDirName(GenerateDto generateDto) {
+        return getPackageDir(generateDto) + "/dal/entity";
     }
 
     @Override
-    public String getFullFileName(String entityName) {
-        return getTargetDirName() + "/" + entityName + ".java";
+    public String getFullFileName(String entityName, GenerateDto generateDto) {
+        return getTargetDirName(generateDto) + "/" + entityName + ".java";
     }
 
     @Override
@@ -63,7 +63,7 @@ public class MybatisEntityGenerater implements Generater {
                 .append(getInsertSQL(columns))
                 .append(getUpdateSQL(columns))
                 .append("*/");
-        return new GenerateResult(getFullFileName(entityName), sb.toString());
+        return new GenerateResult(getFullFileName(entityName, generateDto), sb.toString());
     }
 
     private String getClassBody(List<ColumnDto> columns) {

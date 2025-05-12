@@ -48,7 +48,7 @@ public interface Generater {
      *
      * @return 目录名
      */
-    String getTargetDirName();
+    String getTargetDirName(GenerateDto generateDto);
 
     /**
      * 返回目标文件的完整相对路径
@@ -56,7 +56,7 @@ public interface Generater {
      * @param entityName 表名(首字母大写)
      * @return 文件名
      */
-    String getFullFileName(String entityName);
+    String getFullFileName(String entityName, GenerateDto generateDto);
 
     /**
      * 根据列，生成文件内容
@@ -66,6 +66,17 @@ public interface Generater {
      * @return 生成结果
      */
     GenerateResult generate(List<ColumnDto> columns, GenerateDto generateDto);
+
+    /**
+     * 获取生成代码的package完整目录结构
+     * @return package相对目录路径
+     */
+    default String getPackageDir(GenerateDto generateDto) {
+        if (!StringUtils.hasLength(generateDto.getPackageName())) {
+            throw new RuntimeException("Package name is empty");
+        }
+        return generateDto.getPackageName().replace('.', '/');
+    }
 
     /**
      * 根据表名，获取代码中使用的Entity名称.
