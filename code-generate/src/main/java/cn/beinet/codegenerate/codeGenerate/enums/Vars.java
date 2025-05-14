@@ -37,6 +37,10 @@ public enum Vars {
      */
     LOW_ENTITY_NAME("low_entity_name"),
     /**
+     * 全部字母大写的实体类名，用于枚举
+     */
+    UPALL_ENTITY_NAME("upall_entity_name"),
+    /**
      * DTO文件的body内容
      */
     DTO_FIELDS("dto_fields"),

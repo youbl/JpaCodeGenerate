@@ -33,13 +33,13 @@ public class {{entity_name}}Controller implements {{entity_name}}Client {
 
 {{start-modify_content}}
     @Override
-    // @EventLog(subType = SubType.{{entity_name}}_DEL)
+    // @OperationLog(subType = SubType.{{upall_entity_name}}_DEL)
     public ResponseData<Boolean> delById(@NonNull {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.removeById({{low_key_field}}));
     }
 
     @Override
-    // @EventLog(subType = SubType.{{entity_name}}_UPDATE)
+    // @OperationLog(subType = SubType.{{upall_entity_name}}_UPDATE)
     public ResponseData<{{primary_key_type}}> updateById(@NonNull {{entity_name}}Dto dto) {
         Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
         {{primary_key_type}} newId = service.save{{entity_name}}(dto);
@@ -47,14 +47,13 @@ public class {{entity_name}}Controller implements {{entity_name}}Client {
     }
 
     @Override
-    // 要上报新增的主键，因此这里不能用注解@EventLog
+    // @OperationLog(subType = SubType.{{upall_entity_name}}_ADD)
     public ResponseData<{{primary_key_type}}> insert(@NonNull {{entity_name}}Dto dto) {
         // clear primary key before insert
         dto.set{{up_key_field}}(null);
 
         {{primary_key_type}} newId = service.save{{entity_name}}(dto);
         dto.set{{up_key_field}}(newId);
-        //LogUtils.reportLog(SubType.{{entity_name}}_ADD, dto); // 事件上报代码
         return ResponseData.ok(newId);
     }
 {{end-modify_content}}

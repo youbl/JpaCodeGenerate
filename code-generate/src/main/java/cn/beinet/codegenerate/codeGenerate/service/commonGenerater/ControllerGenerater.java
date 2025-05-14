@@ -55,6 +55,7 @@ public class ControllerGenerater implements Generater {
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
         replaceSymbol(sb, Vars.TABLE_NAME, table);
         replaceSymbol(sb, Vars.LOW_ENTITY_NAME, StringHelper.lowFirstChar(entityName));
+        replaceSymbol(sb, Vars.UPALL_ENTITY_NAME, entityName.toUpperCase());
         replaceSymbol(sb, Vars.LOW_KEY_FIELD, getKeyName(columns, true));
         replaceSymbol(sb, Vars.UP_KEY_FIELD, getKeyName(columns, false));
         replaceSymbol(sb, Vars.KEY_TYPE, getKeyType(columns));
