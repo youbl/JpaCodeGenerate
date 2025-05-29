@@ -26,7 +26,7 @@ public class MybatisMapperGenerater implements Generater {
 
     @Override
     public String getTargetDirName(GenerateDto generateDto) {
-        return getPackageDir(generateDto) + "/dal";
+        return getPackageDir(generateDto) + "/dao";
     }
 
     @Override

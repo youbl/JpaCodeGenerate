@@ -30,7 +30,7 @@ public class MybatisEntityGenerater implements Generater {
 
     @Override
     public String getTargetDirName(GenerateDto generateDto) {
-        return getPackageDir(generateDto) + "/dal/entity";
+        return getPackageDir(generateDto) + "/dao/entity";
     }
 
     @Override

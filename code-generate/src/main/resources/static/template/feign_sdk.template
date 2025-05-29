@@ -4,31 +4,39 @@ import {{package_name}}.dto.{{entity_name}}Dto;
 import {{response_package_name}}.ResponseData;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
 /**
- *
+ * {{entity_name}} API
  * @author youbl.blog.csdn.net
  * @since {{date_time}}
  */
 @FeignClient(name = "{{low_entity_name}}-client", url = "${microservice.url.{{low_entity_name}}:{{low_entity_name}}}")
+@Tag(name = "{{entity_name}}", description = "{{entity_name}} API")
 public interface {{entity_name}}Client {
 
     @PostMapping("/{{low_entity_name}}/all")
+    @Operation(summary = "query data list by condition")
     ResponseData<List<{{entity_name}}Dto>> findAll(@RequestBody {{entity_name}}Dto dto);
 
     @GetMapping("/{{low_entity_name}}")
+    @Operation(summary = "query single data by key")
     ResponseData<{{entity_name}}Dto> findById(@RequestParam {{primary_key_type}} {{low_key_field}});
 
 {{start-modify_content}}
     @DeleteMapping("/{{low_entity_name}}")
+    @Operation(summary = "del one record by key")
     ResponseData<Boolean> delById(@RequestParam {{primary_key_type}} {{low_key_field}});
 
     @PutMapping("/{{low_entity_name}}")
+    @Operation(summary = "update one record by key")
     ResponseData<{{primary_key_type}}> updateById(@RequestBody {{entity_name}}Dto dto);
 
     @PostMapping("/{{low_entity_name}}")
+    @Operation(summary = "insert one record")
     ResponseData<{{primary_key_type}}> insert(@RequestBody {{entity_name}}Dto dto);
 {{end-modify_content}}
 }

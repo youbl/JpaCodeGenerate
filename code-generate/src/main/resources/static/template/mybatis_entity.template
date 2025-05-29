@@ -1,4 +1,4 @@
-package {{package_name}}.dal.entity;
+package {{package_name}}.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;

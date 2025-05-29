@@ -147,7 +147,7 @@
                     </span>
                     <span style="display: inline-block;width:210px; ">
                         <el-radio-group v-model="codeCond.jdkVer">
-                            <el-radio label="8">JDK8</el-radio>
+<!--                            <el-radio label="8">JDK8</el-radio>-->
                             <el-radio label="21">JDK21</el-radio>
                         </el-radio-group>
                     </span>
@@ -238,6 +238,7 @@
 
             codeCond: {
                 packageName: '',
+                packageResponseData: 'com.zixun.agentbase.core.base.dto',
                 removePrefix: 't_cb_',
                 modify: true,
                 feignSdk: true,
@@ -441,7 +442,7 @@
                     }
                     this.codeFiles = response.data;
                     this.codeGenerateTime = (new Date()).toString();
-                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dal.**"})';
+                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dao.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });
@@ -458,7 +459,7 @@
                     this.codeGenerateTime = (new Date()).toString();
                     this.codeLink = $$BASE_URL + 'v1/code/down?zipfile=' + response.data;
                     window.open(this.codeLink);
-                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dal.**"})';
+                    this.codeDesc = '注意：请在main函数类上添加注解：@MapperScan({"' + this.codeCond.packageName + '.dao.**"})';
                 }).catch(function (error) {
                     this.ajaxError(error);
                 });

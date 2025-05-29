@@ -1,6 +1,6 @@
 package {{package_name}}.mapstruct;
 
-import {{package_name}}.dal.entity.{{entity_name}};
+import {{package_name}}.dao.entity.{{entity_name}};
 import {{package_name}}.dto.{{entity_name}}Dto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
