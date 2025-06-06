@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
 /**
@@ -20,7 +20,7 @@ public interface {{entity_name}}Client {
 
     @PostMapping("/{{low_entity_name}}/all")
     @Operation(summary = "query data list by condition")
-    ResponseData<List<{{entity_name}}Dto>> findAll(@RequestBody {{entity_name}}Dto dto);
+    ResponseData<List<{{entity_name}}Dto>> findAll(@Valid @RequestBody {{entity_name}}Dto dto);
 
     @GetMapping("/{{low_entity_name}}")
     @Operation(summary = "query single data by key")
@@ -33,10 +33,10 @@ public interface {{entity_name}}Client {
 
     @PutMapping("/{{low_entity_name}}")
     @Operation(summary = "update one record by key")
-    ResponseData<{{primary_key_type}}> updateById(@RequestBody {{entity_name}}Dto dto);
+    ResponseData<{{primary_key_type}}> updateById(@Valid @RequestBody {{entity_name}}Dto dto);
 
     @PostMapping("/{{low_entity_name}}")
     @Operation(summary = "insert one record")
-    ResponseData<{{primary_key_type}}> insert(@RequestBody {{entity_name}}Dto dto);
+    ResponseData<{{primary_key_type}}> insert(@Valid @RequestBody {{entity_name}}Dto dto);
 {{end-modify_content}}
 }

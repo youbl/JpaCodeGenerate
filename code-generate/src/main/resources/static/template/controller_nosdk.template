@@ -5,7 +5,7 @@ import {{package_name}}.dto.{{entity_name}}Dto;
 import {{package_name}}.service.{{entity_name}}Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.NonNull;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -30,13 +31,13 @@ public class {{entity_name}}Controller {
 
     @PostMapping("/{{low_entity_name}}/all")
     @Operation(summary = "query data list by condition")
-    public ResponseData<List<{{entity_name}}Dto>> findAll(@RequestBody {{entity_name}}Dto dto) {
+    public ResponseData<List<{{entity_name}}Dto>> findAll(@Valid @RequestBody {{entity_name}}Dto dto) {
         return ResponseData.ok(service.search(dto));
     }
 
     @GetMapping("/{{low_entity_name}}")
     @Operation(summary = "query single data by key")
-    public ResponseData<{{entity_name}}Dto> findById(@NonNull {{primary_key_type}} {{low_key_field}}) {
+    public ResponseData<{{entity_name}}Dto> findById(@RequestParam {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.findById({{low_key_field}}));
     }
 
@@ -44,14 +45,14 @@ public class {{entity_name}}Controller {
     @DeleteMapping("/{{low_entity_name}}")
     @Operation(summary = "del one record by key")
     // @OperationLog(subType = SubType.{{upall_entity_name}}_DEL)
-    public ResponseData<Boolean> delById(@NonNull {{primary_key_type}} {{low_key_field}}) {
+    public ResponseData<Boolean> delById(@RequestParam {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.removeById({{low_key_field}}));
     }
 
     @PutMapping("/{{low_entity_name}}")
     @Operation(summary = "update one record by key")
     // @OperationLog(subType = SubType.{{upall_entity_name}}_UPDATE)
-    public ResponseData<{{primary_key_type}}> updateById(@RequestBody @NonNull {{entity_name}}Dto dto) {
+    public ResponseData<{{primary_key_type}}> updateById(@Valid @RequestBody {{entity_name}}Dto dto) {
         Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
         {{primary_key_type}} newId = service.save{{entity_name}}(dto);
         return ResponseData.ok(newId);
@@ -60,7 +61,7 @@ public class {{entity_name}}Controller {
     @PostMapping("/{{low_entity_name}}")
     @Operation(summary = "insert one record")
     // @OperationLog(subType = SubType.{{upall_entity_name}}_ADD)
-    public ResponseData<{{primary_key_type}}> insert(@RequestBody @NonNull {{entity_name}}Dto dto) {
+    public ResponseData<{{primary_key_type}}> insert(@Valid @RequestBody {{entity_name}}Dto dto) {
         // clear primary key before insert
         dto.set{{up_key_field}}(null);
 
