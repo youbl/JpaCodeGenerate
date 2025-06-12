@@ -1,10 +1,10 @@
 package cn.beinet.codegenerate.configs.logins;
 
 import cn.beinet.codegenerate.configs.BaseFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

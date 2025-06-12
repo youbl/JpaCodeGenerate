@@ -4,13 +4,12 @@ import cn.beinet.codegenerate.consts.Consts;
 import cn.beinet.codegenerate.service.SaltService;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.TokenHelper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 判断Cookie是否存在有效登录信息的类

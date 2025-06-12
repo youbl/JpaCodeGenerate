@@ -1,11 +1,10 @@
 package cn.beinet.codegenerate.configs.logins;
 
 import cn.beinet.codegenerate.consts.Consts;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 通过固定的ak/sk进行登录验证的类，一般用于api调用

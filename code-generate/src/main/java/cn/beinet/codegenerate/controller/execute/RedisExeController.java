@@ -7,6 +7,7 @@ import cn.beinet.codegenerate.linkinfo.service.LinkInfoService;
 import cn.beinet.codegenerate.model.RedisResultDto;
 import cn.beinet.codegenerate.repository.RedisRepository;
 import cn.beinet.codegenerate.util.ContextUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpHeaders;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;

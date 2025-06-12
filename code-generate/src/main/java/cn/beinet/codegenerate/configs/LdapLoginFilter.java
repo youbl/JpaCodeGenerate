@@ -9,6 +9,11 @@ import cn.beinet.codegenerate.util.ContextUtil;
 import cn.beinet.codegenerate.util.RequestHelper;
 import cn.beinet.codegenerate.util.SpringUtil;
 import cn.beinet.codegenerate.util.TokenHelper;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,11 +22,6 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 

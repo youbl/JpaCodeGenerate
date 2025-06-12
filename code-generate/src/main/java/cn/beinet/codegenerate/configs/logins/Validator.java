@@ -1,11 +1,10 @@
 package cn.beinet.codegenerate.configs.logins;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.core.Ordered;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 新类

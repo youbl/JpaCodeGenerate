@@ -1,9 +1,9 @@
 package cn.beinet.codegenerate.util;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import java.util.regex.Pattern;
 
 /**
