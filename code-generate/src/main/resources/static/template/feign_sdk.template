@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 
 /**
@@ -19,24 +20,24 @@ import java.util.List;
 public interface {{entity_name}}Client {
 
     @PostMapping("/{{low_entity_name}}/all")
-    @Operation(summary = "query data list by condition")
+    @Operation(summary = "query {{entity_name}} list by condition")
     ResponseData<List<{{entity_name}}Dto>> findAll(@Valid @RequestBody {{entity_name}}Dto dto);
 
     @GetMapping("/{{low_entity_name}}")
-    @Operation(summary = "query single data by key")
-    ResponseData<{{entity_name}}Dto> findById(@RequestParam {{primary_key_type}} {{low_key_field}});
+    @Operation(summary = "query {{entity_name}} by {{low_key_field}}")
+    ResponseData<{{entity_name}}Dto> findById(@RequestParam @Min(value = 1, message = "{{low_key_field}} can't less than 1") {{primary_key_type}} {{low_key_field}});
 
 {{start-modify_content}}
     @DeleteMapping("/{{low_entity_name}}")
-    @Operation(summary = "del one record by key")
-    ResponseData<Boolean> delById(@RequestParam {{primary_key_type}} {{low_key_field}});
+    @Operation(summary = "del {{entity_name}} by {{low_key_field}}")
+    ResponseData<Boolean> delById(@RequestParam @Min(value = 1, message = "{{low_key_field}} can't less than 1") {{primary_key_type}} {{low_key_field}});
 
     @PutMapping("/{{low_entity_name}}")
-    @Operation(summary = "update one record by key")
+    @Operation(summary = "update {{entity_name}} by {{low_key_field}}")
     ResponseData<{{primary_key_type}}> updateById(@Valid @RequestBody {{entity_name}}Dto dto);
 
     @PostMapping("/{{low_entity_name}}")
-    @Operation(summary = "insert one record")
+    @Operation(summary = "insert one {{entity_name}}")
     ResponseData<{{primary_key_type}}> insert(@Valid @RequestBody {{entity_name}}Dto dto);
 {{end-modify_content}}
 }

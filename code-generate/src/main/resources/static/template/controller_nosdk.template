@@ -6,6 +6,7 @@ import {{package_name}}.service.{{entity_name}}Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,27 +31,27 @@ public class {{entity_name}}Controller {
     private final {{entity_name}}Service service;
 
     @PostMapping("/{{low_entity_name}}/all")
-    @Operation(summary = "query data list by condition")
+    @Operation(summary = "query {{entity_name}} list by condition")
     public ResponseData<List<{{entity_name}}Dto>> findAll(@Valid @RequestBody {{entity_name}}Dto dto) {
         return ResponseData.ok(service.search(dto));
     }
 
     @GetMapping("/{{low_entity_name}}")
-    @Operation(summary = "query single data by key")
-    public ResponseData<{{entity_name}}Dto> findById(@RequestParam {{primary_key_type}} {{low_key_field}}) {
+    @Operation(summary = "query single {{entity_name}} by {{low_key_field}}")
+    public ResponseData<{{entity_name}}Dto> findById(@RequestParam @Min(value = 1, message = "{{low_key_field}} can't less than 1") {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.findById({{low_key_field}}));
     }
 
 {{start-modify_content}}
     @DeleteMapping("/{{low_entity_name}}")
-    @Operation(summary = "del one record by key")
+    @Operation(summary = "del {{entity_name}} by {{low_key_field}}")
     // @OperationLog(subType = SubType.{{upall_entity_name}}_DEL)
-    public ResponseData<Boolean> delById(@RequestParam {{primary_key_type}} {{low_key_field}}) {
+    public ResponseData<Boolean> delById(@RequestParam @Min(value = 1, message = "{{low_key_field}} can't less than 1") {{primary_key_type}} {{low_key_field}}) {
         return ResponseData.ok(service.removeById({{low_key_field}}));
     }
 
     @PutMapping("/{{low_entity_name}}")
-    @Operation(summary = "update one record by key")
+    @Operation(summary = "update {{entity_name}} by {{low_key_field}}")
     // @OperationLog(subType = SubType.{{upall_entity_name}}_UPDATE)
     public ResponseData<{{primary_key_type}}> updateById(@Valid @RequestBody {{entity_name}}Dto dto) {
         Assert.notNull(dto.get{{up_key_field}}(), "update must set primary key.");
@@ -59,7 +60,7 @@ public class {{entity_name}}Controller {
     }
 
     @PostMapping("/{{low_entity_name}}")
-    @Operation(summary = "insert one record")
+    @Operation(summary = "insert one {{entity_name}}")
     // @OperationLog(subType = SubType.{{upall_entity_name}}_ADD)
     public ResponseData<{{primary_key_type}}> insert(@Valid @RequestBody {{entity_name}}Dto dto) {
         // clear primary key before insert
