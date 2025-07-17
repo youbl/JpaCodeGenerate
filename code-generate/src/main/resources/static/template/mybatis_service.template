@@ -24,7 +24,8 @@ public class {{entity_name}}Service extends ServiceImpl<{{entity_name}}Mapper, {
         LambdaQueryWrapper<{{entity_name}}> wrapper = new LambdaQueryWrapper<>();
         if (dto != null) {{{service_cond_fields}}
         }
-        wrapper.orderByDesc({{entity_name}}::get{{up_key_field}}).last(" LIMIT 123");
+        var limit = (dto == null || dto.getRowLimit() == null || dto.getRowLimit() <= 0) ? 123 : dto.getRowLimit();
+        wrapper.orderByDesc({{entity_name}}::get{{up_key_field}}).last(" LIMIT " + limit);
         return entityMapper.entity2dto(list(wrapper));
     }
 

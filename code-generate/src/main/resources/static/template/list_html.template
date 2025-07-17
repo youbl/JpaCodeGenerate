@@ -92,7 +92,9 @@
                 statusTxt: '',
                 loading: false,
                 {{search-date_var}}
-                searchCondition: {},
+                searchCondition: {
+                    rowLimit: 123,
+                },
                 dataList: [],
 {{start-modify_content}}
                 statusEditDialog: false,
@@ -151,7 +153,8 @@
                 {{search-date_combine}}
                 this.dataList = [];
                 let url = $$BASE_URL + '{{low_entity_name}}/all';
-                return axios.post(url, this.searchCondition).then(response => {
+                // get方法要用 params 包一下参数，条件才会跟到url后面
+                return axios.get(url, {params: this.searchCondition}).then(response => {
                     this.loading = false;
                     if (!response.data || response.data.code !== 0) {
                         return alert('获取数据列表失败:' + getErrorMsg(response));
@@ -280,9 +283,30 @@
                 //console.log('该列宽度:' + str + ':' + flexWidth)
                 return flexWidth + 'px';
             },
-            // 当前页面列表数据，完整导出到csv
+            // 完整列表数据，完整导出到csv
             exportToCsv: function () {
-                window.exportDataToCsv(this.dataList);
+                // 设置很大的分页数据条数，一次性导出
+                let tmpLimit = this.searchCondition.rowLimit;
+                this.searchCondition.rowLimit = 1000000;
+
+                let url = $$BASE_URL + '{{low_entity_name}}/all';
+                return axios.post(url, this.searchCondition).then(response => {
+                    if (!response.data || response.data.code !== 0) {
+                        return alert('获取导出数据列表失败:' + getErrorMsg(response));
+                    }
+                    let data = response.data.data;
+                    if (!data || data.length === undefined) {
+                        return alert('获取导出数据失败:' + getErrorMsg(response));
+                    }
+                    if (data.length === 0) {
+                        return alert('未找到可导出的数据');
+                    }
+                    // 导出刚刚查询的数据
+                    window.exportDataToCsv(data);
+                }).catch(error => this.ajaxError(error));
+
+                // 立即恢复页面条件数据
+                this.searchCondition.rowLimit = tmpLimit;
             },
 
             goLogin: function () {

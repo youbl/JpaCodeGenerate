@@ -30,9 +30,9 @@ import java.util.List;
 public class {{entity_name}}Controller {
     private final {{entity_name}}Service service;
 
-    @PostMapping("/{{low_entity_name}}/all")
+    @GetMapping("/{{low_entity_name}}/all")
     @Operation(summary = "query {{entity_name}} list by condition")
-    public ResponseData<List<{{entity_name}}Dto>> findAll(@Valid @RequestBody {{entity_name}}Dto dto) {
+    public ResponseData<List<{{entity_name}}Dto>> findAll(@Valid {{entity_name}}Dto dto) {
         return ResponseData.ok(service.search(dto));
     }
 

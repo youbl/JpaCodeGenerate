@@ -28,6 +28,7 @@ public interface {{entity_name}}EntityMapper {
     {{entity_name}} dto2entity({{entity_name}}Dto dto);
 
     {{dto_localdatetime_to_timestamp}}
+    @Mapping(target = "rowLimit",  ignore = true)
     {{entity_name}}Dto entity2dto({{entity_name}} entity);
 
     List<{{entity_name}}> dto2entity(List<{{entity_name}}Dto> dto);

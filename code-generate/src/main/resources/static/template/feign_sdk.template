@@ -19,9 +19,9 @@ import java.util.List;
 @Tag(name = "{{entity_name}}", description = "{{entity_name}} API")
 public interface {{entity_name}}Client {
 
-    @PostMapping("/{{low_entity_name}}/all")
+    @GetMapping("/{{low_entity_name}}/all")
     @Operation(summary = "query {{entity_name}} list by condition")
-    ResponseData<List<{{entity_name}}Dto>> findAll(@Valid @RequestBody {{entity_name}}Dto dto);
+    ResponseData<List<{{entity_name}}Dto>> findAll(@Valid {{entity_name}}Dto dto);
 
     @GetMapping("/{{low_entity_name}}")
     @Operation(summary = "query {{entity_name}} by {{low_key_field}}")

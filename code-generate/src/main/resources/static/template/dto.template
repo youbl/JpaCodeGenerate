@@ -14,5 +14,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Data
 @Accessors(chain = true)
 public class {{entity_name}}Dto {
+     /**
+     * 要查询的数据行数
+     */
+    private Integer rowLimit;
 {{dto_fields}}
 }
