@@ -9,6 +9,16 @@
     <script src="../res/axios.min.js" type="text/javascript"></script>
     <script src="../res/elemeIndex.js" type="text/javascript"></script>
     <link href="../res/elemeIndex.css" rel="stylesheet">
+    <style>
+        /* 表格的单数行 */
+        .el-table .odd-row {
+            background: whitesmoke;
+        }
+        /* 表格的双数行 */
+        .el-table .even-row {
+            background: oldlace;
+        }
+    </style>
 </head>
 <body style="overflow: hidden;margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f9fc;"><!-- 禁用浏览器的纵向滚动条 -->
 <h1>
@@ -38,7 +48,7 @@
             :data="dataList"
             height="calc(100vh - 200px)"
             border
-            stripe
+            :row-class-name="tableRowClassName"
             @selection-change="handleSelectionChange"
             style="width: 100%">
         <el-table-column type="selection" width="55"></el-table-column>
@@ -103,9 +113,15 @@
         },
         computed: {},
         methods: {
+            // 用于el-table隔行变色功能
+            tableRowClassName: function (row) {
+                return (row.rowIndex % 2 === 0) ? 'odd-row' : 'even-row';
+            },
+            // el-tale表格行选择事件
             handleSelectionChange: function (val) {
                 this.multipleSelection = val;
             },
+            // 获取el-tale表格选择的所有行数据
             getAllSelectedId: function () {
                 if (this.multipleSelection.length <= 0) {
                     alert('请选择要处理的数据');
@@ -120,6 +136,7 @@
                 }
                 return ret;
             },
+            // 加载el-table展示的数据源
             loadDatas: function () {
                 if (this.loading)
                     return alert('加载中...');
@@ -151,6 +168,7 @@
                 }).catch(error => this.ajaxError(error));
             },
 {{start-modify_content}}
+            // 确认并完成删除动作
             confirmDel: function (row) {
                 if (!confirm('确认要删除吗?')) {
                     return;
@@ -165,6 +183,7 @@
                     this.loadDatas();
                 }).catch(error => this.ajaxError(error));
             },
+            // 打开新增/编辑对话框
             openEditDialog: function (row, isClone) {
                 if (row) {
                     if (isClone) {
@@ -184,9 +203,11 @@
                 //}
                 this.statusEditDialog = true;
             },
+            // 隐藏新增/编辑对话框
             hideEditDialog: function () {
                 this.statusEditDialog = false;
             },
+            // 新增/编辑对话框里的保存功能
             saveData: function (form) {
                 this.$refs[form].validate(valid => {
                     if (!valid)
@@ -259,6 +280,7 @@
                 //console.log('该列宽度:' + str + ':' + flexWidth)
                 return flexWidth + 'px';
             },
+            // 当前页面列表数据，完整导出到csv
             exportToCsv: function () {
                 window.exportDataToCsv(this.dataList);
             },
