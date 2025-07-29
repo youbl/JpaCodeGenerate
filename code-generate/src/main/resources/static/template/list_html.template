@@ -188,6 +188,9 @@
             },
             // 打开新增/编辑对话框
             openEditDialog: function (row, isClone) {
+                // hideEditDialog方法并不能总是触发，因此要在弹窗时清理
+                this.clearValidate();
+
                 if (row) {
                     if (isClone) {
                         this.editRow = {...row};
@@ -209,6 +212,15 @@
             // 隐藏新增/编辑对话框
             hideEditDialog: function () {
                 this.statusEditDialog = false;
+                this.clearValidate();
+            },
+            clearValidate: function() {
+                // 清除表单验证错误信息
+                this.$nextTick(() => {
+                    if (this.$refs.editRowForm) {
+                        this.$refs.editRowForm.clearValidate();
+                    }
+                });
             },
             // 新增/编辑对话框里的保存功能
             saveData: function (form) {

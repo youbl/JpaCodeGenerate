@@ -266,6 +266,7 @@ public class HtmlGenerater implements Generater {
             } else if (dto.isLocalDateTime()) {
                 editContent = getDateTimeEditContent(colName);
             } else {
+                // todo: 长度大于5000时，显示为textbox
                 editContent = getInputEditContent(colName);
             }
             sb.append("            <el-form-item label=\"")
