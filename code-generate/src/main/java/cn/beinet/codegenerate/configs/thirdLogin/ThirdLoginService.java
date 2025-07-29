@@ -41,9 +41,10 @@ public class ThirdLoginService {
         String callbackUrl = combinCallbackUrl(thirdLoginInfo.getCallbackUrl(), request);
         String loginUrl = thirdLoginInfo.getLoginUrl();
         loginUrl += (loginUrl.indexOf('?') > 0) ? '&' : '?';
-        loginUrl += "redirect_uri=" + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8.toString());
+        loginUrl += "scope=openid&prompt=login%20consent&response_type=code&client_id=" + thirdLoginInfo.getAppKey();
+        loginUrl += "&redirect_uri=" + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8);
         if (StringUtils.hasLength(thirdLoginInfo.getCallbackPara())) {
-            loginUrl += "&state=" + URLEncoder.encode(thirdLoginInfo.getCallbackPara(), StandardCharsets.UTF_8.toString());
+            loginUrl += "&state=" + URLEncoder.encode(thirdLoginInfo.getCallbackPara(), StandardCharsets.UTF_8);
         }
         System.out.println(loginUrl);
         return loginUrl;

@@ -4,6 +4,7 @@ import cn.beinet.codegenerate.configs.LdapLoginFilter;
 import cn.beinet.codegenerate.configs.arguments.AuthDetails;
 import cn.beinet.codegenerate.configs.logins.ImgCodeService;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.DingtalkService;
+import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.EToolsLoginService;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.dto.DingtalkUserInfoResult;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.dto.DingtalkUserResult;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
     private final ImgCodeService codeService;
 
+    // 原生的钉钉登录对接服务类
     private final DingtalkService dingtalkService;
+
+    // ETools团队的飞书对接服务类
+    private final EToolsLoginService eToolsLoginService;
 
     private final LdapLoginFilter ldapLoginFilter;
 
@@ -48,12 +54,37 @@ public class LoginController {
 
     /**
      * 返回当前登录用户
+     *
      * @param authDetails 当前登录上下文
      * @return 登录用户名
      */
     @GetMapping("currentuser")
     public String getLoginUser(AuthDetails authDetails) {
         return authDetails.getAccount();
+    }
+
+    /**
+     * etools回调地址
+     *
+     * @param code     暂不清楚用途
+     * @param authCode 钉钉认证通过时，回调的authCode，用于获取后续的钉钉token用
+     * @param state    暂不清楚用途
+     * @return html
+     */
+    @GetMapping("authCallback/etools")
+    @SneakyThrows
+    public String authCallbackETools(@RequestParam(required = false) String code,
+                                     @RequestParam(required = false) String authCode,
+                                     @RequestParam(required = false) String state,
+                                     HttpServletRequest request,
+                                     HttpServletResponse response) {
+        var userInfo = eToolsLoginService.getAuthTokenUser(authCode);
+        if (userInfo == null || !StringUtils.hasLength(userInfo.getOrgEmail())) {
+            return "未成功获取用户邮箱";
+        }
+
+        String email = userInfo.getOrgEmail();
+        return checkEmail(email, request, response);
     }
 
     /**
@@ -93,6 +124,10 @@ public class LoginController {
             return "未成功获取用户邮箱";
 
         String email = userInfo2.getResult().getOrg_email();
+        return checkEmail(email, request, response);
+    }
+
+    private String checkEmail(String email, HttpServletRequest request, HttpServletResponse response) {
         if (!emailDomain.startsWith("@")) {
             emailDomain = "@" + emailDomain;
         }

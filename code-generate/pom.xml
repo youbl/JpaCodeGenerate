@@ -122,6 +122,13 @@
             <artifactId>dom4j</artifactId>
             <version>1.6.1</version>
         </dependency>
+
+        <!-- 内部的钉钉、飞书集成登录 -->
+        <dependency>
+            <groupId>com.fzzixun.etools</groupId>
+            <artifactId>oauth-server-client</artifactId>
+            <version>0.1.20</version>
+        </dependency>
     </dependencies>
 
     <build>

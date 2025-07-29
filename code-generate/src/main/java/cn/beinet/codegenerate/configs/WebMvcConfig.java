@@ -1,6 +1,9 @@
 package cn.beinet.codegenerate.configs;
 
 import cn.beinet.codegenerate.configs.arguments.AuthDetailArgumentResolver;
+import cn.beinet.codegenerate.configs.thirdLogin.ThirdLoginInfo;
+import com.fzzixun.etools.oauth.client.AuthProperties;
+import com.fzzixun.etools.oauth.client.AuthService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextListener;
@@ -33,5 +36,21 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Bean
     public RequestContextListener requestContextListener() {
         return new RequestContextListener();
+    }
+
+    /**
+     * ETools提供的飞书登录类
+     *
+     * @param thirdLoginInfo yml配置
+     * @return 登录类实例
+     */
+    @Bean
+    public AuthService authService(ThirdLoginInfo thirdLoginInfo) {
+        var authProperties = new AuthProperties();
+        authProperties.setAuthHost(thirdLoginInfo.getLoginUrl());
+        authProperties.setAuthApiHost(thirdLoginInfo.getLoginUrl());
+        authProperties.setAppKey(thirdLoginInfo.getAppKey());
+        authProperties.setAppSecret(thirdLoginInfo.getAppSecret());
+        return new AuthService(authProperties);
     }
 }
