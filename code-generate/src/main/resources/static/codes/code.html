@@ -139,8 +139,9 @@
                     <span style="display: inline-block;width:140px; ">
                         <el-tooltip class="item" effect="dark" placement="top-start">
                               <div slot="content">
-                                  选中时，如果Entity类包含LocalDateTime字段，<br>
-                                  对应的Dto类会转换为Long类型的时间戳
+                                  建议选中：如果Entity类包含LocalDateTime字段，<br>
+                                  对应的Dto类会转换为Long类型的时间戳.<br>
+                                  时间戳无时区，可以有效避免前端与后端的时区差异问题。
                               </div>
                             <el-checkbox v-model="codeCond.dtoUseTs">DTO使用时间戳</el-checkbox>
                         </el-tooltip>
@@ -241,7 +242,7 @@
                 packageResponseData: 'com.zixun.agentbase.core.base.dto',
                 removePrefix: 't_cb_',
                 modify: true,
-                feignSdk: true,
+                feignSdk: false,
                 dtoUseTs: true,
                 jdkVer: '21',
                 columnArr: [],

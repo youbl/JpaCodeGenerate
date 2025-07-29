@@ -18,7 +18,7 @@ public class ColumnDto {
     private String table;
 
     /**
-     * 字段名
+     * 数据库里的字段名
      */
     private String column;
 

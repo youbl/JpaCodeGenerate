@@ -43,7 +43,7 @@ public class MybatisServiceGenerater implements Generater {
         String now = TimeHelper.getNow();
         replaceSymbol(sb, Vars.DATE_TIME, now);
 
-        String entityName = getEntityName(columns.get(0).getTable(), generateDto);
+        String entityName = getEntityName(columns.getFirst().getTable(), generateDto);
         replaceSymbol(sb, Vars.ENTITY_NAME, entityName);
 
         replaceSymbol(sb, Vars.SERVICE_COND_FIELDS, getBody(columns, entityName));
@@ -74,14 +74,17 @@ public class MybatisServiceGenerater implements Generater {
             sb.append("            ").append(cond).append("\n");
 
             if (HtmlGenerater.isSearchKey(colName) && item.isLocalDateTime()) {
-                // 时间字段要增加 开始和结束的区间搜索
-                String condBegin = "wrapper.ge(dto.get" + colName + "Begin() != null, " + entityName + "::get" + colName +
-                        ", dto.get" + colName + "Begin());";
-                sb.append("            ").append(condBegin).append("\n");
+                // 开始时间区间搜索
+                sb
+                        .append("            if(dto.get").append(colName).append("Begin() != null) {\n")
+                        .append("                wrapper.apply(\"`").append(item.getColumn()).append("` >= FROM_UNIXTIME({0}/1000)\", dto.get").append(colName).append("Begin());\n")
+                        .append("            }\n");
 
-                String condEnd = "wrapper.le(dto.get" + colName + "End() != null, " + entityName + "::get" + colName +
-                        ", dto.get" + colName + "End());";
-                sb.append("            ").append(condEnd).append("\n");
+                // 结束时间区间搜索
+                sb
+                        .append("            if(dto.get").append(colName).append("End() != null) {\n")
+                        .append("                wrapper.apply(\"`").append(item.getColumn()).append("` <= FROM_UNIXTIME({0}/1000)\", dto.get").append(colName).append("End());\n")
+                        .append("            }\n");
             }
         }
         return sb.toString();

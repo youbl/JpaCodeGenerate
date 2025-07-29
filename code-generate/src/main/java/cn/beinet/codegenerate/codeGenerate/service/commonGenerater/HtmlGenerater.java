@@ -145,7 +145,7 @@ public class HtmlGenerater implements Generater {
                         "                :picker-options=\"globalPickOptions\"\n" +
                         "                v-model=\"" + varName + "\"\n" +
                         "                format=\"yyyy-MM-dd HH:mm:ss\"\n" +
-                        "                value-format=\"yyyy-MM-dd HH:mm:ss\"\n" +
+                        "                value-format=\"timestamp\"\n" +
                         "                type=\"datetimerange\"\n" +
                         "                range-separator=\"至\"\n" +
                         "                start-placeholder=\"开始日期\"\n" +
@@ -198,10 +198,15 @@ public class HtmlGenerater implements Generater {
             if (!isTableShowKey(dto.getColumn())) {
                 continue;
             }
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.append("\n");
             }
             String colName = getFieldName(dto.getColumn(), true);
+            // 默认时间按时间戳处理，要转换为日期字符串
+            String val = dto.isLocalDateTime() ?
+                    "scope.row['" + colName + "'] ? getStrTimeFromTimestamp(scope.row['" + colName + "']) : '-'"
+                    :
+                    "scope.row['" + colName + "'] ? scope.row['" + colName + "'] : '-'";
             sb.append("        <el-table-column label=\"")
                     .append(colName)
                     .append("\" :width=\"flexColumnWidth('")
@@ -210,11 +215,9 @@ public class HtmlGenerater implements Generater {
                     .append("            <template slot-scope=\"scope\">\n")
                     .append("                <div :title=\"scope.row['")
                     .append(colName)
-                    .append("']\">{{scope.row['")
-                    .append(colName)
-                    .append("'] ? scope.row['")
-                    .append(colName)
-                    .append("'] : '-'}}</div>\n")
+                    .append("']\">{{")
+                    .append(val)
+                    .append("}}</div>\n")
                     .append("            </template>\n")
                     .append("        </el-table-column>");
         }
@@ -257,10 +260,14 @@ public class HtmlGenerater implements Generater {
             String colName = getFieldName(dto.getColumn(), true);
             boolean disabled = isDisableEditKey(colName, keyName);
             // 主键在新建时，要隐藏
-            String vif = dto.isPrimaryKey() ? " v-if=\"editRow['" + colName + "']\"" : "";
+            String vif = disabled ? " v-if=\"editRow['" + keyName + "']\"" : "";
             String editContent;
             if (disabled) {
-                editContent = "<span>{{editRow['" + colName + "']}}</span>";
+                // 默认时间按时间戳处理，要转换为日期字符串
+                editContent = dto.isLocalDateTime() ?
+                        "<span>{{getStrTimeFromTimestamp(editRow['" + colName + "'])}}</span>"
+                        :
+                        "<span>{{editRow['" + colName + "']}}</span>";
             } else if (dto.isBool()) {
                 editContent = getSelectEditContent(colName);
             } else if (dto.isLocalDateTime()) {
@@ -295,7 +302,7 @@ public class HtmlGenerater implements Generater {
         return "<el-date-picker size=\"mini\"\n" +
                 "                            v-model=\"editRow['" + colName + "']\"\n" +
                 "                            format=\"yyyy-MM-dd HH:mm:ss\"\n" +
-                "                            value-format=\"yyyy-MM-dd HH:mm:ss\"\n" +
+                "                            value-format=\"timestamp\"\n" +
                 "                            placeholder=\"请选择\"\n" +
                 "                            type=\"datetime\">\n" +
                 "            </el-date-picker>";

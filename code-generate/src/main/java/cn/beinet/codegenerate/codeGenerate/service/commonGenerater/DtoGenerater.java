@@ -77,10 +77,8 @@ public class DtoGenerater implements Generater {
             String colName = getFieldName(column.getColumn(), true);
             if (isTime && HtmlGenerater.isSearchKey(column.getColumn())) {
                 // 搜索字段增加Begin和End区间条件字段
-                sb.append("    @DateTimeFormat(pattern = \"yyyy-MM-dd HH:mm:ss\")\n")
-                        .append("    private java.time.LocalDateTime ").append(colName).append("Begin;\n");
-                sb.append("    @DateTimeFormat(pattern = \"yyyy-MM-dd HH:mm:ss\")\n")
-                        .append("    private java.time.LocalDateTime ").append(colName).append("End;\n\n");
+                sb.append("    private Long ").append(colName).append("Begin;\n");
+                sb.append("    private Long ").append(colName).append("End;\n\n");
             }
         }
         return sb.toString();
@@ -88,6 +86,7 @@ public class DtoGenerater implements Generater {
 
     /**
      * 重写，把LocalDateTime转换为Long类型的时间戳
+     *
      * @param column 对应的列
      * @return 字段在DTO里的定义
      */
