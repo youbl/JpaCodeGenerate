@@ -102,7 +102,7 @@
                                         <el-button size="mini" circle icon="el-icon-delete"
                                                    @click="removeSql(idx, 1)"></el-button>
                                         <span>
-                                    {{idx+1}}:【{{item.cnt}}条/{{item.ms}}ms/{{item.dbName}}】<br>
+                                    {{idx + 1}}:【{{item.cnt}}条/{{item.ms}}ms/{{item.dbName}}】<br>
                                     <a href="javascript:void(0)" @click="setSqlAndLinkInfo(idx, 1)">{{item.sql}}</a>
                                 </span>
                                     </li>
@@ -122,8 +122,8 @@
                                         <el-button size="mini" circle icon="el-icon-delete"
                                                    @click="removeSql(idx, 2)"></el-button>
                                         <span>
-                                    {{idx+1}}:<a href="javascript:void(0)" @click="setSqlAndLinkInfo(idx, 2)"
-                                                 :title="item.sql">【{{item.title}}/{{item.dbName}}】</a>
+                                    {{idx + 1}}:<a href="javascript:void(0)" @click="setSqlAndLinkInfo(idx, 2)"
+                                                   :title="item.sql">【{{item.title}}/{{item.dbName}}】</a>
                                 </span>
                                     </li>
                                 </ul>
@@ -186,14 +186,16 @@
 
     <el-dialog :title="'字段值详情:' + selectedTable + '.' + selectedField + '（按ESC关窗）'"
                :visible.sync="fieldValueShow">
-        <el-input
-                type="textarea"
-                :rows="20"
-                v-model="selectedFieldValue">
-        </el-input>
-        <br>
+        <div>
+            <el-input
+                    type="textarea"
+                    :rows="20"
+                    v-model="selectedFieldValue">
+            </el-input>
+        </div>
         <template>
             <el-button type="primary" @click="formatJson">JSON格式化</el-button>
+            <span v-html="jsonFormatError"></span>
         </template>
     </el-dialog>
 
@@ -254,6 +256,7 @@
             fieldValueShow: false,
             selectedField: '',
             selectedFieldValue: '',
+            jsonFormatError: '',
         },
         created: function () {
             this.loadConnections().then(() => {
@@ -562,15 +565,26 @@
             },
 
             showFieldValue: function (row, key) {
+                this.jsonFormatError = '';
                 this.fieldValueShow = true;
                 this.selectedField = key;
                 this.selectedFieldValue = row[key];
             },
-            formatJson: function () {
+            formatJson: function (throwErr) {
+                this.jsonFormatError = '';
                 try {
-                    this.selectedFieldValue = JSON.stringify(JSON.parse(this.selectedFieldValue), null, 4);
+                    let result = JSON.parse(this.selectedFieldValue);
+                    if (typeof (result) === 'string') {
+                        result = JSON.parse(result);
+                    }
+                    this.selectedFieldValue = JSON.stringify(result, null, 4);
                 } catch (e) {
-                    alert('错误:' + e);
+                    if (throwErr === true) {
+                        this.jsonFormatError = '错误:' + e;
+                        return;
+                    }
+                    this.selectedFieldValue = '"' + this.selectedFieldValue + '"';
+                    this.formatJson(true);
                 }
             },
 

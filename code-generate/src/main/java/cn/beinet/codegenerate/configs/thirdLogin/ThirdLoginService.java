@@ -1,5 +1,6 @@
 package cn.beinet.codegenerate.configs.thirdLogin;
 
+import com.fzzixun.etools.oauth.client.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -7,9 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 第三方登录信息配置
@@ -21,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class ThirdLoginService {
     private final ThirdLoginInfo thirdLoginInfo;
+    private final AuthService authService;
 
     @Value("${server.servlet.context-path:}")
     private String prefix;
@@ -39,13 +38,7 @@ public class ThirdLoginService {
         Assert.isTrue(StringUtils.hasLength(thirdLoginInfo.getCallbackUrl()), "未配置回调地址");
 
         String callbackUrl = combinCallbackUrl(thirdLoginInfo.getCallbackUrl(), request);
-        String loginUrl = thirdLoginInfo.getLoginUrl();
-        loginUrl += (loginUrl.indexOf('?') > 0) ? '&' : '?';
-        loginUrl += "scope=openid&prompt=login%20consent&response_type=code&client_id=" + thirdLoginInfo.getAppKey();
-        loginUrl += "&redirect_uri=" + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8);
-        if (StringUtils.hasLength(thirdLoginInfo.getCallbackPara())) {
-            loginUrl += "&state=" + URLEncoder.encode(thirdLoginInfo.getCallbackPara(), StandardCharsets.UTF_8);
-        }
+        var loginUrl = authService.generateOauthLink(callbackUrl, thirdLoginInfo.getCallbackPara());
         System.out.println(loginUrl);
         return loginUrl;
     }
