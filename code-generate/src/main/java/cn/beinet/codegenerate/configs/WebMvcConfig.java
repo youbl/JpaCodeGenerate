@@ -16,7 +16,7 @@ import java.util.List;
  * Description:
  *
  * @author : youbl
- * @create: 2022/6/9 20:51
+ * @since 2022/6/9 20:51
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
@@ -46,7 +46,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Bean
     public AuthService authService(ThirdLoginInfo thirdLoginInfo) {
-        var authProperties = new AuthProperties();
+        AuthProperties authProperties = new AuthProperties();
         authProperties.setAuthHost(thirdLoginInfo.getLoginUrl());
         authProperties.setAuthApiHost(thirdLoginInfo.getLoginUrl());
         authProperties.setAppKey(thirdLoginInfo.getAppKey());

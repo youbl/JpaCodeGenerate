@@ -7,8 +7,7 @@ import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.DingtalkService;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.EToolsLoginService;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.dto.DingtalkUserInfoResult;
 import cn.beinet.codegenerate.configs.thirdLogin.dingtalk.dto.DingtalkUserResult;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.fzzixun.etools.oauth.client.response.GetAuthUserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 新类
@@ -78,7 +79,7 @@ public class LoginController {
                                      @RequestParam(required = false) String state,
                                      HttpServletRequest request,
                                      HttpServletResponse response) {
-        var userInfo = eToolsLoginService.getAuthTokenUser(authCode);
+        GetAuthUserResponse userInfo = eToolsLoginService.getAuthTokenUser(authCode);
         if (userInfo == null || !StringUtils.hasLength(userInfo.getOrgEmail())) {
             return "未成功获取用户邮箱";
         }

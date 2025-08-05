@@ -198,7 +198,7 @@ public class HtmlGenerater implements Generater {
             if (!isTableShowKey(dto.getColumn())) {
                 continue;
             }
-            if (!sb.isEmpty()) {
+            if (sb.length() > 0) {
                 sb.append("\n");
             }
             String colName = getFieldName(dto.getColumn(), true);

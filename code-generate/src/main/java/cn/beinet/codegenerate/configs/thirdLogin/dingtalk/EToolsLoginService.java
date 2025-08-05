@@ -2,11 +2,11 @@ package cn.beinet.codegenerate.configs.thirdLogin.dingtalk;
 
 import com.fzzixun.etools.oauth.client.AuthService;
 import com.fzzixun.etools.oauth.client.response.GetAuthTokenUserBodyResponse;
+import com.fzzixun.etools.oauth.client.response.GetAuthTokenUserResponse;
 import com.fzzixun.etools.oauth.client.response.GetAuthUserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,12 +27,12 @@ public class EToolsLoginService {
 
     @SneakyThrows
     public GetAuthUserResponse getAuthTokenUser(String oauthCode) {
-        var getAuthTokenUserResponse
+        GetAuthTokenUserResponse getAuthTokenUserResponse
                 = authService.getUserInfoByOauthCode(oauthCode);
         if (getAuthTokenUserResponse.success()) {
             GetAuthTokenUserBodyResponse data = getAuthTokenUserResponse.getData();
             return data.getAuth_user();
         }
-        throw new BadRequestException(getAuthTokenUserResponse.getMessage());
+        throw new RuntimeException(getAuthTokenUserResponse.getMessage());
     }
 }
