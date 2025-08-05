@@ -542,6 +542,11 @@
                     this.searchCond.configTestLabel;
             },
             loadConfigs: function (isProd) {
+                if (isProd) {
+                    this.configProd = {};
+                } else {
+                    this.configTest = {};
+                }
                 let configServerDto = this.getPara(isProd);
                 let urlConfig = $$BASE_URL + 'v1/configServer/config';
                 return axios.post(urlConfig, configServerDto).then(response => {
@@ -549,6 +554,10 @@
                     let txt = isProd ? '目标' : '源';
                     if (!response.data) {
                         return alert(txt + '环境配置加载有误');
+                    }
+                    // 有code并等于500，同时存在在errMsg和ts，表示后端读取数据异常了
+                    if (response.data.code && response.data.code === 500 && response.data.errMsg && response.data.ts) {
+                        return alert(txt + '环境配置加载异常:\n' + response.data.errMsg);
                     }
 
                     for (let att in response.data) {
