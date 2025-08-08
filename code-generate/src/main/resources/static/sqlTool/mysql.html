@@ -180,9 +180,12 @@
         <br>
         <template>
             <el-button type="primary" @click="generateSelectSql">生成 SELECT 语句并查询</el-button>
-            <el-button type="primary" @click="generateUpdateSql">生成 UPDATE 语句</el-button>
-            <el-button type="primary" @click="generateInsertSql">生成 INSERT 语句</el-button>
-            <el-button type="success" @click="exportTableDataAsSql">导出SQL</el-button>
+            <el-button type="primary" @click="generateUpdateSql">生成 UPDATE 模板</el-button>
+            <el-button type="primary" @click="generateInsertSql">生成 INSERT 模板</el-button>
+            <el-button type="success" @click="exportTableDataAsSql">导出数据SQL</el-button>
+            <span style="margin-left: 10px;">最多导出: </span>
+            <input type="number" v-model.number="exportRowLimit" min="1" max="100000" style="width: 80px; margin-left: 5px;" placeholder="1000">
+            <span style="margin-left: 5px;">行</span>
         </template>
     </el-dialog>
 
@@ -253,6 +256,7 @@
             generateSqlShow: false,
             selectedTable: '',
             generateSql: '',
+            exportRowLimit: 1000, // 默认导出行数限制
 
             showAsTextBox: true,
             fieldValueShow: false,
@@ -662,8 +666,14 @@
                     return alert('请先选择数据库和表');
                 }
 
-                // 首先查询表的所有数据
-                let sql = 'SELECT * FROM `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '`';
+                // 验证导出行数限制
+                let limit = this.exportRowLimit || 1000;
+                if (limit <= 0 || limit > 100000) {
+                    return alert('导出行数必须在1-100000之间');
+                }
+
+                // 首先查询表的指定行数数据
+                let sql = 'SELECT * FROM `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '` LIMIT ' + limit;
                 let url = $$BASE_URL + 'mysql/executeSql?';
                 let body = {
                     'sql': sql,
@@ -734,8 +744,7 @@
 
                     let fieldsPart = fieldNames.map(name => '`' + name + '`').join(', ');
                     let valuesPart = values.join(', ');
-                    let insertSql = 'INSERT INTO `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '` (' + fieldsPart + ')\n' +
-                        '  VALUES (' + valuesPart + ');';
+                    let insertSql = 'INSERT INTO `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '` (' + fieldsPart + ') VALUES (' + valuesPart + ');';
                     insertSqls.push(insertSql);
                 }
 
@@ -758,7 +767,8 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 
-                alert('SQL文件已生成并下载，包含 ' + insertSqls.length + ' 条INSERT语句');
+                let limitInfo = insertSqls.length >= this.exportRowLimit ? '（已达到导出上限）' : '';
+                alert('SQL文件已生成并下载，包含 ' + insertSqls.length + ' 条INSERT语句' + limitInfo);
             },
 
             ajaxError: function (error) {
