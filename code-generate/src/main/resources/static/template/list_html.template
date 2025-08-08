@@ -302,7 +302,7 @@
                 this.searchCondition.rowLimit = 1000000;
 
                 let url = $$BASE_URL + '{{low_entity_name}}/all';
-                return axios.post(url, this.searchCondition).then(response => {
+                axios.get(url, {params: this.searchCondition}).then(response => {
                     if (!response.data || response.data.code !== 0) {
                         return alert('获取导出数据列表失败:' + getErrorMsg(response));
                     }
