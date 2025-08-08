@@ -703,7 +703,7 @@
                     }
 
                     // 下载SQL文件
-                    this.downloadSqlFile(insertSqls);
+                    this.downloadSqlFile(insertSqls, response.data.result.length);
                     this.generateSqlShow = false;
                 }).catch(error => {
                     this.loading = false;
@@ -716,9 +716,10 @@
                     return [];
                 }
 
-                let insertSqls = [];
                 let fieldNames = Object.keys(data[0]);
+                let allValuesRows = [];
 
+                // 为每一行数据生成VALUES部分
                 for (let i = 0; i < data.length; i++) {
                     let row = data[i];
                     let values = [];
@@ -742,18 +743,20 @@
                         }
                     }
 
-                    let fieldsPart = fieldNames.map(name => '`' + name + '`').join(', ');
-                    let valuesPart = values.join(', ');
-                    let insertSql = 'INSERT INTO `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '` (' + fieldsPart + ') VALUES (' + valuesPart + ');';
-                    insertSqls.push(insertSql);
+                    allValuesRows.push('(' + values.join(', ') + ')');
                 }
 
-                return insertSqls;
+                // 生成单条INSERT语句
+                let fieldsPart = fieldNames.map(name => '`' + name + '`').join(', ');
+                let insertSql = 'INSERT INTO `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '` (' + fieldsPart + ') VALUES\n  ' + allValuesRows.join(',\n  ') + ';';
+                
+                return [insertSql]; // 返回包含单条SQL的数组
             },
 
-            downloadSqlFile: function (insertSqls) {
+            downloadSqlFile: function (insertSqls, dataRowCount) {
                 let sqlContent = '-- 表 ' + this.selectedTable + ' 的数据导出\n';
-                sqlContent += '-- 导出时间: ' + new Date().toLocaleString() + '\n\n';
+                sqlContent += '-- 导出时间: ' + new Date().toLocaleString() + '\n';
+                sqlContent += '-- 数据行数: ' + dataRowCount + '\n\n';
                 sqlContent += insertSqls.join('\n') + '\n';
 
                 // 创建下载链接
@@ -767,8 +770,8 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 
-                let limitInfo = insertSqls.length >= this.exportRowLimit ? '（已达到导出上限）' : '';
-                alert('SQL文件已生成并下载，包含 ' + insertSqls.length + ' 条INSERT语句' + limitInfo);
+                let limitInfo = dataRowCount >= this.exportRowLimit ? '（已达到导出上限）' : '';
+                alert('SQL文件已生成并下载，1条INSERT语句包含 ' + dataRowCount + ' 行数据' + limitInfo);
             },
 
             ajaxError: function (error) {
