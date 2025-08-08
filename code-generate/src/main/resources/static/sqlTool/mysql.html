@@ -182,6 +182,7 @@
             <el-button type="primary" @click="generateSelectSql">生成 SELECT 语句并查询</el-button>
             <el-button type="primary" @click="generateUpdateSql">生成 UPDATE 语句</el-button>
             <el-button type="primary" @click="generateInsertSql">生成 INSERT 语句</el-button>
+            <el-button type="success" @click="exportTableDataAsSql">导出SQL</el-button>
         </template>
     </el-dialog>
 
@@ -653,6 +654,111 @@
             },
             exportResult: function () {
                 window.exportDataToCsv(this.resultData);
+            },
+
+            // 把指定的表，导出为INSERT INTO语句
+            exportTableDataAsSql: function () {
+                if (!this.searchCond.dbTestName || !this.selectedTable) {
+                    return alert('请先选择数据库和表');
+                }
+
+                // 首先查询表的所有数据
+                let sql = 'SELECT * FROM `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '`';
+                let url = $$BASE_URL + 'mysql/executeSql?';
+                let body = {
+                    'sql': sql,
+                    'ip': this.searchCond.dbTestIp,
+                    'user': this.searchCond.dbTestUser,
+                    'pwd': this.searchCond.dbTestPwd,
+                    'db': this.searchCond.dbTestName,
+                    'name': this.searchCond.configName,
+                    'dbTimeout': this.searchCond.dbTimeout,
+                };
+
+                if (this.loading) {
+                    return alert('正在执行中，请稍候');
+                }
+
+                this.loading = true;
+                axios.post(url, body).then(response => {
+                    this.loading = false;
+                    if (response.data.code !== 200) {
+                        return alert(response.data.code + ':' + response.data.errMsg);
+                    }
+
+                    // 生成INSERT语句
+                    let insertSqls = this.generateInsertSqlsFromData(response.data.result);
+                    if (insertSqls.length === 0) {
+                        return alert('表中没有数据可导出');
+                    }
+
+                    // 下载SQL文件
+                    this.downloadSqlFile(insertSqls);
+                    this.generateSqlShow = false;
+                }).catch(error => {
+                    this.loading = false;
+                    this.ajaxError(error);
+                });
+            },
+
+            generateInsertSqlsFromData: function (data) {
+                if (!data || data.length === 0) {
+                    return [];
+                }
+
+                let insertSqls = [];
+                let fieldNames = Object.keys(data[0]);
+
+                for (let i = 0; i < data.length; i++) {
+                    let row = data[i];
+                    let values = [];
+
+                    for (let j = 0; j < fieldNames.length; j++) {
+                        let fieldName = fieldNames[j];
+                        let value = row[fieldName];
+
+                        if (value === null || value === undefined) {
+                            values.push('NULL');
+                        } else if (typeof value === 'string') {
+                            // 转义单引号
+                            value = value.replace(/'/g, "''");
+                            values.push("'" + value + "'");
+                        } else if (typeof value === 'number') {
+                            values.push(value.toString());
+                        } else {
+                            // 其他类型转为字符串处理
+                            value = String(value).replace(/'/g, "''");
+                            values.push("'" + value + "'");
+                        }
+                    }
+
+                    let fieldsPart = fieldNames.map(name => '`' + name + '`').join(', ');
+                    let valuesPart = values.join(', ');
+                    let insertSql = 'INSERT INTO `' + this.searchCond.dbTestName + '`.`' + this.selectedTable + '` (' + fieldsPart + ')\n' +
+                        '  VALUES (' + valuesPart + ');';
+                    insertSqls.push(insertSql);
+                }
+
+                return insertSqls;
+            },
+
+            downloadSqlFile: function (insertSqls) {
+                let sqlContent = '-- 表 ' + this.selectedTable + ' 的数据导出\n';
+                sqlContent += '-- 导出时间: ' + new Date().toLocaleString() + '\n\n';
+                sqlContent += insertSqls.join('\n') + '\n';
+
+                // 创建下载链接
+                let blob = new Blob([sqlContent], {type: 'text/plain;charset=utf-8'});
+                let url = window.URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = this.selectedTable + '_data_export.sql';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                alert('SQL文件已生成并下载，包含 ' + insertSqls.length + ' 条INSERT语句');
             },
 
             ajaxError: function (error) {
