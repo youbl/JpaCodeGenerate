@@ -242,6 +242,7 @@
             dbsTest: {},
             defaultName: '',
             tableList: [],
+            tableCancelToken: null, // 表列表请求取消令牌
 
             costTime: 0,
             resultData: [],
@@ -257,6 +258,7 @@
             selectedTable: '',
             generateSql: '',
             exportRowLimit: 1000, // 默认导出行数限制
+            dbCancelToken: null, // 数据库请求取消令牌
 
             showAsTextBox: true,
             fieldValueShow: false,
@@ -311,6 +313,11 @@
                 if (!this.selectDbName && this.sqlConns.length) {
                     this.selectDbName = this.sqlConns[0].configName;
                 }
+                
+                // 立即清空数据库和表列表，避免显示之前连接的数据
+                this.dbsTest = {};
+                this.tableList = [];
+                
                 for (let i = 0, j = this.sqlConns.length; i < j; i++) {
                     if (this.sqlConns[i].configName === this.selectDbName) {
                         this.copyAtts(this.sqlConns[i]);
@@ -432,9 +439,21 @@
             },
             loadDbs: function () {
                 this.dbsTest = {};
+                this.tableList = []; // 清空表列表
+                
+                // 取消前一次数据库请求
+                if (this.dbCancelToken) {
+                    this.dbCancelToken.cancel('新的数据库请求已发起');
+                }
+                
+                // 创建新的取消令牌
+                this.dbCancelToken = axios.CancelToken.source();
                 let currentIp = this.searchCond.dbTestIp;
                 let url = $$BASE_URL + 'mysql/databases?' + this.combineDbPara();
-                return axios.get(url).then(response => {
+                
+                return axios.get(url, {
+                    cancelToken: this.dbCancelToken.token
+                }).then(response => {
                     if (response.data.code && response.data.code === 500) {
                         return alert(currentIp + '出错:\n' + response.data.errMsg);
                     }
@@ -443,17 +462,36 @@
 
                     this.loadTables();
                 }).catch(error => {
-                    this.ajaxError(error);
+                    if (!axios.isCancel(error)) {
+                        this.ajaxError(error);
+                    }
+                }).finally(() => {
+                    this.dbCancelToken = null;
                 });
             },
             loadTables: function () {
                 if (!this.searchCond.dbTestName)
                     return;
+                
+                // 取消前一次表列表请求
+                if (this.tableCancelToken) {
+                    this.tableCancelToken.cancel('新的表列表请求已发起');
+                }
+                
+                // 创建新的取消令牌
+                this.tableCancelToken = axios.CancelToken.source();
                 let url = $$BASE_URL + 'mysql/tableNames?' + this.combineDbPara() + '&db=' + this.searchCond.dbTestName;
-                return axios.get(url).then(response => {
+                
+                return axios.get(url, {
+                    cancelToken: this.tableCancelToken.token
+                }).then(response => {
                     this.tableList = response.data;
                 }).catch(error => {
-                    this.ajaxError(error);
+                    if (!axios.isCancel(error)) {
+                        this.ajaxError(error);
+                    }
+                }).finally(() => {
+                    this.tableCancelToken = null;
                 });
             },
             getSqlByTable: function (tbName) {
