@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 /**
@@ -28,6 +29,10 @@ public class DefaultConfigurations {
         module.addSerializer(Long.class, ToStringSerializer.instance);
         module.addSerializer(Long.TYPE, ToStringSerializer.instance);
         module.addSerializer(long.class, ToStringSerializer.instance);
+        
+        // BigInteger类型转String返回，解决数据库BIGINT映射到BigInteger时的精度问题
+        module.addSerializer(BigInteger.class, ToStringSerializer.instance);
+        
         // module.addDeserializer(LocalDateTime.class, new LocalDateTimeSerializerExt());
 
         ObjectMapper mapper = Jackson2ObjectMapperBuilder.json()
