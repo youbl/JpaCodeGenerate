@@ -15,7 +15,10 @@ import java.io.Serializable;
  */
 @Data
 @Accessors(chain = true)
-@TableName("{{table_name}}")
+@TableName({{entity_name}}.TABLE_NAME)
 public class {{entity_name}} implements Serializable {
+
+    public final static String TABLE_NAME = "{{table_name}}";
+
 {{entity_fields}}
 }

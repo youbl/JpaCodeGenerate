@@ -12,10 +12,9 @@ import java.util.List;
  * @since {{date_time}}
  */
 public interface {{entity_name}}Mapper extends BaseMapper<{{entity_name}}> {
-    String TABLE = "{{table_name}}";
 
     @Select("<script>" +
-            "SELECT * FROM " + TABLE + " a " +
+            "SELECT * FROM " + {{entity_name}}.TABLE_NAME + " a " +
             "WHERE a.{{low_key_field}} IN " +
             "<foreach item='item' index='index' collection='idList' open='(' separator=',' close=')'>" +
             " #{item} " +
