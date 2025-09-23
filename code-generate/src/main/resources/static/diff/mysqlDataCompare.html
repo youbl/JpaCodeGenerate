@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MySQL数据对比工具</title>
+    <script src="../static/common.js?v=1"></script>
+    <script src="../static/vue.min.js"></script>
+    <script src="../static/axios.min.js"></script>
+    <script src="../static/elemeIndex.js"></script>
+    <link rel="stylesheet" href="../static/elemeIndex.css">
+    <style>
+        .el-select-dropdown__wrap {
+            max-height: 500px;
+        }
+
+        .el-table_1_column_1 {
+            font-weight: bold;
+        }
+
+        .tableHeader {
+            font-size: 20px;
+        }
+
+        .field-selection {
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f8f9fa;
+        }
+
+        .field-selection h4 {
+            margin: 0 0 15px 0;
+            color: #409eff;
+        }
+
+        .field-table-header {
+            background-color: #f5f7fa;
+        }
+
+        .diff-row {
+            background-color: #fff5f5 !important;
+        }
+
+        .field-diff {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .field-diff input[type="text"] {
+            width: 200px;
+            padding: 2px 5px;
+            border: 1px solid #dcdfe6;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 0 3px;
+        }
+
+        .field-diff input[type="text"]:focus {
+            border-color: #409eff;
+            outline: none;
+        }
+
+        .field-consistent input[type="text"] {
+            width: 200px;
+            padding: 2px 5px;
+            border: 1px solid #67c23a;
+            border-radius: 3px;
+            font-size: 12px;
+            background-color: #f0f9ff;
+        }
+    </style>
+</head>
+<body>
+
+<div id="divApp">
+    <el-form :model="searchCond" ref="searchForm" :inline="true" class="demo-form-inline"
+             style="text-align: left">
+        <!-- 左库配置 -->
+        <el-form-item label="左库" prop="dbTestName" style="font-weight: bold;">
+            <el-select v-model="selectTestDbName" filterable placeholder="请选择环境" @change="dbSelected(false)">
+                <el-option
+                        v-for="item in sqlConns"
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
+                </el-option>
+            </el-select>
+            <el-form-item label="IP">
+                <input type="text" v-model="searchCond.dbTestIp" style="width:240px" :readonly="!isTestCustom"/>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <input type="text" v-model="searchCond.dbTestUser" style="width:60px" :readonly="!isTestCustom"/>
+            </el-form-item>
+            <el-form-item label="密码">
+                <input type="password" v-model="searchCond.dbTestPwd" style="width:60px" :readonly="!isTestCustom"/>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadTestDb"></el-button>
+
+            <el-form-item label="刷新数据库列表">
+                <el-select v-model="searchCond.dbTestName" filterable placeholder="请选择数据库1"
+                           @change="testDbChange">
+                    <el-option
+                            v-for="item in dbsTest"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form-item>
+        <br>
+        <!-- 右库配置 -->
+        <el-form-item label="右库" prop="dbProdName" style="font-weight: bold;">
+            <el-select v-model="selectProdDbName" filterable placeholder="请选择环境" @change="dbSelected(true)">
+                <el-option
+                        v-for="item in sqlConns"
+                        :key="item.configName"
+                        :label="item.configName"
+                        :value="item.configName">
+                </el-option>
+            </el-select>
+            <el-form-item label="IP">
+                <input type="text" v-model="searchCond.dbProdIp" style="width:240px" :readonly="!isProdCustom"/>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <input type="text" v-model="searchCond.dbProdUser" style="width:60px" :readonly="!isProdCustom"/>
+            </el-form-item>
+            <el-form-item label="密码">
+                <input type="password" v-model="searchCond.dbProdPwd" style="width:60px" :readonly="!isProdCustom"/>
+            </el-form-item>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadProdDb"></el-button>
+
+            <el-form-item label="刷新数据库列表">
+                <el-select v-model="searchCond.dbProdName" filterable placeholder="请选择数据库2">
+                    <el-option
+                            v-for="item in dbsProd"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form-item>
+        <br>
+        
+        <!-- 表选择 -->
+        <el-form-item label="对比表" style="font-weight: bold;">
+            <el-select v-model="selectedTable" filterable placeholder="请选择要对比的表" @change="tableSelected">
+                <el-option
+                        v-for="item in tableList"
+                        :key="item"
+                        :label="item"
+                        :value="item">
+                </el-option>
+            </el-select>
+            <el-button type="primary" icon="el-icon-refresh" circle @click="loadTables"></el-button>
+            <el-form-item label="对比数据条数限制">
+                <el-input-number v-model="searchCond.dataLimit" :min="1" :max="1000" style="width:180px"></el-input-number>
+            </el-form-item>
+        </el-form-item>
+        
+        <!-- 字段选择 -->
+        <div class="field-selection" v-if="fieldList.length > 0">
+            <h4><i class="el-icon-tickets"></i> 选择要对比的字段</h4>
+            <div style="margin-bottom: 10px;">
+                <el-checkbox v-model="selectAllFields" @change="selectAllFieldsChange">全选</el-checkbox>
+                <span style="margin-left: 20px; color: #666;">
+                    已选择 {{selectedFieldsCount}} / {{fieldList.length}} 个字段
+                </span>
+            </div>
+            
+            <el-table
+                ref="fieldTable"
+                :data="fieldList"
+                border
+                size="small"
+                max-height="300"
+                style="width: 100%;"
+                :header-row-class-name="'field-table-header'"
+                @selection-change="handleFieldSelectionChange">
+                
+                <el-table-column
+                    type="selection"
+                    width="55"
+                    :selectable="() => true">
+                </el-table-column>
+                
+                <el-table-column
+                    prop="column"
+                    label="字段名"
+                    width="200"
+                    sortable>
+                    <template slot-scope="scope">
+                        <span v-if="scope.row.primaryKey" style="color: #f56c6c;">
+                            <i class="el-icon-key"></i> {{scope.row.column}}
+                        </span>
+                        <span v-else>{{scope.row.column}}</span>
+                    </template>
+                </el-table-column>
+                
+                <el-table-column
+                    prop="type"
+                    label="数据类型"
+                    width="150"
+                    sortable>
+                    <template slot-scope="scope">
+                        <el-tag size="mini" type="info">{{scope.row.type}}</el-tag>
+                    </template>
+                </el-table-column>
+                
+                <el-table-column
+                    prop="comment"
+                    label="字段说明"
+                    show-overflow-tooltip>
+                    <template slot-scope="scope">
+                        <span style="color: #666;">{{scope.row.comment || '无'}}</span>
+                    </template>
+                </el-table-column>
+                
+                <el-table-column
+                    label="属性"
+                    width="120">
+                    <template slot-scope="scope">
+                        <div>
+                            <el-tag v-if="scope.row.primaryKey" size="mini" type="danger">主键</el-tag>
+                            <el-tag v-if="scope.row.auto" size="mini" type="warning">自增</el-tag>
+                            <el-tag v-if="!scope.row.nullable" size="mini" type="success">必填</el-tag>
+                        </div>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        
+        <br>
+        <el-form-item>
+            <el-button type="primary" icon="el-icon-search" @click="compareData" :disabled="!canCompare">对比数据</el-button>
+            <el-checkbox v-model="searchCond.onlyDiff">只显示差异记录</el-checkbox>
+            <el-button type="warning" icon="el-icon-edit" @click="generateSQL" :disabled="!hasComparisonResult">脚本生成</el-button>
+            <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
+            &nbsp;&nbsp;&nbsp;
+<!--            <a href="javascript:void(0)" @click="switchConfig()">源 <-> 目标</a>-->
+<!--            |-->
+<!--            <a href="javascript:void(0)" @click="copyToTarget()">源 -> 目标</a>-->
+<!--            |-->
+<!--            <a href="javascript:void(0)" @click="copyToSource()">目标 -> 源</a>-->
+        </el-form-item>
+        <div>
+            <span style="padding-left:20px;">共{{allData.length}}条记录，{{filteredData.length}}条差异</span>
+            <span v-if="selectedFieldsCount > 0" style="padding-left:20px;">已选择{{selectedFieldsCount}}个字段进行对比</span>
+        </div>
+    </el-form>
+    <br>
+
+    <!-- 数据对比结果表格 -->
+    <el-table v-loading="loading"
+              element-loading-text="数据对比中，请稍候..."
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              border
+              max-height="620"
+              :data="filteredData"
+              :header-row-class-name="'tableHeader'"
+              :row-class-name="getRowClassName"
+              style="width: 100%">
+        <el-table-column
+                prop="rowIndex"
+                label="序号"
+                width="80"
+                type="index">
+        </el-table-column>
+        <el-table-column
+                prop="primaryKey"
+                label="主键值"
+                width="120">
+        </el-table-column>
+        <el-table-column
+                prop="source"
+                label="数据来源"
+                width="120">
+            <template slot-scope="scope">
+                <el-tag v-if="scope.row.source === 'both'" type="info" size="mini">两库都有</el-tag>
+                <el-tag v-else-if="scope.row.source === 'left'" type="warning" size="mini">仅左库</el-tag>
+                <el-tag v-else-if="scope.row.source === 'right'" type="success" size="mini">仅右库</el-tag>
+            </template>
+        </el-table-column>
+        <el-table-column
+                label="字段对比结果">
+            <template slot-scope="scope">
+                        <div v-for="fieldDiff in scope.row.fieldDiffs" :key="fieldDiff.field" style="margin-bottom: 5px;">
+                            <strong>{{fieldDiff.field}}:</strong>
+                            <span v-if="fieldDiff.isDifferent" class="field-diff">
+                                左库: <input type="text" v-model="fieldDiff.leftValue" readonly/>
+                                |
+                                右库: <input type="text" v-model="fieldDiff.rightValue" readonly/>
+                            </span>
+                            <span v-else class="field-consistent" style="color: #67c23a;">
+                                一致: <input type="text" v-model="fieldDiff.leftValue" readonly/>
+                            </span>
+                        </div>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <!-- 全屏加载动画 -->
+    <div v-if="fullScreenLoading" class="loading-overlay">
+        <div style="text-align: center;">
+            <i class="el-icon-loading" style="font-size: 48px; margin-bottom: 20px;"></i>
+            <br>
+            {{loadingText}}
+        </div>
+    </div>
+
+    <!-- 脚本生成对话框 -->
+    <el-dialog title="生成数据同步脚本" :visible.sync="generateSqlShow" width="80%" top="5vh">
+        <template>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #409eff; margin-bottom: 15px;">
+                    <i class="el-icon-setting"></i> 脚本生成选项
+                </h4>
+                <div style="display: flex; gap: 30px; margin-bottom: 15px;">
+                    <div>
+                        <label style="font-weight: bold; color: #333;">目标库:</label>
+                        <el-radio-group v-model="generateSqlTarget" style="margin-left: 10px;" @change="onTargetChange">
+                            <el-radio label="left">修改左库</el-radio>
+                            <el-radio label="right">修改右库</el-radio>
+                        </el-radio-group>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px; padding: 10px; background: #e8f4ff; border-radius: 4px; border-left: 4px solid #409eff;">
+                    <div style="color: #666; font-size: 12px;">
+                        <i class="el-icon-info"></i> <strong>智能脚本生成规则：</strong><br>
+                        • 目标库缺失的记录 → 自动生成 <span style="color: #67c23a; font-weight: bold;">INSERT</span> 语句<br>
+                        • 目标库已存在但有差异的记录 → 自动生成 <span style="color: #e6a23c; font-weight: bold;">UPDATE</span> 语句
+                    </div>
+                </div>
+            </div>
+        </template>
+        <div>
+            <div style="margin-bottom: 10px;">
+                <strong>生成的SQL脚本:</strong>
+                <el-button size="mini" style="float: right;" @click="copySqlToClipboard" v-if="generateSql && !isGenerating">
+                    <i class="el-icon-document-copy"></i> 复制到剪贴板
+                </el-button>
+                <span v-if="isGenerating" style="float: right; color: #409eff;">
+                    <i class="el-icon-loading"></i> 正在生成脚本...
+                </span>
+            </div>
+            <el-input
+                    type="textarea"
+                    :rows="18"
+                    v-model="generateSql"
+                    :placeholder="isGenerating ? '正在生成SQL脚本，请稍候...' : '生成的SQL语句将在这里显示...'"
+                    :disabled="isGenerating"
+                    style="font-family: 'Courier New', monospace; font-size: 12px;">
+            </el-input>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    const vueApp = new Vue({
+        el: '#divApp',
+        data: {
+            loading: false,
+            fullScreenLoading: false,
+            loadingText: '正在加载...',
+            selectTestDbName: '',
+            selectProdDbName: '',
+            sqlConns: [],
+
+            searchCond: {
+                testConfigName: '',
+                dbTestIp: '',
+                dbTestUser: '',
+                dbTestPwd: '',
+                dbTestName: '',
+
+                prodConfigName: '',
+                dbProdIp: '',
+                dbProdUser: '',
+                dbProdPwd: '',
+                dbProdName: '',
+                onlyDiff: true,
+                dataLimit: 1000,
+            },
+
+            dbsTest: [],
+            dbsProd: [],
+            tableList: [],
+            selectedTable: '',
+            fieldList: [],
+            selectAllFields: false,
+            
+            allData: [],
+            primaryKeyField: 'id',
+            
+            // 脚本生成相关
+            generateSqlShow: false,
+            generateSqlTarget: 'right', // left 或 right
+            generateSql: '',
+            isGenerating: false,
+            
+            defaultName: '',
+        },
+        created: function () {
+            this.defaultName = getQueryString('name');
+            this.loadConnections().then(() => {
+                this.selectTestDbName = this.sqlConns[0].configName;
+                if (this.sqlConns.length > 1)
+                    this.selectProdDbName = this.sqlConns[1].configName;
+
+                this.dbSelected(true);
+                this.dbSelected(false);
+            });
+        },
+        computed: {
+            filteredData: function () {
+                if (this.searchCond.onlyDiff) {
+                    return this.allData.filter(item => {
+                        return item.hasDifference;
+                    });
+                }
+                return this.allData;
+            },
+            isTestCustom: function () {
+                return this.selectTestDbName === '' || this.selectTestDbName === '自定义';
+            },
+            isProdCustom: function () {
+                return this.selectProdDbName === '' || this.selectProdDbName === '自定义';
+            },
+            canCompare: function () {
+                return this.searchCond.dbTestName && 
+                       this.searchCond.dbProdName && 
+                       this.selectedTable &&
+                       this.selectedFieldsCount > 0;
+            },
+            selectedFieldsCount: function () {
+                return this.fieldList.filter(field => field.selected).length;
+            },
+            hasComparisonResult: function () {
+                return this.allData.length > 0;
+            }
+        },
+        methods: {
+            loadConnections: function () {
+                let url = $$BASE_URL + 'linkinfo/list?type=mysql';
+                return axios.get(url).then(response => {
+                    if (!response.data || !response.data.length) {
+                        return alert('出错:' + response.data.errMsg);
+                    }
+                    for (let i = 0, j = response.data.length; i < j; i++) {
+                        let item = response.data[i];
+                        this.sqlConns.push({
+                            configName: item.name,
+                            dbTestIp: item.address,
+                            dbTestUser: item.account,
+                            dbTestPwd: '123456',
+                            dbTestName: '',
+                        });
+                    }
+                    this.sqlConns.push({
+                        configName: '自定义',
+                        dbTestIp: '',
+                        dbTestUser: '',
+                        dbTestPwd: '',
+                        dbTestName: '',
+                    });
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            
+            switchConfig: function () {
+                let ip = this.searchCond.dbTestIp;
+                let user = this.searchCond.dbTestUser;
+                let pwd = this.searchCond.dbTestPwd;
+                let configName = this.searchCond.testConfigName;
+
+                this.searchCond.dbTestIp = this.searchCond.dbProdIp;
+                this.searchCond.dbTestUser = this.searchCond.dbProdUser;
+                this.searchCond.dbTestPwd = this.searchCond.dbProdPwd;
+                this.searchCond.testConfigName = this.searchCond.prodConfigName;
+                this.loadTestDb();
+                this.searchCond.dbProdIp = ip;
+                this.searchCond.dbProdUser = user;
+                this.searchCond.dbProdPwd = pwd;
+                this.searchCond.prodConfigName = configName;
+                this.loadProdDb();
+                setTimeout(() => {
+                    let db1 = this.searchCond.dbTestName;
+                    let db2 = this.searchCond.dbProdName;
+                    this.searchCond.dbTestName = db2;
+                    this.searchCond.dbProdName = db1;
+                }, 2000);
+            },
+            
+            copyToTarget: function () {
+                this.searchCond.dbProdIp = this.searchCond.dbTestIp;
+                this.searchCond.dbProdUser = this.searchCond.dbTestUser;
+                this.searchCond.dbProdPwd = this.searchCond.dbTestPwd;
+                this.searchCond.prodConfigName = this.searchCond.testConfigName;
+
+                this.loadProdDb();
+                setTimeout(() => {
+                    this.searchCond.dbProdName = this.searchCond.dbTestName;
+                }, 2000);
+            },
+            
+            copyToSource: function () {
+                this.searchCond.dbTestIp = this.searchCond.dbProdIp;
+                this.searchCond.dbTestUser = this.searchCond.dbProdUser;
+                this.searchCond.dbTestPwd = this.searchCond.dbProdPwd;
+                this.searchCond.testConfigName = this.searchCond.prodConfigName;
+
+                this.loadTestDb();
+                setTimeout(() => {
+                    this.searchCond.dbTestName = this.searchCond.dbProdName;
+                }, 2000);
+            },
+
+            dbSelected: function (flg) {
+                let selectDbName = flg ? this.selectProdDbName : this.selectTestDbName;
+                if (!selectDbName)
+                    return;
+                for (let i = 0, j = this.sqlConns.length; i < j; i++) {
+                    if (this.sqlConns[i].configName === selectDbName) {
+                        this.setDbFromOption(flg, this.sqlConns[i]);
+                        if (selectDbName === '自定义')
+                            return;
+                        this.loadDbs(flg);
+                        break;
+                    }
+                }
+            },
+            
+            setDbFromOption: function (flg, conns) {
+                if (flg) {
+                    this.searchCond.dbProdIp = conns.dbTestIp;
+                    this.searchCond.dbProdUser = conns.dbTestUser;
+                    this.searchCond.dbProdPwd = conns.dbTestPwd;
+                    this.searchCond.prodConfigName = conns.configName;
+                } else {
+                    this.searchCond.dbTestIp = conns.dbTestIp;
+                    this.searchCond.dbTestUser = conns.dbTestUser;
+                    this.searchCond.dbTestPwd = conns.dbTestPwd;
+                    this.searchCond.testConfigName = conns.configName;
+                }
+            },
+            
+            loadTestDb: function () {
+                this.loadDbs(false);
+            },
+            
+            loadProdDb: function () {
+                this.loadDbs(true);
+            },
+
+            combineDbPara: function (isProd, addDb) {
+                if (isProd) {
+                    if (!this.searchCond.dbProdIp || !this.searchCond.dbProdUser || !this.searchCond.dbProdPwd) {
+                        alert('请输入右库IP/用户/密码');
+                        throw new Error('请输入右库IP/用户/密码');
+                    }
+                    let ret = 'ip=' + this.searchCond.dbProdIp +
+                        '&user=' + encodeURIComponent(this.searchCond.dbProdUser) +
+                        '&pwd=' + encodeURIComponent(this.searchCond.dbProdPwd) +
+                        '&name=' + encodeURIComponent(this.searchCond.prodConfigName);
+                    if (addDb === true) {
+                        ret += '&db=' + encodeURIComponent(this.searchCond.dbProdName);
+                    }
+                    return ret;
+                }
+                if (!this.searchCond.dbTestIp || !this.searchCond.dbTestUser || !this.searchCond.dbTestPwd) {
+                    alert('请输入左库IP/用户/密码');
+                    throw new Error('请输入左库IP/用户/密码');
+                }
+                let ret = 'ip=' + this.searchCond.dbTestIp +
+                    '&user=' + encodeURIComponent(this.searchCond.dbTestUser) +
+                    '&pwd=' + encodeURIComponent(this.searchCond.dbTestPwd) +
+                    '&name=' + encodeURIComponent(this.searchCond.testConfigName);
+                if (addDb === true) {
+                    ret += '&db=' + encodeURIComponent(this.searchCond.dbTestName);
+                }
+                return ret;
+            },
+
+            loadDbs: function (isProd) {
+                if (isProd) {
+                    this.dbsProd = [];
+                } else {
+                    this.dbsTest = [];
+                }
+                let para = this.combineDbPara(isProd);
+                let url = $$BASE_URL + 'mysql/databases?' + para;
+                return axios.get(url).then(response => {
+                    if (!Array.isArray(response.data)) {
+                        if (response.data.errMsg) {
+                            alert(para + '\r\n' + response.data.errMsg);
+                        }
+                        return;
+                    }
+                    if (isProd) {
+                        this.dbsProd = response.data;
+                        this.setByDefault('dbProdName', this.dbsProd);
+                    } else {
+                        this.dbsTest = response.data;
+                        this.setByDefault('dbTestName', this.dbsTest);
+                    }
+                    // 当数据库加载完成后，加载表列表
+                    this.loadTables();
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+
+            setByDefault: function (prop, arr) {
+                if (arr.length <= 0) {
+                    this.searchCond[prop] = '';
+                    return;
+                }
+                if (this.defaultName) {
+                    for (let i = 0, j = arr.length; i < j; i++) {
+                        if (arr[i].indexOf(this.defaultName) >= 0) {
+                            this.searchCond[prop] = arr[i];
+                            return;
+                        }
+                    }
+                }
+                this.searchCond[prop] = arr[0];
+            },
+
+            testDbChange: function (testDb) {
+                if (!testDb)
+                    return;
+                testDb = testDb.replace('-dev', '')
+                    .replace('-test', '')
+                    .replace('-prev', '');
+
+                for (let i = 0, j = this.dbsProd.length; i < j; i++) {
+                    let item = this.dbsProd[i];
+                    if (item.indexOf(testDb) === 0) {
+                        this.searchCond.dbProdName = item;
+                        break;
+                    }
+                }
+                this.loadTables();
+            },
+            
+            loadTables: function () {
+                if (!this.searchCond.dbTestName) {
+                    return;
+                }
+                this.tableList = [];
+                this.selectedTable = '';
+                this.fieldList = [];
+                
+                let url = $$BASE_URL + 'mysql/tableNames?' + this.combineDbPara(false, true);
+                return axios.get(url).then(response => {
+                    this.tableList = response.data || [];
+                }).catch(error => {
+                    this.ajaxError(error);
+                });
+            },
+            
+            tableSelected: function () {
+                if (!this.selectedTable) {
+                    this.fieldList = [];
+                    return;
+                }
+                this.loadTableFields();
+            },
+            
+            loadTableFields: function () {
+                if (!this.selectedTable || !this.searchCond.dbTestName) {
+                    return;
+                }
+                
+                this.loadingText = '正在加载表结构...';
+                this.fullScreenLoading = true;
+                
+                let url = $$BASE_URL + 'mysql/columns?' + 
+                    this.combineDbPara(false, true) + 
+                    '&tableName=' + encodeURIComponent(this.selectedTable);
+                
+                axios.get(url).then(response => {
+                    if (response.data && response.data.length > 0) {
+                        this.fieldList = response.data.map(field => ({
+                            column: field.column,
+                            type: field.type,
+                            comment: field.comment || '',
+                            selected: false,
+                            primaryKey: field.primaryKey || false,
+                            auto: field.auto || false,
+                            nullable: field.nullable !== false
+                        }));
+                        
+                        // 设置主键字段
+                        let primaryField = this.fieldList.find(field => field.primaryKey);
+                        if (primaryField) {
+                            this.primaryKeyField = primaryField.column;
+                        }
+                    } else {
+                        this.fieldList = [];
+                    }
+                    this.fullScreenLoading = false;
+                }).catch(error => {
+                    this.fullScreenLoading = false;
+                    this.ajaxError(error);
+                });
+            },
+            
+            selectAllFieldsChange: function (value) {
+                this.fieldList.forEach(field => {
+                    field.selected = value;
+                });
+                // 同步表格选择状态
+                this.$nextTick(() => {
+                    if (this.$refs.fieldTable) {
+                        if (value) {
+                            this.fieldList.forEach(row => {
+                                this.$refs.fieldTable.toggleRowSelection(row, true);
+                            });
+                        } else {
+                            this.$refs.fieldTable.clearSelection();
+                        }
+                    }
+                });
+            },
+            
+            handleFieldSelectionChange: function (selectedRows) {
+                // 更新fieldList中的selected状态
+                this.fieldList.forEach(field => {
+                    field.selected = selectedRows.some(row => row.column === field.column);
+                });
+                
+                // 更新全选状态
+                let selectedCount = selectedRows.length;
+                let totalCount = this.fieldList.length;
+                this.selectAllFields = selectedCount === totalCount;
+            },
+            
+            compareData: async function () {
+                if (!this.canCompare) {
+                    alert('请先选择数据库、表和要对比的字段');
+                    return;
+                }
+                
+                this.allData = [];
+                this.loadingText = '正在查询左库数据...';
+                this.fullScreenLoading = true;
+                
+                try {
+                    // 获取选中的字段
+                    let selectedFields = this.fieldList.filter(field => field.selected);
+                    let fieldNames = selectedFields.map(field => field.column);
+                    
+                    // 确保主键字段被包含
+                    if (!fieldNames.includes(this.primaryKeyField)) {
+                        fieldNames.unshift(this.primaryKeyField);
+                    }
+                    
+                    // 查询左库数据
+                    this.loadingText = '正在查询左库数据...';
+                    let leftData = await this.queryTableData(false, fieldNames);
+                    
+                    // 查询右库数据
+                    this.loadingText = '正在查询右库数据...';
+                    let rightData = await this.queryTableData(true, fieldNames);
+                    
+                    // 对比数据
+                    this.loadingText = '正在对比数据...';
+                    this.processDataComparison(leftData, rightData, selectedFields);
+                    
+                } catch (error) {
+                    console.error('数据对比失败:', error);
+                    alert('数据对比失败: ' + (error.message || error));
+                } finally {
+                    this.fullScreenLoading = false;
+                }
+            },
+            
+            queryTableData: function (isProd, fieldNames) {
+                let fieldSql = fieldNames.map(name => '`' + name + '`').join(', ');
+                let dbName = isProd ? this.searchCond.dbProdName : this.searchCond.dbTestName;
+                let sql = `SELECT ${fieldSql} FROM \`${dbName}\`.\`${this.selectedTable}\` ORDER BY \`${this.primaryKeyField}\` LIMIT ${this.searchCond.dataLimit}`;
+                
+                let url = $$BASE_URL + 'mysql/executeSql?';
+                let body = {
+                    'sql': sql,
+                    'ip': isProd ? this.searchCond.dbProdIp : this.searchCond.dbTestIp,
+                    'user': isProd ? this.searchCond.dbProdUser : this.searchCond.dbTestUser,
+                    'pwd': isProd ? this.searchCond.dbProdPwd : this.searchCond.dbTestPwd,
+                    'db': dbName,
+                    'name': isProd ? this.searchCond.prodConfigName : this.searchCond.testConfigName,
+                    'dbTimeout': '30',
+                };
+                
+                return axios.post(url, body).then(response => {
+                    if (response.data.code !== 200) {
+                        throw new Error(response.data.errMsg || '查询失败');
+                    }
+                    return response.data.result || [];
+                });
+            },
+            
+            processDataComparison: function (leftData, rightData, selectedFields) {
+                let comparisonResults = [];
+                let leftMap = new Map();
+                let rightMap = new Map();
+                
+                // 将数据转换为Map，以主键为key
+                leftData.forEach(row => {
+                    leftMap.set(String(row[this.primaryKeyField]), row);
+                });
+                
+                rightData.forEach(row => {
+                    rightMap.set(String(row[this.primaryKeyField]), row);
+                });
+                
+                // 获取所有唯一的主键
+                let allKeys = new Set([...leftMap.keys(), ...rightMap.keys()]);
+                
+                allKeys.forEach(key => {
+                    let leftRow = leftMap.get(key);
+                    let rightRow = rightMap.get(key);
+                    let hasDifference = false;
+                    let source = '';
+                    let fieldDiffs = [];
+                    
+                    if (leftRow && rightRow) {
+                        source = 'both';
+                        // 对比选中的字段
+                        selectedFields.forEach(field => {
+                            let leftValue = leftRow[field.column];
+                            let rightValue = rightRow[field.column];
+                            let isDifferent = this.compareFieldValues(leftValue, rightValue);
+                            
+                            if (isDifferent) {
+                                hasDifference = true;
+                            }
+                            
+                            fieldDiffs.push({
+                                field: field.column,
+                                leftValue: this.formatValue(leftValue),
+                                rightValue: this.formatValue(rightValue),
+                                isDifferent: isDifferent
+                            });
+                        });
+                    } else if (leftRow) {
+                        source = 'left';
+                        hasDifference = true;
+                        selectedFields.forEach(field => {
+                            fieldDiffs.push({
+                                field: field.column,
+                                leftValue: this.formatValue(leftRow[field.column]),
+                                rightValue: '(不存在)',
+                                isDifferent: true
+                            });
+                        });
+                    } else if (rightRow) {
+                        source = 'right';
+                        hasDifference = true;
+                        selectedFields.forEach(field => {
+                            fieldDiffs.push({
+                                field: field.column,
+                                leftValue: '(不存在)',
+                                rightValue: this.formatValue(rightRow[field.column]),
+                                isDifferent: true
+                            });
+                        });
+                    }
+                    
+                    comparisonResults.push({
+                        primaryKey: key,
+                        source: source,
+                        hasDifference: hasDifference,
+                        fieldDiffs: fieldDiffs,
+                        leftRow: leftRow,
+                        rightRow: rightRow
+                    });
+                });
+                
+                this.allData = comparisonResults;
+            },
+            
+            compareFieldValues: function (leftValue, rightValue) {
+                // 处理null和undefined
+                if (leftValue == null && rightValue == null) {
+                    return false;
+                }
+                if (leftValue == null || rightValue == null) {
+                    return true;
+                }
+                
+                // 转换为字符串进行比较（处理数字和字符串的差异）
+                return String(leftValue).trim() !== String(rightValue).trim();
+            },
+            
+            formatValue: function (value) {
+                if (value == null) {
+                    return '(NULL)';
+                }
+                return String(value);
+            },
+            
+            getRowClassName: function ({row, rowIndex}) {
+                return row.hasDifference ? 'diff-row' : '';
+            },
+            
+            // 脚本生成相关方法
+            generateSQL: function () {
+                if (!this.hasComparisonResult) {
+                    return alert('请先执行数据对比');
+                }
+                
+                let diffData = this.filteredData;
+                if (!diffData || diffData.length <= 0) {
+                    return alert('未找到数据差异，无需生成脚本');
+                }
+                
+                // 打开弹窗并自动生成脚本
+                this.generateSqlShow = true;
+                this.doGenerateSql();
+            },
+            
+            // 目标库切换时自动重新生成脚本
+            onTargetChange: function () {
+                if (this.generateSqlShow) {
+                    this.doGenerateSql();
+                }
+            },
+            
+            doGenerateSql: function () {
+                this.isGenerating = true;
+                this.generateSql = '';
+                
+                try {
+                    let diffData = this.filteredData;
+                    let insertStatements = [];
+                    let updateStatements = [];
+                    
+                    // 根据数据情况自动生成不同类型的语句
+                    diffData.forEach(item => {
+                        if (this.shouldGenerateInsert(item)) {
+                            let insertSql = this.generateSingleInsertStatement(item);
+                            if (insertSql) {
+                                insertStatements.push(insertSql);
+                            }
+                        } else if (this.shouldGenerateUpdate(item)) {
+                            let updateSql = this.generateSingleUpdateStatement(item);
+                            if (updateSql) {
+                                updateStatements.push(updateSql);
+                            }
+                        }
+                    });
+                    
+                    let totalCount = insertStatements.length + updateStatements.length;
+                    if (totalCount === 0) {
+                        this.generateSql = '-- 没有需要生成的SQL语句\n-- 请检查对比结果和生成选项';
+                    } else {
+                        let header = `-- 智能同步脚本生成\n`;
+                        header += `-- 生成时间: ${new Date().toLocaleString()}\n`;
+                        header += `-- 目标库: ${this.generateSqlTarget === 'left' ? '左库' : '右库'}\n`;
+                        header += `-- 表名: ${this.selectedTable}\n`;
+                        header += `-- INSERT语句: ${insertStatements.length}条\n`;
+                        header += `-- UPDATE语句: ${updateStatements.length}条\n`;
+                        header += `-- 总计: ${totalCount}条\n\n`;
+                        
+                        let allStatements = [];
+                        
+                        if (insertStatements.length > 0) {
+                            allStatements.push('-- ========== INSERT 语句 ==========');
+                            allStatements = allStatements.concat(insertStatements);
+                            allStatements.push('');
+                        }
+                        
+                        if (updateStatements.length > 0) {
+                            allStatements.push('-- ========== UPDATE 语句 ==========');
+                            allStatements = allStatements.concat(updateStatements);
+                            allStatements.push('');
+                        }
+                        
+                        this.generateSql = header + allStatements.join('\n') + '\n';
+                    }
+                } catch (error) {
+                    console.error('SQL生成失败:', error);
+                    this.generateSql = '-- SQL生成失败: ' + error.message;
+                } finally {
+                    this.isGenerating = false;
+                }
+            },
+            
+            // 判断是否需要生成INSERT语句
+            shouldGenerateInsert: function (item) {
+                if (this.generateSqlTarget === 'left' && item.source === 'right') {
+                    // 向左库插入右库独有的数据
+                    return true;
+                } else if (this.generateSqlTarget === 'right' && item.source === 'left') {
+                    // 向右库插入左库独有的数据
+                    return true;
+                }
+                return false;
+            },
+            
+            // 判断是否需要生成UPDATE语句
+            shouldGenerateUpdate: function (item) {
+                return item.source === 'both' && item.hasDifference;
+            },
+            
+            // 生成单条INSERT语句（包含所有字段）
+            generateSingleInsertStatement: function (item) {
+                let targetDbName = this.generateSqlTarget === 'left' ? 
+                    this.searchCond.dbTestName : this.searchCond.dbProdName;
+                
+                let sourceRow = null;
+                if (this.generateSqlTarget === 'left' && item.source === 'right') {
+                    sourceRow = item.rightRow;
+                } else if (this.generateSqlTarget === 'right' && item.source === 'left') {
+                    sourceRow = item.leftRow;
+                }
+                
+                if (!sourceRow) {
+                    return null;
+                }
+                
+                // 使用所有字段，不只是选中的对比字段
+                let allFieldNames = this.fieldList.map(field => field.column);
+                
+                let fieldsPart = allFieldNames.map(name => '`' + name + '`').join(', ');
+                let valuesPart = allFieldNames.map(fieldName => {
+                    let value = sourceRow[fieldName];
+                    return this.formatSqlValue(value);
+                }).join(', ');
+                
+                return `INSERT INTO \`${targetDbName}\`.\`${this.selectedTable}\` (${fieldsPart}) VALUES (${valuesPart});`;
+            },
+            
+            // 生成单条UPDATE语句（包含所有字段）
+            generateSingleUpdateStatement: function (item) {
+                let targetDbName = this.generateSqlTarget === 'left' ? 
+                    this.searchCond.dbTestName : this.searchCond.dbProdName;
+                
+                let sourceRow = null;
+                let targetRow = null;
+                
+                if (this.generateSqlTarget === 'left') {
+                    // 更新左库为右库的值
+                    sourceRow = item.rightRow;
+                    targetRow = item.leftRow;
+                } else {
+                    // 更新右库为左库的值
+                    sourceRow = item.leftRow;
+                    targetRow = item.rightRow;
+                }
+                
+                if (!sourceRow || !targetRow) {
+                    return null;
+                }
+                
+                let setParts = [];
+                
+                // 使用所有字段（除主键外），不只是有差异的字段
+                this.fieldList.forEach(field => {
+                    if (field.column !== this.primaryKeyField) {
+                        let sourceValue = sourceRow[field.column];
+                        setParts.push(`\`${field.column}\` = ${this.formatSqlValue(sourceValue)}`);
+                    }
+                });
+                
+                if (setParts.length > 0) {
+                    let primaryKeyValue = this.formatSqlValue(sourceRow[this.primaryKeyField]);
+                    return `UPDATE \`${targetDbName}\`.\`${this.selectedTable}\` SET ${setParts.join(', ')} WHERE \`${this.primaryKeyField}\` = ${primaryKeyValue};`;
+                }
+                
+                return null;
+            },
+            
+            formatSqlValue: function (value) {
+                if (value == null) {
+                    return 'NULL';
+                } else if (typeof value === 'boolean') {
+                    return value ? '1' : '0';
+                } else if (typeof value === 'number') {
+                    return value.toString();
+                } else if (typeof value === 'string') {
+                    // 转义单引号
+                    let escapedValue = value.replace(/'/g, "''");
+                    return "'" + escapedValue + "'";
+                } else {
+                    // 其他类型转为字符串处理
+                    let escapedValue = String(value).replace(/'/g, "''");
+                    return "'" + escapedValue + "'";
+                }
+            },
+            
+            copySqlToClipboard: function () {
+                if (!this.generateSql) {
+                    return alert('没有可复制的SQL内容');
+                }
+                
+                // 创建临时textarea元素
+                let textarea = document.createElement('textarea');
+                textarea.value = this.generateSql;
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    this.$message.success('SQL脚本已复制到剪贴板');
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    this.$message.error('复制失败，请手动选择复制');
+                }
+                
+                document.body.removeChild(textarea);
+            },
+            
+            ajaxError: function (error) {
+                window.ajaxError(error, vueApp);
+            },
+        },
+    });
+</script>
+</body>
+</html>
