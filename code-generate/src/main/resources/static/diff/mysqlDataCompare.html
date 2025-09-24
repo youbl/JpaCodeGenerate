@@ -766,22 +766,18 @@
                 this.fullScreenLoading = true;
                 
                 try {
-                    // 获取选中的字段
+                    // 获取选中的字段（用于对比）
                     let selectedFields = this.fieldList.filter(field => field.selected);
-                    let fieldNames = selectedFields.map(field => field.column);
                     
-                    // 确保主键字段被包含
-                    if (!fieldNames.includes(this.primaryKeyField)) {
-                        fieldNames.unshift(this.primaryKeyField);
-                    }
+                    // 查询所有字段（用于后续生成SQL）
+                    let allFieldNames = this.fieldList.map(field => field.column);
                     
-                    // 查询左库数据
-                    this.loadingText = '正在查询左库数据...';
-                    let leftData = await this.queryTableData(false, fieldNames);
-                    
-                    // 查询右库数据
-                    this.loadingText = '正在查询右库数据...';
-                    let rightData = await this.queryTableData(true, fieldNames);
+                    // 并行查询左库和右库数据
+                    this.loadingText = '正在并行查询左库和右库数据...';
+                    let [leftData, rightData] = await Promise.all([
+                        this.queryTableData(false, allFieldNames),
+                        this.queryTableData(true, allFieldNames)
+                    ]);
                     
                     // 对比数据
                     this.loadingText = '正在对比数据...';
@@ -891,8 +887,8 @@
                         source: source,
                         hasDifference: hasDifference,
                         fieldDiffs: fieldDiffs,
-                        leftRow: leftRow,
-                        rightRow: rightRow
+                        leftRow: leftRow,    // 完整的左库行数据
+                        rightRow: rightRow   // 完整的右库行数据
                     });
                 });
                 
@@ -946,6 +942,7 @@
                 }
             },
             
+            
             doGenerateSql: function () {
                 this.isGenerating = true;
                 this.generateSql = '';
@@ -955,7 +952,7 @@
                     let insertStatements = [];
                     let updateStatements = [];
                     
-                    // 根据数据情况自动生成不同类型的语句
+                    // 根据数据情况自动生成不同类型的语句（现在是同步操作）
                     diffData.forEach(item => {
                         if (this.shouldGenerateInsert(item)) {
                             let insertSql = this.generateSingleInsertStatement(item);
@@ -1030,16 +1027,16 @@
                 
                 let sourceRow = null;
                 if (this.generateSqlTarget === 'left' && item.source === 'right') {
-                    sourceRow = item.rightRow;
+                    sourceRow = item.rightRow;  // 直接使用完整的右库数据
                 } else if (this.generateSqlTarget === 'right' && item.source === 'left') {
-                    sourceRow = item.leftRow;
+                    sourceRow = item.leftRow;   // 直接使用完整的左库数据
                 }
                 
                 if (!sourceRow) {
                     return null;
                 }
                 
-                // 使用所有字段，不只是选中的对比字段
+                // 使用所有字段
                 let allFieldNames = this.fieldList.map(field => field.column);
                 
                 let fieldsPart = allFieldNames.map(name => '`' + name + '`').join(', ');
@@ -1061,11 +1058,11 @@
                 
                 if (this.generateSqlTarget === 'left') {
                     // 更新左库为右库的值
-                    sourceRow = item.rightRow;
+                    sourceRow = item.rightRow;  // 直接使用完整的右库数据
                     targetRow = item.leftRow;
                 } else {
                     // 更新右库为左库的值
-                    sourceRow = item.leftRow;
+                    sourceRow = item.leftRow;   // 直接使用完整的左库数据
                     targetRow = item.rightRow;
                 }
                 
@@ -1075,7 +1072,7 @@
                 
                 let setParts = [];
                 
-                // 使用所有字段（除主键外），不只是有差异的字段
+                // 使用所有字段（除主键外）
                 this.fieldList.forEach(field => {
                     if (field.column !== this.primaryKeyField) {
                         let sourceValue = sourceRow[field.column];
