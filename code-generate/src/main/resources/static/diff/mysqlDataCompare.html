@@ -178,11 +178,45 @@
         <!-- 字段选择 -->
         <div class="field-selection" v-if="fieldList.length > 0">
             <h4><i class="el-icon-tickets"></i> 选择要对比的字段</h4>
-            <div style="margin-bottom: 10px;">
-                <el-checkbox v-model="selectAllFields" @change="selectAllFieldsChange">全选</el-checkbox>
-                <span style="margin-left: 20px; color: #666;">
-                    已选择 {{selectedFieldsCount}} / {{fieldList.length}} 个字段
-                </span>
+            <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 20px;">
+                <div>
+                    <el-checkbox v-model="selectAllFields" @change="selectAllFieldsChange">全选</el-checkbox>
+                    <span style="margin-left: 20px; color: #666;">
+                        已选择 {{selectedFieldsCount}} / {{fieldList.length}} 个字段
+                    </span>
+                </div>
+                <div style="border-left: 1px solid #ddd; padding-left: 20px;">
+                    <label style="font-weight: bold; color: #333;">数据匹配策略:</label>
+                    <el-select v-model="matchStrategy" placeholder="选择匹配策略" @change="strategyChanged" style="margin-left: 10px; width: 200px;">
+                        <el-option label="业务字段匹配 (默认)" value="business"></el-option>
+                        <el-option label="主键匹配" value="primary"></el-option>
+                    </el-select>
+                </div>
+            </div>
+            
+            <!-- 业务字段匹配配置 -->
+            <div v-if="matchStrategy === 'business'" style="margin-bottom: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <div style="margin-bottom: 10px;">
+                    <strong style="color: #856404;">
+                        <i class="el-icon-warning"></i> 业务字段匹配配置
+                    </strong>
+                    <span style="color: #856404; font-size: 12px; margin-left: 10px;">
+                        根据选定的业务字段内容作为主键匹配数据差异，而不是主键ID，避免脚本生成有问题；解决数据比对问题，如：<br>
+                        - 数据相同但是主键id不同，被认为记录不同生成insert语句；<br>
+                        - 主键id相同但是数据不同，并认为是同一条记录生成update
+                    </span>
+                </div>
+                <div>
+                    <label style="font-weight: 500;">选择匹配字段:</label>
+                    <el-checkbox-group v-model="businessMatchFields" style="margin-left: 10px;">
+                        <el-checkbox v-for="field in businessFieldCandidates" :key="field.column" :label="field.column">
+                            {{field.column}} <span style="color: #999; font-size: 12px;">({{field.type}})</span>
+                        </el-checkbox>
+                    </el-checkbox-group>
+                </div>
+                <div style="margin-top: 5px; color: #856404; font-size: 12px;">
+                    建议选择: title、name、code等具有业务唯一性的字段组合
+                </div>
             </div>
             
             <el-table
@@ -250,7 +284,7 @@
         <br>
         <el-form-item>
             <el-button type="primary" icon="el-icon-search" @click="compareData" :disabled="!canCompare">对比数据</el-button>
-            <el-checkbox v-model="searchCond.onlyDiff">只显示差异记录</el-checkbox>
+            <el-checkbox v-model="searchCond.onlyDiff">只显示差异数据</el-checkbox>
             <el-button type="warning" icon="el-icon-edit" @click="generateSQL" :disabled="!hasComparisonResult">脚本生成</el-button>
             <el-button icon="el-icon-refresh" @click="location.reload()">页面刷新</el-button>
             &nbsp;&nbsp;&nbsp;
@@ -261,7 +295,7 @@
 <!--            <a href="javascript:void(0)" @click="copyToSource()">目标 -> 源</a>-->
         </el-form-item>
         <div>
-            <span style="padding-left:20px;">共{{allData.length}}条记录，{{filteredData.length}}条差异</span>
+            <span style="padding-left:20px;">共{{allData.length}}条数据，{{filteredData.length}}条差异</span>
             <span v-if="selectedFieldsCount > 0" style="padding-left:20px;">已选择{{selectedFieldsCount}}个字段进行对比</span>
         </div>
     </el-form>
@@ -286,17 +320,31 @@
         </el-table-column>
         <el-table-column
                 prop="primaryKey"
-                label="主键值"
-                width="120">
+                label="匹配键"
+                width="160">
+            <template slot-scope="scope">
+                <div style="font-size: 12px;">
+                    {{scope.row.primaryKey}}
+                </div>
+                <div v-if="scope.row.matchStrategy === 'business' && scope.row.businessMatchFields.length" 
+                     style="font-size: 10px; color: #666; margin-top: 2px;">
+                    匹配字段: {{scope.row.businessMatchFields.join(', ')}}
+                </div>
+            </template>
         </el-table-column>
         <el-table-column
                 prop="source"
                 label="数据来源"
-                width="120">
+                width="140">
             <template slot-scope="scope">
-                <el-tag v-if="scope.row.source === 'both'" type="info" size="mini">两库都有</el-tag>
-                <el-tag v-else-if="scope.row.source === 'left'" type="warning" size="mini">仅左库</el-tag>
-                <el-tag v-else-if="scope.row.source === 'right'" type="success" size="mini">仅右库</el-tag>
+                <div>
+                    <el-tag v-if="scope.row.source === 'both'" type="info" size="mini">两库都有</el-tag>
+                    <el-tag v-else-if="scope.row.source === 'left'" type="warning" size="mini">仅左库</el-tag>
+                    <el-tag v-else-if="scope.row.source === 'right'" type="success" size="mini">仅右库</el-tag>
+                </div>
+                <div v-if="scope.row.matchStrategy === 'business'" style="margin-top: 3px;">
+                    <el-tag type="info" size="mini" style="font-size: 10px;">业务匹配</el-tag>
+                </div>
             </template>
         </el-table-column>
         <el-table-column
@@ -305,12 +353,12 @@
                         <div v-for="fieldDiff in scope.row.fieldDiffs" :key="fieldDiff.field" style="margin-bottom: 5px;">
                             <strong>{{fieldDiff.field}}:</strong>
                             <span v-if="fieldDiff.isDifferent" class="field-diff">
-                                左库: <input type="text" v-model="fieldDiff.leftValue" readonly/>
+                                左库: <input type="text" style="width:400px" :title="fieldDiff.leftValue" v-model="fieldDiff.leftValue" readonly/>
                                 |
-                                右库: <input type="text" v-model="fieldDiff.rightValue" readonly/>
+                                右库: <input type="text" style="width:400px" :title="fieldDiff.rightValue" v-model="fieldDiff.rightValue" readonly/>
                             </span>
                             <span v-else class="field-consistent" style="color: #67c23a;">
-                                一致: <input type="text" v-model="fieldDiff.leftValue" readonly/>
+                                一致: <input type="text" style="width:800px" :title="fieldDiff.leftValue" v-model="fieldDiff.leftValue" readonly/>
                             </span>
                         </div>
             </template>
@@ -345,8 +393,8 @@
                 <div style="margin-bottom: 15px; padding: 10px; background: #e8f4ff; border-radius: 4px; border-left: 4px solid #409eff;">
                     <div style="color: #666; font-size: 12px;">
                         <i class="el-icon-info"></i> <strong>智能脚本生成规则：</strong><br>
-                        • 目标库缺失的记录 → 自动生成 <span style="color: #67c23a; font-weight: bold;">INSERT</span> 语句<br>
-                        • 目标库已存在但有差异的记录 → 自动生成 <span style="color: #e6a23c; font-weight: bold;">UPDATE</span> 语句
+                        • 目标库缺失的数据 → 自动生成 <span style="color: #67c23a; font-weight: bold;">INSERT</span> 语句<br>
+                        • 目标库已存在但有差异的数据 → 自动生成 <span style="color: #e6a23c; font-weight: bold;">UPDATE</span> 语句
                     </div>
                 </div>
             </div>
@@ -410,6 +458,10 @@
             allData: [],
             primaryKeyField: 'id',
             
+            // 匹配策略相关
+            matchStrategy: 'business', // primary 或 business
+            businessMatchFields: [], // 业务匹配字段列表
+            
             // 脚本生成相关
             generateSqlShow: false,
             generateSqlTarget: 'right', // left 或 right
@@ -445,16 +497,35 @@
                 return this.selectProdDbName === '' || this.selectProdDbName === '自定义';
             },
             canCompare: function () {
-                return this.searchCond.dbTestName && 
-                       this.searchCond.dbProdName && 
-                       this.selectedTable &&
-                       this.selectedFieldsCount > 0;
+                let basicCondition = this.searchCond.dbTestName && 
+                                    this.searchCond.dbProdName && 
+                                    this.selectedTable &&
+                                    this.selectedFieldsCount > 0;
+                
+                if (this.matchStrategy === 'business') {
+                    return basicCondition && this.businessMatchFields.length > 0;
+                }
+                return basicCondition;
             },
             selectedFieldsCount: function () {
                 return this.fieldList.filter(field => field.selected).length;
             },
             hasComparisonResult: function () {
                 return this.allData.length > 0;
+            },
+            businessFieldCandidates: function () {
+                // 排除主键和常见的系统字段，推荐作为业务匹配的字段
+                return this.fieldList.filter(field => {
+                    let columnName = field.column.toLowerCase();
+                    // 排除主键、时间字段、自增字段等
+                    return !field.primaryKey && 
+                           !field.auto &&
+                           !columnName.includes('date') &&
+                           !columnName.includes('time') &&
+                           !columnName.includes('created') &&
+                           !columnName.includes('updated') &&
+                           !columnName.includes('modified');
+                });
             }
         },
         methods: {
@@ -755,6 +826,22 @@
                 this.selectAllFields = selectedCount === totalCount;
             },
             
+            // 匹配策略改变时的处理
+            strategyChanged: function () {
+                this.businessMatchFields = []; // 重置业务匹配字段
+            },
+            
+            // 生成业务匹配的唯一键
+            generateBusinessKey: function (row) {
+                if (this.businessMatchFields.length === 0) {
+                    return null;
+                }
+                return this.businessMatchFields.map(fieldName => {
+                    let value = row[fieldName];
+                    return value ? String(value).toLowerCase().trim() : '';
+                }).join('|');
+            },
+            
             compareData: async function () {
                 if (!this.canCompare) {
                     alert('请先选择数据库、表和要对比的字段');
@@ -820,16 +907,31 @@
                 let leftMap = new Map();
                 let rightMap = new Map();
                 
-                // 将数据转换为Map，以主键为key
-                leftData.forEach(row => {
-                    leftMap.set(String(row[this.primaryKeyField]), row);
-                });
+                if (this.matchStrategy === 'primary') {
+                    // 主键匹配策略
+                    leftData.forEach(row => {
+                        leftMap.set(String(row[this.primaryKeyField]), row);
+                    });
+                    rightData.forEach(row => {
+                        rightMap.set(String(row[this.primaryKeyField]), row);
+                    });
+                } else {
+                    // 业务字段匹配策略
+                    leftData.forEach(row => {
+                        let businessKey = this.generateBusinessKey(row);
+                        if (businessKey) {
+                            leftMap.set(businessKey, row);
+                        }
+                    });
+                    rightData.forEach(row => {
+                        let businessKey = this.generateBusinessKey(row);
+                        if (businessKey) {
+                            rightMap.set(businessKey, row);
+                        }
+                    });
+                }
                 
-                rightData.forEach(row => {
-                    rightMap.set(String(row[this.primaryKeyField]), row);
-                });
-                
-                // 获取所有唯一的主键
+                // 获取所有唯一的键
                 let allKeys = new Set([...leftMap.keys(), ...rightMap.keys()]);
                 
                 allKeys.forEach(key => {
@@ -838,9 +940,13 @@
                     let hasDifference = false;
                     let source = '';
                     let fieldDiffs = [];
+                    let displayKey = '';
                     
                     if (leftRow && rightRow) {
                         source = 'both';
+                        displayKey = this.matchStrategy === 'primary' ? 
+                            key : `${leftRow[this.primaryKeyField]} ↔ ${rightRow[this.primaryKeyField]}`;
+                        
                         // 对比选中的字段
                         selectedFields.forEach(field => {
                             let leftValue = leftRow[field.column];
@@ -861,6 +967,9 @@
                     } else if (leftRow) {
                         source = 'left';
                         hasDifference = true;
+                        displayKey = this.matchStrategy === 'primary' ? 
+                            key : String(leftRow[this.primaryKeyField]);
+                        
                         selectedFields.forEach(field => {
                             fieldDiffs.push({
                                 field: field.column,
@@ -872,6 +981,9 @@
                     } else if (rightRow) {
                         source = 'right';
                         hasDifference = true;
+                        displayKey = this.matchStrategy === 'primary' ? 
+                            key : String(rightRow[this.primaryKeyField]);
+                        
                         selectedFields.forEach(field => {
                             fieldDiffs.push({
                                 field: field.column,
@@ -883,12 +995,14 @@
                     }
                     
                     comparisonResults.push({
-                        primaryKey: key,
+                        primaryKey: displayKey,
                         source: source,
                         hasDifference: hasDifference,
                         fieldDiffs: fieldDiffs,
                         leftRow: leftRow,    // 完整的左库行数据
-                        rightRow: rightRow   // 完整的右库行数据
+                        rightRow: rightRow,  // 完整的右库行数据
+                        matchStrategy: this.matchStrategy,
+                        businessMatchFields: this.matchStrategy === 'business' ? this.businessMatchFields : []
                     });
                 });
                 
