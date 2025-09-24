@@ -351,7 +351,12 @@
                 label="字段对比结果">
             <template slot-scope="scope">
                         <div v-for="fieldDiff in scope.row.fieldDiffs" :key="fieldDiff.field" style="margin-bottom: 5px;">
-                            <strong>{{fieldDiff.field}}:</strong>
+                            <strong>
+                                <span v-if="fieldDiff.isMatchField" style="color: #409eff;">
+                                    <i class="el-icon-key"></i> {{fieldDiff.field}}:
+                                </span>
+                                <span v-else>{{fieldDiff.field}}:</span>
+                            </strong>
                             <span v-if="fieldDiff.isDifferent" class="field-diff">
                                 左库: <input type="text" style="width:400px" :title="fieldDiff.leftValue" v-model="fieldDiff.leftValue" readonly/>
                                 |
@@ -842,6 +847,34 @@
                 }).join('|');
             },
             
+            // 获取字段显示顺序（业务匹配字段优先）
+            getOrderedFieldsForDisplay: function (selectedFields) {
+                if (this.matchStrategy !== 'business' || this.businessMatchFields.length === 0) {
+                    return selectedFields; // 主键匹配时保持原顺序
+                }
+                
+                let matchFields = []; // 业务匹配字段
+                let otherFields = []; // 其他字段
+                
+                selectedFields.forEach(field => {
+                    if (this.businessMatchFields.includes(field.column)) {
+                        matchFields.push(field);
+                    } else {
+                        otherFields.push(field);
+                    }
+                });
+                
+                // 将业务匹配字段按配置顺序排序
+                matchFields.sort((a, b) => {
+                    let indexA = this.businessMatchFields.indexOf(a.column);
+                    let indexB = this.businessMatchFields.indexOf(b.column);
+                    return indexA - indexB;
+                });
+                
+                // 业务匹配字段在前，其他字段在后
+                return [...matchFields, ...otherFields];
+            },
+            
             compareData: async function () {
                 if (!this.canCompare) {
                     alert('请先选择数据库、表和要对比的字段');
@@ -947,8 +980,9 @@
                         displayKey = this.matchStrategy === 'primary' ? 
                             key : `${leftRow[this.primaryKeyField]} ↔ ${rightRow[this.primaryKeyField]}`;
                         
-                        // 对比选中的字段
-                        selectedFields.forEach(field => {
+                        // 对比选中的字段，业务匹配字段优先显示
+                        let orderedFields = this.getOrderedFieldsForDisplay(selectedFields);
+                        orderedFields.forEach(field => {
                             let leftValue = leftRow[field.column];
                             let rightValue = rightRow[field.column];
                             let isDifferent = this.compareFieldValues(leftValue, rightValue);
@@ -961,7 +995,8 @@
                                 field: field.column,
                                 leftValue: this.formatValue(leftValue),
                                 rightValue: this.formatValue(rightValue),
-                                isDifferent: isDifferent
+                                isDifferent: isDifferent,
+                                isMatchField: this.matchStrategy === 'business' && this.businessMatchFields.includes(field.column)
                             });
                         });
                     } else if (leftRow) {
@@ -970,12 +1005,14 @@
                         displayKey = this.matchStrategy === 'primary' ? 
                             key : String(leftRow[this.primaryKeyField]);
                         
-                        selectedFields.forEach(field => {
+                        let orderedFields = this.getOrderedFieldsForDisplay(selectedFields);
+                        orderedFields.forEach(field => {
                             fieldDiffs.push({
                                 field: field.column,
                                 leftValue: this.formatValue(leftRow[field.column]),
                                 rightValue: '(不存在)',
-                                isDifferent: true
+                                isDifferent: true,
+                                isMatchField: this.matchStrategy === 'business' && this.businessMatchFields.includes(field.column)
                             });
                         });
                     } else if (rightRow) {
@@ -984,12 +1021,14 @@
                         displayKey = this.matchStrategy === 'primary' ? 
                             key : String(rightRow[this.primaryKeyField]);
                         
-                        selectedFields.forEach(field => {
+                        let orderedFields = this.getOrderedFieldsForDisplay(selectedFields);
+                        orderedFields.forEach(field => {
                             fieldDiffs.push({
                                 field: field.column,
                                 leftValue: '(不存在)',
                                 rightValue: this.formatValue(rightRow[field.column]),
-                                isDifferent: true
+                                isDifferent: true,
+                                isMatchField: this.matchStrategy === 'business' && this.businessMatchFields.includes(field.column)
                             });
                         });
                     }
